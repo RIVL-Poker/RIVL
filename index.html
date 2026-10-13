@@ -1,1 +1,277 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RIVL | Rated Poker</title><link rel="stylesheet" href="style.css"></head><body><div id="app"><aside class="sidebar"><div class="brand">♠ <span>RIVL</span></div><nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav" data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp; Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button></nav><div class="season"><small id="sideTier">✦ SEASON 1</small><h2 id="sideRating">1,500</h2><p id="sideRatingLabel">Your rating</p><div class="progress"><span class="tier-progress"></span></div><small id="sideRank">Ladder</small></div><div class="sidefoot">DEMO BUILD · v1.4.1</div></aside><main><header><div class="crumb">TEXAS HOLD’EM · RATED BOT PLAY</div><div class="account"><span class="coin">◉ 12,450</span><span class="avatar">K</span><span>KadenR</span></div></header><section id="play" class="view active"><div class="hero"><div class="eyebrow">♠ RIVL POKER</div><h1>PLAY. IMPROVE.<br><em>CLIMB.</em></h1><p>Every decision you make is graded like a chess move. Play well and your rating climbs, even when the river doesn’t go your way. No real-money wagering.</p><button class="gold" id="quickplay">PLAY VS BOTS →</button></div><div class="practice-banner"><span>♠ <strong>RATED VS BOTS</strong> · 3 / 6 / 9 players · Rating saved on this device · No real money</span><label><input id="coachToggle" type="checkbox" checked> AI Learning Mode · live grades</label></div><div class="section-title"><h2>CHOOSE YOUR TABLE</h2><span>15-MINUTE MATCHES · RATED · 60% PLACEMENT / 40% DECISIONS</span></div><div class="modes"><article class="mode"><div class="mini-table"><div class="rivl-chip" role="img" aria-label="Black and gold RIVL poker chip with a single golden spade"><div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div></div></div><h3>3 PLAYER</h3><p>Fast · Competitive</p><button class="gold join" data-count="3">PLAY BOTS</button></article><article class="mode"><div class="mini-table"><div class="rivl-chip" role="img" aria-label="Black and gold RIVL poker chip with a single golden spade"><div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div></div></div><h3>6 PLAYER</h3><p>Balanced · Strategic</p><button class="gold join" data-count="6">PLAY BOTS</button></article><article class="mode"><div class="mini-table"><div class="rivl-chip" role="img" aria-label="Black and gold RIVL poker chip with a single golden spade"><div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div></div></div><h3>9 PLAYER</h3><p>High Action · Skilled</p><button class="gold join" data-count="9">PLAY BOTS</button></article></div><div class="bottom-cards"><article class="panel"><h3>YOUR STATS</h3><strong id="homeRating">1,500</strong><p id="homeStatsLine">Rating</p><div class="progress"><span class="tier-progress"></span></div></article><article class="panel"><h3>RECENT MATCHES</h3><div id="recentList"></div></article><article class="panel"><h3>DEFAULT TABLE THEME</h3><div class="theme-preview">CAIRO ✦</div><p>Amber skyline · Black marble · Gold</p></article></div></section><section id="table" class="view"><div class="gamebar"><div><small>BLINDS</small><strong id="blinds">5 / 10</strong></div><div><small>MATCH CLOCK</small><strong id="clock">15:00</strong></div><div><small>ACCURACY</small><strong id="liveAcc">–</strong></div><div><small>PLAYERS</small><strong id="players">6</strong></div><button class="outline" id="leave">LEAVE TABLE</button></div><div class="table-scene"><div class="skyline">♠ RIVL · CAIRO TABLE ♠</div><div class="poker-table"><div class="seat s1"><div class="avatar">A</div><span>Ace · 1,000</span></div><div class="seat s2"><div class="avatar">R</div><span>Rico · 1,000</span></div><div class="seat s3"><div class="avatar">L</div><span>Luna · 1,000</span></div><div class="seat s4"><div class="avatar">N</div><span>Nash · 1,000</span></div><div class="seat s5"><div class="avatar">M</div><span>Mula · 1,000</span></div><div class="seat s6"><div class="avatar">J</div><span>Jett · 1,000</span></div><div class="seat s7"><div class="avatar">N</div><span>Nova · 1,000</span></div><div class="seat s8"><div class="avatar">B</div><span>Blaze · 1,000</span></div><div class="pot">POT <strong id="pot">15</strong><div id="potChips" class="pot-chips" aria-hidden="true"></div></div><div id="winFx" class="win-fx" aria-live="polite"></div><div id="chipFlight" class="chip-flight" aria-hidden="true"></div><div id="gradeFx" class="grade-fx" aria-live="polite"></div><div class="community"><div class="card back">?</div><div class="card back">?</div><div class="card back">?</div><div class="card back">?</div><div class="card back">?</div></div><div class="myseat"><div id="holecards" class="holecards"></div><span class="avatar">K</span><div><strong>KadenR</strong><small id="stack">1,000 chips</small></div><span class="turn" id="turn">8</span></div></div></div><div class="actions"><button class="fold" id="fold">FOLD</button><button class="check" id="check">CHECK / CALL</button><button class="gold" id="bet">RAISE 20</button><div class="raise"><label for="betinput">RAISE TO · CHIPS <span id="amountlabel">20</span></label><div class="amount-row"><button type="button" id="minusBet" aria-label="Decrease bet">−</button><input id="betinput" type="number" inputmode="numeric" min="10" max="1000" step="1" value="20" aria-label="Raise to chips"><button type="button" id="plusBet" aria-label="Increase bet">+</button></div><input type="range" min="10" max="1000" step="1" value="20" id="betamount" aria-label="Bet slider"><div class="quick-bets"><button data-bet="min">MIN</button><button data-bet="half">½ POT</button><button data-bet="pot">POT</button><button data-bet="all">ALL IN</button></div></div></div><div class="bottom-toggle"><button id="togglePanel" aria-expanded="false">⌃ &nbsp; OPEN GAME PANEL</button></div><div id="gamePanel" class="game-panel collapsed"><div class="tabs"><button class="tab selected" data-tab="chat">CHAT</button><button class="tab" data-tab="history">HAND HISTORY</button><button class="tab" data-tab="stats">PLAYER STATS</button><button class="tab" data-tab="settings">TABLE SETTINGS</button><button class="tab" data-tab="coach">AI COACH</button></div><div id="tabcontent"><p>Hand history appears here while you play.</p></div></div><p class="demo-notice" id="status">Choose an action to play your hand.</p><div id="matchResult" class="match-result" hidden></div></section><section id="profile" class="view content-view"><h1>YOUR PROFILE</h1><div class="panel profile-card"><div class="avatar large">K</div><div><h2>KadenR</h2><p id="profTier">Silver</p><strong id="profRating">1,500 rating</strong></div></div><div class="stat-grid"><article class="panel"><h3>RATED MATCHES</h3><h2 id="profGames">0</h2></article><article class="panel"><h3>WINS</h3><h2 id="profWins">0</h2></article><article class="panel"><h3>WIN RATE</h3><h2 id="profWinRate">–</h2></article><article class="panel"><h3>AVG ACCURACY</h3><h2 id="profAcc">–</h2></article></div><div class="profile-grid"><article class="panel"><h3>RATING HISTORY</h3><div id="profChart"></div></article><article class="panel"><h3>DECISION QUALITY · ALL MATCHES</h3><div id="profLabels"></div></article></div><article class="panel"><h3>RECENT MATCHES</h3><div id="profMatches" class="mr-table"></div></article><p class="muted">Stats are saved in this browser. Accounts that follow you across devices come with the online version.</p></section><section id="leaderboard" class="view content-view"><h1>SEASON 1 LADDER</h1><div class="panel ladder"><div class="ladder-row head"><span>#</span><span>PLAYER</span><span>TIER</span><span>RATING</span><span>RD</span><span>MATCHES</span><span>ACCURACY</span></div><div id="ladderRows"></div></div><div class="panel how"><h3>HOW YOUR RATING WORKS</h3><p><b>1. Every decision is graded.</b> When you fold, call or raise, RIVL works out your equity against the hands each opponent likely holds, based on how they’ve bet. It compares the expected value of your choice with the best option and labels it like a chess move: Brilliant, Best, Excellent, Good, Inaccuracy, Mistake or Blunder.</p><p><b>2. Each match gives you a score against every opponent.</b> 60% comes from placement (finish above them and you win that part). 40% comes from decision accuracy (play more accurately than them and you win that part).</p><p><b>3. Glicko-2 updates everyone’s rating.</b> Beating higher-rated players is worth more. <b>RD</b> is how sure the system is about your rating: new players start at ±350 and move fast, then settle as you play. Below ±110 your rating is no longer provisional.</p><p><b>Bots are on the ladder too.</b> Each bot has a fixed skill level and its own rating, so you can measure yourself against them. Leaving a match early leaves it unrated.</p><div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET LADDER</button><span id="resetConfirm" hidden>Erase all ratings and match history on this device? <button class="outline" id="resetYes" type="button">ERASE</button> <button class="outline" id="resetNo" type="button">KEEP</button></span></div></div></section><section id="themes" class="view content-view"><h1>TABLE THEMES</h1><div class="theme-grid"><div class="panel chosen"><div class="theme-preview">CAIRO ✦</div><h3>Cairo — Default</h3><p>Black marble and warm gold</p></div><div class="panel"><div class="theme-preview midnight">MIDNIGHT</div><h3>Midnight</h3><p>Coming later</p></div><div class="panel"><div class="theme-preview royal">ROYAL</div><h3>Royal</h3><p>Coming later</p></div></div></section></main></div><script src="engine.js"></script><script src="rating.js"></script><script src="script.js"></script><script src="ladder-ui.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>RIVL | Rated Poker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <aside class="sidebar">
+            <div class="brand">♠ <span>RIVL</span></div>
+            <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav"
+                    data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp;
+                    Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button></nav>
+            <div class="season"><small id="sideTier">✦ SEASON 1</small>
+                <h2 id="sideRating">1,500</h2>
+                <p id="sideRatingLabel">Your rating</p>
+                <div class="progress"><span class="tier-progress"></span></div><small id="sideRank">Ladder</small>
+            </div>
+            <div class="sidefoot">DEMO BUILD · v1.4.1</div>
+        </aside>
+        <main>
+            <header>
+                <div class="crumb">TEXAS HOLD’EM · RATED BOT PLAY</div>
+                <div class="account"><span class="coin">◉ 12,450</span><span class="avatar">K</span><span>KadenR</span>
+                </div>
+            </header>
+            <section id="play" class="view active">
+                <div class="hero">
+                    <div class="eyebrow">♠ RIVL POKER</div>
+                    <h1>PLAY. IMPROVE.<br><em>CLIMB.</em></h1>
+                    <p>Every decision you make is graded like a chess move. Play well and your rating climbs, even when
+                        the river doesn’t go your way. No real-money wagering.</p><button class="gold"
+                        id="quickplay">PLAY VS BOTS →</button>
+                </div>
+                <div class="practice-banner"><span>♠ <strong>RATED VS BOTS</strong> · 3 / 6 / 9 players · Rating saved
+                        on this device · No real money</span><label><input id="coachToggle" type="checkbox" checked> AI
+                        Learning Mode · live grades</label></div>
+                <div class="section-title">
+                    <h2>CHOOSE YOUR TABLE</h2><span>15-MINUTE MATCHES · RATED · 60% PLACEMENT / 40% DECISIONS</span>
+                </div>
+                <div class="modes">
+                    <article class="mode">
+                        <div class="mini-table">
+                            <div class="rivl-chip" role="img"
+                                aria-label="Black and gold RIVL poker chip with a single golden spade">
+                                <div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div>
+                            </div>
+                        </div>
+                        <h3>3 PLAYER</h3>
+                        <p>Fast · Competitive</p><button class="gold join" data-count="3">PLAY BOTS</button>
+                    </article>
+                    <article class="mode">
+                        <div class="mini-table">
+                            <div class="rivl-chip" role="img"
+                                aria-label="Black and gold RIVL poker chip with a single golden spade">
+                                <div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div>
+                            </div>
+                        </div>
+                        <h3>6 PLAYER</h3>
+                        <p>Balanced · Strategic</p><button class="gold join" data-count="6">PLAY BOTS</button>
+                    </article>
+                    <article class="mode">
+                        <div class="mini-table">
+                            <div class="rivl-chip" role="img"
+                                aria-label="Black and gold RIVL poker chip with a single golden spade">
+                                <div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div>
+                            </div>
+                        </div>
+                        <h3>9 PLAYER</h3>
+                        <p>High Action · Skilled</p><button class="gold join" data-count="9">PLAY BOTS</button>
+                    </article>
+                </div>
+                <div class="bottom-cards">
+                    <article class="panel">
+                        <h3>YOUR STATS</h3><strong id="homeRating">1,500</strong>
+                        <p id="homeStatsLine">Rating</p>
+                        <div class="progress"><span class="tier-progress"></span></div>
+                    </article>
+                    <article class="panel">
+                        <h3>RECENT MATCHES</h3>
+                        <div id="recentList"></div>
+                    </article>
+                    <article class="panel">
+                        <h3>DEFAULT TABLE THEME</h3>
+                        <div class="theme-preview">CAIRO ✦</div>
+                        <p>Amber skyline · Black marble · Gold</p>
+                    </article>
+                </div>
+            </section>
+            <section id="table" class="view">
+                <div class="gamebar">
+                    <div><small>BLINDS</small><strong id="blinds">5 / 10</strong></div>
+                    <div><small>MATCH CLOCK</small><strong id="clock">15:00</strong></div>
+                    <div><small>ACCURACY</small><strong id="liveAcc">–</strong></div>
+                    <div><small>PLAYERS</small><strong id="players">6</strong></div><button class="outline"
+                        id="leave">LEAVE TABLE</button>
+                </div>
+                <div class="table-scene">
+                    <div class="skyline">♠ RIVL · CAIRO TABLE ♠</div>
+                    <div class="poker-table">
+                        <div class="seat s1">
+                            <div class="avatar">A</div><span>Ace · 1,000</span>
+                        </div>
+                        <div class="seat s2">
+                            <div class="avatar">R</div><span>Rico · 1,000</span>
+                        </div>
+                        <div class="seat s3">
+                            <div class="avatar">L</div><span>Luna · 1,000</span>
+                        </div>
+                        <div class="seat s4">
+                            <div class="avatar">N</div><span>Nash · 1,000</span>
+                        </div>
+                        <div class="seat s5">
+                            <div class="avatar">M</div><span>Mula · 1,000</span>
+                        </div>
+                        <div class="seat s6">
+                            <div class="avatar">J</div><span>Jett · 1,000</span>
+                        </div>
+                        <div class="seat s7">
+                            <div class="avatar">N</div><span>Nova · 1,000</span>
+                        </div>
+                        <div class="seat s8">
+                            <div class="avatar">B</div><span>Blaze · 1,000</span>
+                        </div>
+                        <div class="pot">POT <strong id="pot">15</strong>
+                            <div id="potChips" class="pot-chips" aria-hidden="true"></div>
+                        </div>
+                        <div id="winFx" class="win-fx" aria-live="polite"></div>
+                        <div id="chipFlight" class="chip-flight" aria-hidden="true"></div>
+                        <div id="gradeFx" class="grade-fx" aria-live="polite"></div>
+                        <div class="community">
+                            <div class="card back">?</div>
+                            <div class="card back">?</div>
+                            <div class="card back">?</div>
+                            <div class="card back">?</div>
+                            <div class="card back">?</div>
+                        </div>
+                        <div class="myseat">
+                            <div id="holecards" class="holecards"></div><span class="avatar">K</span>
+                            <div><strong>KadenR</strong><small id="stack">1,000 chips</small></div><span class="turn"
+                                id="turn">8</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions"><button class="fold" id="fold">FOLD</button><button class="check" id="check">CHECK
+                        / CALL</button><button class="gold" id="bet">RAISE 20</button>
+                    <div class="raise"><label for="betinput">RAISE TO · CHIPS <span id="amountlabel">20</span></label>
+                        <div class="amount-row"><button type="button" id="minusBet"
+                                aria-label="Decrease bet">−</button><input id="betinput" type="number"
+                                inputmode="numeric" min="10" max="1000" step="1" value="20"
+                                aria-label="Raise to chips"><button type="button" id="plusBet"
+                                aria-label="Increase bet">+</button></div><input type="range" min="10" max="1000"
+                            step="1" value="20" id="betamount" aria-label="Bet slider">
+                        <div class="quick-bets"><button data-bet="min">MIN</button><button data-bet="half">½
+                                POT</button><button data-bet="pot">POT</button><button data-bet="all">ALL IN</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-toggle"><button id="togglePanel" aria-expanded="false">⌃ &nbsp; OPEN GAME
+                        PANEL</button></div>
+                <div id="gamePanel" class="game-panel collapsed">
+                    <div class="tabs"><button class="tab selected" data-tab="chat">CHAT</button><button class="tab"
+                            data-tab="history">HAND HISTORY</button><button class="tab" data-tab="stats">PLAYER
+                            STATS</button><button class="tab" data-tab="settings">TABLE SETTINGS</button><button
+                            class="tab" data-tab="coach">AI COACH</button></div>
+                    <div id="tabcontent">
+                        <p>Hand history appears here while you play.</p>
+                    </div>
+                </div>
+                <p class="demo-notice" id="status">Choose an action to play your hand.</p>
+                <div id="matchResult" class="match-result" hidden></div>
+            </section>
+            <section id="profile" class="view content-view">
+                <h1>YOUR PROFILE</h1>
+                <div class="panel profile-card">
+                    <div class="avatar large">K</div>
+                    <div>
+                        <h2>KadenR</h2>
+                        <p id="profTier">Silver</p><strong id="profRating">1,500 rating</strong>
+                    </div>
+                </div>
+                <div class="stat-grid">
+                    <article class="panel">
+                        <h3>RATED MATCHES</h3>
+                        <h2 id="profGames">0</h2>
+                    </article>
+                    <article class="panel">
+                        <h3>WINS</h3>
+                        <h2 id="profWins">0</h2>
+                    </article>
+                    <article class="panel">
+                        <h3>WIN RATE</h3>
+                        <h2 id="profWinRate">–</h2>
+                    </article>
+                    <article class="panel">
+                        <h3>AVG ACCURACY</h3>
+                        <h2 id="profAcc">–</h2>
+                    </article>
+                </div>
+                <div class="profile-grid">
+                    <article class="panel">
+                        <h3>RATING HISTORY</h3>
+                        <div id="profChart"></div>
+                    </article>
+                    <article class="panel">
+                        <h3>DECISION QUALITY · ALL MATCHES</h3>
+                        <div id="profLabels"></div>
+                    </article>
+                </div>
+                <article class="panel">
+                    <h3>RECENT MATCHES</h3>
+                    <div id="profMatches" class="mr-table"></div>
+                </article>
+                <p class="muted">Stats are saved in this browser. Accounts that follow you across devices come with the
+                    online version.</p>
+            </section>
+            <section id="leaderboard" class="view content-view">
+                <h1>SEASON 1 LADDER</h1>
+                <div class="panel ladder">
+                    <div class="ladder-row head">
+                        <span>#</span><span>PLAYER</span><span>TIER</span><span>RATING</span><span>RD</span><span>MATCHES</span><span>ACCURACY</span>
+                    </div>
+                    <div id="ladderRows"></div>
+                </div>
+                <div class="panel how">
+                    <h3>HOW YOUR RATING WORKS</h3>
+                    <p><b>1. Every decision is graded.</b> When you fold, call or raise, RIVL works out your equity
+                        against the hands each opponent likely holds, based on how they’ve bet. It compares the expected
+                        value of your choice with the best option and labels it like a chess move: Brilliant, Best,
+                        Excellent, Good, Inaccuracy, Mistake or Blunder.</p>
+                    <p><b>2. Each match gives you a score against every opponent.</b> 60% comes from placement (finish
+                        above them and you win that part). 40% comes from decision accuracy (play more accurately than
+                        them and you win that part).</p>
+                    <p><b>3. Glicko-2 updates everyone’s rating.</b> Beating higher-rated players is worth more.
+                        <b>RD</b> is how sure the system is about your rating: new players start at ±350 and move fast,
+                        then settle as you play. Below ±110 your rating is no longer provisional.</p>
+                    <p><b>Bots are on the ladder too.</b> Each bot has a fixed skill level and its own rating, so you
+                        can measure yourself against them. Leaving a match early leaves it unrated.</p>
+                    <div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET
+                            LADDER</button><span id="resetConfirm" hidden>Erase all ratings and match history on this
+                            device? <button class="outline" id="resetYes" type="button">ERASE</button> <button
+                                class="outline" id="resetNo" type="button">KEEP</button></span></div>
+                </div>
+            </section>
+            <section id="themes" class="view content-view">
+                <h1>TABLE THEMES</h1>
+                <div class="theme-grid">
+                    <div class="panel chosen">
+                        <div class="theme-preview">CAIRO ✦</div>
+                        <h3>Cairo — Default</h3>
+                        <p>Black marble and warm gold</p>
+                    </div>
+                    <div class="panel">
+                        <div class="theme-preview midnight">MIDNIGHT</div>
+                        <h3>Midnight</h3>
+                        <p>Coming later</p>
+                    </div>
+                    <div class="panel">
+                        <div class="theme-preview royal">ROYAL</div>
+                        <h3>Royal</h3>
+                        <p>Coming later</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="engine.js"></script>
+    <script src="rating.js"></script>
+    <script src="script.js"></script>
+    <script src="ladder-ui.js"></script>
+</body>
+
+</html>
