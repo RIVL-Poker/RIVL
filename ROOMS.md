@@ -22,7 +22,7 @@ This branch adds a live shared **lobby**, not playable multiplayer poker yet.
 - Multiplayer poker gameplay, server-side shuffling, betting, turn clocks, and hand settlement
 - Reconnection/reservation/leave cleanup, persistent identity, authentication, moderation, rate limiting
 - Start match remains disabled deliberately; **do not advertise online poker as playable**.
-- Secure token handling: host token is currently included in room state for client host detection and must be removed before any public deployment. This foundation is for controlled development only.
+- Room tokens must be protected against leakage, origin abuse, replay, and brute-force attacks before public deployment.
 
 ## Security notes
 Do not publicly deploy this prototype until host authentication and authorization are hardened, including hiding host credentials from other clients, validating input and origins, handling disconnects, and limiting room creation. Room codes are not authorization tokens.

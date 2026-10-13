@@ -2,14 +2,14 @@
 (()=>{
   const $=id=>document.getElementById(id);
   const API=window.RIVL_ROOM_API||localStorage.getItem('rivlRoomApi')||'';
-  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1;
+  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false;
   const status=message=>{$('roomStatus').textContent=message};
   const safeName=value=>(value||'Player').trim().slice(0,20)||'Player';
   const request=async(path,method='GET',body)=>{if(!API)throw Error('Room server not configured. Set window.RIVL_ROOM_API to your deployed Worker URL in index.html.');const response=await fetch(API.replace(/\/$/,'')+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw Error(data.error||'Room server error');return data};
   function render(){
     if(!snapshot)return;
     $('roomEntry').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=roomCode;
-    const host=snapshot.hostToken===token;
+    const host=isHost;
     $('roomHostNotice').textContent=host?'You are the host. Add bots using +, remove bots, or switch visibility.':'Waiting for the host. Open seats are reserved for players joining.';
     $('roomPrivate').disabled=!host;$('roomPublic').disabled=!host;
     $('roomPrivate').className=snapshot.visibility==='private'?'gold':'outline';
@@ -37,7 +37,7 @@
     const wsUrl=API.replace(/^http/,'ws').replace(/\/$/,'')+'/ws/'+encodeURIComponent(roomCode)+'?token='+encodeURIComponent(token);
     socket=new WebSocket(wsUrl);
     socket.onopen=()=>status('Connected to room '+roomCode);
-    socket.onmessage=event=>{const message=JSON.parse(event.data);if(message.type==='state'){snapshot=message.state;render()}else if(message.error)status(message.error)};
+    socket.onmessage=event=>{const message=JSON.parse(event.data);if(message.type==='state'){snapshot=message.state;isHost=!!message.isHost;render()}else if(message.error)status(message.error)};
     socket.onclose=()=>status('Room connection closed. Refresh or rejoin.');
     socket.onerror=()=>status('Could not connect to room server.');
   }

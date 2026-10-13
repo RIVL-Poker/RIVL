@@ -11,7 +11,7 @@ export default {
       const id=env.ROOMS.idFromName(code);
       const stub=env.ROOMS.get(id);
       const response=await stub.fetch(new Request('https://room/create',{method:'POST',body:await request.text()}));
-      return new Response(response.body,{status:response.status,headers});
+      const data=await response.json();return json(response.ok?{...data,code}:data,response.status);
     }
     const match=url.pathname.match(/^\/api\/rooms\/([A-Z2-9]{5})\/join$/);
     if(match&&request.method==='POST'){
@@ -34,8 +34,8 @@ export class Room {
   constructor(state,env){this.state=state;this.env=env;this.sockets=new Map();this.room=null}
   async load(){if(!this.room)this.room=await this.state.storage.get('room')||null;return this.room}
   async save(){await this.state.storage.put('room',this.room);this.broadcast()}
-  publicState(){return {visibility:this.room.visibility,seats:this.room.seats,hostToken:this.room.hostToken}}
-  broadcast(){for(const [ws] of this.sockets)try{ws.send(JSON.stringify({type:'state',state:this.publicState()}))}catch{}}
+  publicState(){return {visibility:this.room.visibility,seats:this.room.seats.map(s=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:s.isHost}:null)}}
+  broadcast(){for(const [ws,token] of this.sockets)try{ws.send(JSON.stringify({type:'state',state:this.publicState(),isHost:token===this.room.hostToken}))}catch{}}
   reply(body,status=200){return Response.json(body,{status})}
   async fetch(request){
     const path=new URL(request.url).pathname;
@@ -62,7 +62,7 @@ export class Room {
       const token=new URL(request.url).searchParams.get('token');
       if(!room.members[token])return this.reply({error:'Unauthorized'},401);
       const pair=new WebSocketPair();const client=pair[0],server=pair[1];server.accept();this.sockets.set(server,token);
-      server.send(JSON.stringify({type:'state',state:this.publicState()}));
+      server.send(JSON.stringify({type:'state',state:this.publicState(),isHost:token===room.hostToken}));
       server.addEventListener('message',async event=>{
         try{
           const msg=JSON.parse(event.data);if(token!==room.hostToken)throw Error('Host only');
