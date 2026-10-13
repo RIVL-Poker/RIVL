@@ -84,27 +84,46 @@
                 <div class="room-visibility"><span>Room visibility</span><button id="roomPrivate" class="gold">PRIVATE</button><button id="roomPublic" class="outline">PUBLIC</button><button id="copyRoomCode" class="outline">COPY CODE</button></div>
                 <p id="roomHostNotice">The host can add bots or change visibility. All seats begin empty until players join.</p>
                 <div id="roomSeats" class="room-seats"></div>
-                <div id="roomBotPicker" class="rivl-modal-backdrop" hidden role="presentation"><div class="rivl-modal" role="dialog" aria-modal="true" aria-labelledby="botPickerTitle"><h3 id="botPickerTitle">ADD BOT · SELECT SKILL</h3><h3>ADD BOT · SELECT SKILL</h3><p>Bot names and poker avatars are generated after selection.</p><div class="room-levels"><button data-level="Beginner">BEGINNER</button><button data-level="Intermediate">INTERMEDIATE</button><button data-level="Advanced">ADVANCED</button><button data-level="Expert">EXPERT</button></div><button class="outline" id="cancelBotPicker">CANCEL</button></div></div>
+                <div id="roomBotPicker" class="rivl-modal-backdrop" hidden role="presentation"><div class="rivl-modal" role="dialog" aria-modal="true" aria-labelledby="botPickerTitle"><h3 id="botPickerTitle">ADD BOT · SELECT SKILL</h3><p>Bot names and poker avatars are generated after selection.</p><div class="room-levels"><button data-level="Beginner">BEGINNER</button><button data-level="Intermediate">INTERMEDIATE</button><button data-level="Advanced">ADVANCED</button><button data-level="Expert">EXPERT</button></div><button class="outline" id="cancelBotPicker">CANCEL</button></div></div>
                 <button class="gold" id="roomStart" disabled>START MATCH</button>
-                <div id="roomGame" class="panel" hidden>
-                  <h3 id="roomGamePhase">HAND 1 · PREFLOP</h3>
-                  <p>YOUR PRIVATE HOLE CARDS</p>
-                  <h2 id="roomHoleCards" style="font-size:2rem;letter-spacing:.12em">—</h2>
-                  <div class="rivl-live-table">
-                    <div id="roomPot">POT · 0 CHIPS</div>
-                    <div id="roomBoard" class="rivl-board">Waiting for the flop</div>
-                    <div id="roomGamePlayers" class="rivl-live-seats"></div>
+                <div id="roomGame" hidden>
+                  <div class="gamebar rivl-pvp-gamebar">
+                    <div><small>BLINDS</small><strong id="roomBlinds">10 / 20</strong></div>
+                    <div><small>HAND</small><strong id="roomGamePhase">HAND 1 · PREFLOP</strong></div>
+                    <div><small>MODE</small><strong>PVP · UNRANKED</strong></div>
+                    <div><small>PLAYERS</small><strong id="roomPlayerCount">2</strong></div>
                   </div>
-                  <div class="rivl-timer-row"><div id="roomTimer"><span id="roomTimerText">12s</span></div><span id="roomBetInfo">Waiting for players</span></div>
-                  <div id="roomActions" class="rivl-bet-actions" hidden>
-                    <button id="roomFold" class="fold">FOLD</button>
-                    <button id="roomCall" class="gold">CHECK / CALL</button>
-                    <input id="roomRaiseAmount" type="number" min="20" step="1" value="40" aria-label="Raise to amount">
-                    <button id="roomRaise" class="gold">RAISE TO</button>
-                    <button id="roomAllin" class="outline">ALL IN</button>
+                  <div class="table-scene rivl-pvp-scene">
+                    <div class="skyline">♠ RIVL · CAIRO TABLE ♠</div>
+                    <div class="poker-table rivl-pvp-table" id="roomPokerTable">
+                      <div id="roomGamePlayers" class="rivl-pvp-opponents"></div>
+                      <div class="pot">POT <strong id="roomPot">0</strong></div>
+                      <div id="roomBoard" class="community rivl-pvp-board"></div>
+                      <div class="myseat rivl-pvp-myseat">
+                        <div id="roomHoleCards" class="holecards"></div>
+                        <span class="avatar" id="roomMyAvatar">P</span>
+                        <div><strong id="roomMyName">Player</strong><small id="roomMyStack">1,000 chips</small></div>
+                        <span class="turn" id="roomMyTurn">12</span>
+                      </div>
+                    </div>
                   </div>
-                  <h3 id="roomWinner" aria-live="polite"></h3>
-                  <button id="roomNext" class="gold" hidden>DEAL NEXT HAND</button>
+                  <div class="rivl-pvp-controls">
+                    <div class="rivl-timer-row"><div id="roomTimer"><span id="roomTimerText">12s</span></div><span id="roomBetInfo">Waiting for players</span></div>
+                    <div id="roomActions" class="rivl-bet-actions" hidden>
+                      <button id="roomFold" class="fold">FOLD</button>
+                      <button id="roomCall" class="check">CHECK / CALL</button>
+                      <button id="roomRaise" class="gold">RAISE TO</button>
+                      <div class="raise rivl-pvp-raise">
+                        <label for="roomRaiseAmount">RAISE TO · CHIPS <span id="roomAmountLabel">40</span></label>
+                        <div class="amount-row"><button id="roomMinusBet" type="button" aria-label="Decrease raise">−</button><input id="roomRaiseAmount" type="number" inputmode="numeric" min="20" step="1" value="40" aria-label="Raise to amount"><button id="roomPlusBet" type="button" aria-label="Increase raise">+</button></div>
+                        <input id="roomRaiseSlider" type="range" min="20" max="1000" step="1" value="40" aria-label="Raise amount slider">
+                        <div class="quick-bets"><button data-room-bet="min">MIN</button><button data-room-bet="half">½ POT</button><button data-room-bet="pot">POT</button><button data-room-bet="all">ALL IN</button></div>
+                      </div>
+                      <button id="roomAllin" class="outline">ALL IN</button>
+                    </div>
+                    <h3 id="roomWinner" aria-live="polite"></h3>
+                    <button id="roomNext" class="gold" hidden>DEAL NEXT HAND</button>
+                  </div>
                 </div>
                 <p class="room-disclaimer">Unranked multiplayer beta · server-controlled betting · no real-money wagering.</p>
               </div>
