@@ -67,9 +67,22 @@
         if(g.holeCards?.length){setTimeout(()=>pvpSound('card'),100);setTimeout(()=>pvpSound('card'),270)}
       }
       const board=$('roomBoard');
+      const revealed=g.board.length;
       if(newHand)board.replaceChildren();
-      for(let i=board.children.length;i<5;i++)board.append(animatedCard(g.board[i],!g.board[i],g.board[i]?(i-Math.max(0,previousBoard.length))*180+100:0));
-      if(g.board.length>previousBoard.length)g.board.slice(previousBoard.length).forEach((_,i)=>setTimeout(()=>pvpSound('card'),100+i*180));
+      // Refresh previously hidden placeholders as the server reveals each street.
+      // Do not replay the deal animation or audio for unchanged cards.
+      for(let i=0;i<5;i++){
+        const code=g.board[i],old=board.children[i];
+        if(!old||old.dataset.code!==(code||'')){
+          const newlyRevealed=!!code&&i>=previousBoard.length;
+          const el=animatedCard(code,!code,newlyRevealed?100+(i-previousBoard.length)*180:0);
+          el.dataset.code=code||'';
+          if(old)old.replaceWith(el);else board.append(el);
+        }
+      }
+      if(revealed>previousBoard.length){
+        g.board.slice(previousBoard.length).forEach((_,i)=>setTimeout(()=>pvpSound('card'),100+i*180));
+      }
       previousBoard=[...g.board];
       if(previousTurn!==g.turn&&g.phase!=='showdown'){if(previousTurn!==-1)pvpSound('chip');previousTurn=g.turn}
       if(previousPhase!=='showdown'&&g.phase==='showdown')pvpSound('win');
