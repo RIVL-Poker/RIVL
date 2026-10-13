@@ -5,7 +5,7 @@
   let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false;
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
-  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');if(back){el.textContent='♠';return el}if(!code)return el;const rank=document.createElement('strong');rank.textContent=code[0]+suit[code[1]];const center=document.createElement('span');center.className='rivl-card-center';center.textContent=suit[code[1]];el.append(rank,center);return el};
+  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');if(back){el.textContent='♠';return el}if(!code)return el;const rank=document.createElement('strong');rank.textContent=code[0]==='T'?'10':code[0];const center=document.createElement('span');center.className='rivl-card-center';center.textContent=suit[code[1]];el.append(rank,center);return el};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
