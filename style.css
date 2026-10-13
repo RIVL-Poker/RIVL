@@ -266,3 +266,14 @@ body.in-game .s7{top:-28px}
 .rivl-bet-actions input{width:125px;background:#151515;color:white;border:1px solid #bc9256;border-radius:8px;font-size:19px;text-align:center}
 #roomWinner{color:#ffdc88;margin-top:18px}
 @media(max-width:650px){.rivl-live-table{border-radius:30px;border-width:7px;padding:14px}.rivl-bet-actions button{min-width:90px}.rivl-live-seat{font-size:10px}}
+
+/* Multiplayer match is a separate screen, never a section below room setup. */
+#rooms.rivl-match-mode{padding-top:12px}
+#rooms.rivl-match-mode>.section-title,#rooms.rivl-match-mode>#roomStatus{display:none}
+#rooms.rivl-match-mode .room-visibility,#rooms.rivl-match-mode #roomHostNotice,#rooms.rivl-match-mode #roomSeats,#rooms.rivl-match-mode #roomBotPicker,#rooms.rivl-match-mode #roomStart,#rooms.rivl-match-mode .room-disclaimer{display:none!important}
+#rooms.rivl-match-mode .room-topline{margin:0 0 12px;min-height:42px}
+#rooms.rivl-match-mode .room-topline h2{font-size:15px;letter-spacing:.13em;color:#e9c27c}
+#rooms.rivl-match-mode #roomGame{margin:0;min-height:calc(100vh - 190px);display:flex;flex-direction:column;justify-content:space-around;gap:14px;padding:clamp(14px,2.5vw,30px)}
+#rooms.rivl-match-mode #roomGame[hidden]{display:none}
+#rooms.rivl-match-mode .rivl-felt{min-height:260px}
+@media(max-width:700px){#rooms.rivl-match-mode #roomGame{min-height:calc(100dvh - 150px)}#rooms.rivl-match-mode .room-topline{gap:8px}}
