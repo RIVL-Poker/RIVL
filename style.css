@@ -232,3 +232,21 @@ body.in-game .s7{top:-28px}
  body.in-game .poker-table[data-player-count="3"] .s1{top:-24px;left:25%}
  body.in-game .poker-table[data-player-count="3"] .s2{top:-24px;left:75%}
 }
+
+/* Online room lobby */
+.room-entry{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:22px 0}
+.room-entry .panel{display:flex;flex-direction:column;gap:14px}
+.room-entry label{display:flex;flex-direction:column;gap:8px;color:#d7bc91}
+.room-entry input{background:#161513;color:#f8e6c9;border:1px solid #84633b;padding:13px;border-radius:8px;font:inherit;max-width:100%}
+.room-topline,.room-visibility{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0}
+.room-topline{justify-content:space-between}
+.room-seats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:22px 0}
+.room-seat{min-height:115px;background:linear-gradient(150deg,#251c13,#0c0b0b);border:1px solid #755a35;border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#ead3aa}
+.room-seat button{border:1px solid #9b7947;background:#21180d;color:#eac78b;border-radius:50%;width:44px;height:44px;font-size:25px;cursor:pointer}
+.room-seat .room-avatar{display:grid;place-items:center;border:2px solid #c29b5e;border-radius:50%;width:46px;height:46px;font-size:23px}
+.room-seat small{color:#baa88c}
+.room-seat .room-remove{border-radius:8px;font-size:12px;width:auto;height:auto;padding:5px 12px}
+.room-levels{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.room-levels button{background:#332515;color:#f4d39d;border:1px solid #b98a4a;border-radius:8px;padding:12px;cursor:pointer}
+.room-disclaimer{color:#bba783;font-size:13px}
+@media(max-width:700px){.room-entry{grid-template-columns:1fr}.room-seats{gap:6px}.room-seat{padding:7px;min-height:98px;font-size:12px}}

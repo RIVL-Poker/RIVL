@@ -43,7 +43,7 @@
                     <div class="rivl-mode-grid">
                         <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>RANKED</h3><p>Play against real people and climb the ladder.</p><button class="outline" disabled aria-label="Ranked coming soon">COMING SOON</button></article>
                         <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>BOT PRACTICE</h3><p>Sharpen your game against AI opponents.</p><button class="gold" id="selectBotPractice">CHOOSE PLAYERS →</button></article>
-                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>PRIVATE ROOM</h3><p>Invite friends to a private nine-seat table.</p><button class="outline" disabled aria-label="Private rooms coming soon">COMING SOON</button></article>
+                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>PRIVATE ROOM</h3><p>Invite friends to a private nine-seat table.</p><button class="gold" id="openRooms">OPEN ROOMS →</button></article>
                     </div>
                 </div>
                 <div id="playerSelect" class="rivl-menu-step" hidden>
@@ -71,6 +71,23 @@
                         <p>Amber skyline · Black marble · Gold</p>
                     </article>
                 </div>
+            </section>
+            <section id="rooms" class="view content-view">
+              <div class="section-title"><h2>RIVL ROOMS</h2><span>LIVE LOBBY · UNRANKED</span></div>
+              <p id="roomStatus" role="status">Create or join a room. Online rooms require the Cloudflare Worker to be deployed.</p>
+              <div id="roomEntry" class="room-entry">
+                <div class="panel"><h3>CREATE A ROOM</h3><label>Your display name <input id="roomName" maxlength="20" value="Player"></label><button class="gold" id="createRoom">CREATE ROOM</button></div>
+                <div class="panel"><h3>JOIN A ROOM</h3><label>Room code <input id="roomCodeInput" maxlength="8" placeholder="AB12CD"></label><label>Your display name <input id="joinName" maxlength="20" value="Guest"></label><button class="gold" id="joinRoom">JOIN ROOM</button></div>
+              </div>
+              <div id="roomLobby" hidden>
+                <div class="room-topline"><h2>ROOM <span id="roomCodeLabel"></span></h2><button class="outline" id="leaveRoom">LEAVE ROOM</button></div>
+                <div class="room-visibility"><span>Room visibility</span><button id="roomPrivate" class="gold">PRIVATE</button><button id="roomPublic" class="outline">PUBLIC</button><button id="copyRoomCode" class="outline">COPY CODE</button></div>
+                <p id="roomHostNotice">The host can add bots or change visibility. All seats begin empty until players join.</p>
+                <div id="roomSeats" class="room-seats"></div>
+                <div id="roomBotPicker" class="panel" hidden><h3>ADD BOT · SELECT SKILL</h3><p>Bot names and poker avatars are generated after selection.</p><div class="room-levels"><button data-level="Beginner">BEGINNER</button><button data-level="Intermediate">INTERMEDIATE</button><button data-level="Advanced">ADVANCED</button><button data-level="Expert">EXPERT</button></div><button class="outline" id="cancelBotPicker">CANCEL</button></div>
+                <button class="gold" id="roomStart" disabled>START MATCH — COMING NEXT</button>
+                <p class="room-disclaimer">Room synchronization is available after server deployment. Poker gameplay across devices is not enabled yet.</p>
+              </div>
             </section>
             <section id="table" class="view">
                 <div class="gamebar">
@@ -253,6 +270,7 @@
     <script src="rating.js"></script>
     <script src="script.js"></script>
     <script src="ladder-ui.js"></script>
+    <script src="rooms.js"></script>
 </body>
 
 </html>
