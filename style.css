@@ -378,3 +378,10 @@ body.rivl-modal-open{overflow:hidden}
 #roomGame .rivl-pvp-myseat .card{width:37px;height:49px;padding:4px}
 #roomGame .rivl-pvp-myseat .card:not(.back)>strong{font-size:12px}
 #roomGame .rivl-pvp-myseat .card:not(.back)>.rivl-card-center{font-size:20px}
+
+/* One rank in top-left and one centered suit in both poker modes. */
+#roomGame .card:not(.back)>strong{position:relative;z-index:1;align-self:flex-start;font-size:12px;line-height:1}
+#roomGame .card:not(.back)>.rivl-card-center{position:absolute;inset:0;display:grid;place-items:center;line-height:1}
+#table .rivl-clean-card{position:relative;display:flex;flex-direction:column;justify-content:flex-start}
+#table .rivl-clean-card>strong{position:relative;z-index:1;align-self:flex-start;font-size:.65em;line-height:1}
+#table .rivl-clean-card>span{position:absolute;inset:0;display:grid;place-items:center;font-size:1.1em;line-height:1}
