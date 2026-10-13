@@ -190,3 +190,45 @@ body.in-game .s7{top:-28px}
 
 /* v1.4.1: decorative hero spade never blocks taps */
 .hero:after{pointer-events:none}.hero>*{position:relative;z-index:1}
+
+/* RIVL v1.5: two-stage mode selector */
+.rivl-menu-step[hidden]{display:none!important}
+.rivl-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.rivl-mode-option{min-width:0;text-align:center;border:1px solid #79572f;border-radius:16px;padding:28px 18px;background:radial-gradient(ellipse at 50% 0%,#302315,#0e0d0d 72%);display:flex;align-items:center;flex-direction:column}
+.rivl-mode-option h3{font-size:19px;letter-spacing:2px;color:#f3cc8a;margin:20px 0 4px}
+.rivl-mode-option p{color:#b7ada0;line-height:1.55;font-size:13px;min-height:44px}
+.rivl-mode-option button{width:100%;margin-top:auto}
+.rivl-mode-option button:disabled{opacity:.55;cursor:not-allowed}
+.rivl-mode-chip{width:min(100%,172px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:repeating-conic-gradient(#d6a55b 0deg 14deg,#1a1714 14deg 24deg);padding:12px;box-shadow:0 12px 35px #000b,0 0 0 2px #a77a3d}
+.rivl-mode-chip:before{content:'';grid-area:1/1;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 25%,#303036,#090909 70%);border:3px double #e7bd78}
+.rivl-mode-chip span{grid-area:1/1;z-index:1;color:#eac17d;font-size:clamp(54px,7vw,84px);text-shadow:0 4px 14px #000}
+.rivl-back{margin:0 0 18px}
+.rivl-card-art{height:150px;display:flex;align-items:center;justify-content:center;padding-left:25px}
+.rivl-playing-card{display:flex;flex-direction:column;justify-content:space-between;width:87px;height:123px;padding:9px;background:linear-gradient(140deg,#fffdf7,#dfd9cc);color:#1a1714;border:2px solid #c59b60;border-radius:10px;font-family:Georgia,serif;font-size:27px;font-weight:700;box-shadow:0 10px 25px #0009;transform:rotate(-13deg)}
+.rivl-playing-card span{align-self:center;font-size:42px}
+.rivl-playing-card+.rivl-playing-card{transform:translateX(-20px) rotate(12deg)}
+.rivl-card-modes .mode:nth-child(2) .rivl-playing-card:first-child,.rivl-card-modes .mode:nth-child(3) .rivl-playing-card:first-child{color:#bd2635}
+@media(max-width:950px){.rivl-mode-grid{grid-template-columns:1fr}.rivl-mode-option{padding:22px}.rivl-mode-option p{min-height:0}.rivl-mode-chip{width:135px}}
+
+/* v1.5: symmetric desktop seating for each bot table size. */
+@media (min-width:601px){
+ body.in-game .poker-table[data-player-count] .seat{right:auto;bottom:auto;transform:translateX(-50%)}
+ /* 9 players: four mirrored pairs around the human's bottom-center seat. */
+ body.in-game .poker-table[data-player-count="9"] .s1{top:-24px;left:22%}
+ body.in-game .poker-table[data-player-count="9"] .s2{top:-24px;left:78%}
+ body.in-game .poker-table[data-player-count="9"] .s3{top:29%;left:100%}
+ body.in-game .poker-table[data-player-count="9"] .s4{top:calc(100% - 12px);left:78%}
+ body.in-game .poker-table[data-player-count="9"] .s5{top:29%;left:0%}
+ body.in-game .poker-table[data-player-count="9"] .s6{top:calc(100% - 12px);left:22%}
+ body.in-game .poker-table[data-player-count="9"] .s7{top:68%;left:0%}
+ body.in-game .poker-table[data-player-count="9"] .s8{top:68%;left:100%}
+ /* 6 players: top-center opponent and mirrored side pairs. */
+ body.in-game .poker-table[data-player-count="6"] .s1{top:-24px;left:50%}
+ body.in-game .poker-table[data-player-count="6"] .s2{top:23%;left:7%}
+ body.in-game .poker-table[data-player-count="6"] .s3{top:23%;left:93%}
+ body.in-game .poker-table[data-player-count="6"] .s4{top:75%;left:93%}
+ body.in-game .poker-table[data-player-count="6"] .s5{top:75%;left:7%}
+ /* 3 players: opponents mirror each other above the board. */
+ body.in-game .poker-table[data-player-count="3"] .s1{top:-24px;left:25%}
+ body.in-game .poker-table[data-player-count="3"] .s2{top:-24px;left:75%}
+}
