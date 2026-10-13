@@ -90,10 +90,23 @@
                   <h3 id="roomGamePhase">HAND 1 · PREFLOP</h3>
                   <p>YOUR PRIVATE HOLE CARDS</p>
                   <h2 id="roomHoleCards" style="font-size:2rem;letter-spacing:.12em">—</h2>
-                  <p id="roomGamePlayers"></p>
-                  <p>Dealing preview only. Blinds, betting, board cards and showdown are coming next.</p>
+                  <div class="rivl-live-table">
+                    <div id="roomPot">POT · 0 CHIPS</div>
+                    <div id="roomBoard" class="rivl-board">Waiting for the flop</div>
+                    <div id="roomGamePlayers" class="rivl-live-seats"></div>
+                  </div>
+                  <div class="rivl-timer-row"><div id="roomTimer"><span id="roomTimerText">12s</span></div><span id="roomBetInfo">Waiting for players</span></div>
+                  <div id="roomActions" class="rivl-bet-actions" hidden>
+                    <button id="roomFold" class="fold">FOLD</button>
+                    <button id="roomCall" class="gold">CHECK / CALL</button>
+                    <input id="roomRaiseAmount" type="number" min="20" step="1" value="40" aria-label="Raise to amount">
+                    <button id="roomRaise" class="gold">RAISE TO</button>
+                    <button id="roomAllin" class="outline">ALL IN</button>
+                  </div>
+                  <h3 id="roomWinner" aria-live="polite"></h3>
+                  <button id="roomNext" class="gold" hidden>DEAL NEXT HAND</button>
                 </div>
-                <p class="room-disclaimer">Server-side dealing preview. Full multiplayer poker gameplay is still in development.</p>
+                <p class="room-disclaimer">Unranked multiplayer beta · server-controlled betting · no real-money wagering.</p>
               </div>
             </section>
             <section id="table" class="view">

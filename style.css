@@ -250,3 +250,19 @@ body.in-game .s7{top:-28px}
 .room-levels button{background:#332515;color:#f4d39d;border:1px solid #b98a4a;border-radius:8px;padding:12px;cursor:pointer}
 .room-disclaimer{color:#bba783;font-size:13px}
 @media(max-width:700px){.room-entry{grid-template-columns:1fr}.room-seats{gap:6px}.room-seat{padding:7px;min-height:98px;font-size:12px}}
+
+/* RIVL Multiplayer beta table */
+#roomGame{margin-top:18px;padding:24px;background:radial-gradient(ellipse at 50% 20%,#20170e,#0c0b0b 65%);border:1px solid #b78b4a}
+.rivl-live-table{margin:20px auto;padding:22px;border:12px solid #64472c;border-radius:45% / 30%;background:radial-gradient(ellipse,#233d30,#10271e);box-shadow:0 12px 36px #000b,inset 0 0 0 3px #b89152;text-align:center;max-width:920px;min-height:230px}
+#roomPot{color:#ffd28d;font-weight:900;letter-spacing:.12em}
+.rivl-board{min-height:75px;padding:18px 6px;font-size:clamp(22px,3vw,36px);color:#fff;letter-spacing:.2em}
+.rivl-live-seats{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.rivl-live-seat{background:#0b0e0ddd;border:1px solid #997748;border-radius:9px;padding:8px 12px;color:#eee;font-size:12px}
+.rivl-live-seat.is-turn{border-color:#ffdc7d;box-shadow:0 0 12px #e5ad58}.rivl-live-seat.is-folded{opacity:.4}
+.rivl-timer-row{display:flex;gap:15px;align-items:center;margin:12px 0}
+#roomTimer{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;background:#52bd76;flex-shrink:0}
+#roomTimer span{background:#0e0e0f;border-radius:50%;height:53px;width:53px;display:grid;place-items:center;color:#f3cb88;font-size:12px;font-weight:800}
+.rivl-bet-actions{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}.rivl-bet-actions button{min-height:55px;padding:12px 20px;font-weight:900;font-size:15px;flex:1}
+.rivl-bet-actions input{width:125px;background:#151515;color:white;border:1px solid #bc9256;border-radius:8px;font-size:19px;text-align:center}
+#roomWinner{color:#ffdc88;margin-top:18px}
+@media(max-width:650px){.rivl-live-table{border-radius:30px;border-width:7px;padding:14px}.rivl-bet-actions button{min-width:90px}.rivl-live-seat{font-size:10px}}
