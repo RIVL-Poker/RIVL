@@ -355,3 +355,14 @@ body.rivl-modal-open{overflow:hidden}
 #roomGame .rivl-pvp-board .card.red,#roomGame .rivl-pvp-myseat .card.red{color:#bd1e35}
 #roomGame .rivl-deal-in{animation:rivlPvpDeal .42s ease-out both}
 @keyframes rivlPvpDeal{0%{opacity:0;transform:translateY(-28px) rotateY(85deg) scale(.8)}100%{opacity:1;transform:translateY(0) rotateY(0) scale(1)}}
+
+/* Private-room PvP polish: clear header and original centered-suit cards. */
+#rooms.rivl-match-mode .room-topline{top:0;right:0;position:relative;flex:0 0 auto;display:flex;justify-content:flex-end;padding:4px 20px;background:#0b0b0c;border-bottom:1px solid #49351e;z-index:5}
+#rooms.rivl-match-mode .room-topline #leaveRoom{position:static;min-height:34px;padding:6px 12px;font-size:12px}
+#rooms.rivl-match-mode #roomGame{flex:1;height:auto;min-height:0}
+#roomGame .rivl-pvp-gamebar{padding-right:22px}
+#roomGame .rivl-pvp-seat{width:max-content;max-width:175px;justify-content:center}
+#roomGame .rivl-pvp-board .card:not(.back),#roomGame .rivl-pvp-myseat .card:not(.back){position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;line-height:1}
+#roomGame .card:not(.back)>strong{font-size:15px;font-weight:900;align-self:flex-start}
+#roomGame .card:not(.back)>.rivl-card-center{position:absolute;inset:0;display:grid;place-items:center;font-size:29px;font-weight:400;pointer-events:none}
+#roomGame .rivl-pvp-myseat .card:not(.back)>.rivl-card-center{font-size:22px}
