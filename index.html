@@ -84,7 +84,7 @@
                 <div class="room-visibility"><span>Room visibility</span><button id="roomPrivate" class="gold">PRIVATE</button><button id="roomPublic" class="outline">PUBLIC</button><button id="copyRoomCode" class="outline">COPY CODE</button></div>
                 <p id="roomHostNotice">The host can add bots or change visibility. All seats begin empty until players join.</p>
                 <div id="roomSeats" class="room-seats"></div>
-                <div id="roomBotPicker" class="panel" hidden><h3>ADD BOT · SELECT SKILL</h3><p>Bot names and poker avatars are generated after selection.</p><div class="room-levels"><button data-level="Beginner">BEGINNER</button><button data-level="Intermediate">INTERMEDIATE</button><button data-level="Advanced">ADVANCED</button><button data-level="Expert">EXPERT</button></div><button class="outline" id="cancelBotPicker">CANCEL</button></div>
+                <div id="roomBotPicker" class="rivl-modal-backdrop" hidden role="presentation"><div class="rivl-modal" role="dialog" aria-modal="true" aria-labelledby="botPickerTitle"><h3 id="botPickerTitle">ADD BOT · SELECT SKILL</h3><h3>ADD BOT · SELECT SKILL</h3><p>Bot names and poker avatars are generated after selection.</p><div class="room-levels"><button data-level="Beginner">BEGINNER</button><button data-level="Intermediate">INTERMEDIATE</button><button data-level="Advanced">ADVANCED</button><button data-level="Expert">EXPERT</button></div><button class="outline" id="cancelBotPicker">CANCEL</button></div></div>
                 <button class="gold" id="roomStart" disabled>START MATCH</button>
                 <div id="roomGame" class="panel" hidden>
                   <h3 id="roomGamePhase">HAND 1 · PREFLOP</h3>
