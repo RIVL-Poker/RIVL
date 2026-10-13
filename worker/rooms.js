@@ -1,5 +1,4 @@
-/* RIVL room server — Cloudflare Worker + Durable Objects. Lobby only.
-   IMPORTANT: No poker hands are dealt or played here yet. */
+/* RIVL room server — Cloudflare Worker + Durable Objects. Initial private hand dealing. */
 export default {
   async fetch(request,env){
     const url=new URL(request.url);
@@ -34,8 +33,39 @@ export class Room {
   constructor(state,env){this.state=state;this.env=env;this.sockets=new Map();this.room=null}
   async load(){if(!this.room)this.room=await this.state.storage.get('room')||null;return this.room}
   async save(){await this.state.storage.put('room',this.room);this.broadcast()}
-  publicState(){return {visibility:this.room.visibility,seats:this.room.seats.map(s=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:s.isHost}:null)}}
-  broadcast(){for(const [ws,token] of this.sockets)try{ws.send(JSON.stringify({type:'state',state:this.publicState(),isHost:token===this.room.hostToken}))}catch{}}
+  publicState(token){
+    const game=this.room.game;
+    const member=this.room.members[token];
+    return {
+      visibility:this.room.visibility,
+      started:!!game,
+      seats:this.room.seats.map(s=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:s.isHost}:null),
+      game:game?{
+        phase:game.phase,
+        handNumber:game.handNumber,
+        pot:game.pot,
+        board:game.board,
+        players:game.players,
+        holeCards:member?game.hands[member.seat]||null:null
+      }:null
+    };
+  }
+  dealFirstHand(){
+    const deck=[];
+    for(const suit of ['S','H','D','C'])for(const rank of '23456789TJQKA')deck.push(rank+suit);
+    for(let i=deck.length-1;i>0;i--){
+      const bytes=new Uint32Array(1);
+      crypto.getRandomValues(bytes);
+      const j=bytes[0]%(i+1);
+      [deck[i],deck[j]]=[deck[j],deck[i]];
+    }
+    const players=this.room.seats.flatMap((seat,index)=>seat?[{seat:index,name:seat.name,bot:seat.type==='bot',stack:1000}]:[]);
+    const hands={};
+    for(const player of players)hands[player.seat]=[deck.pop(),deck.pop()];
+    this.room.game={phase:'preflop',handNumber:1,pot:0,board:[],players,hands,deck};
+    this.room.started=true;
+  }
+  broadcast(){for(const [ws,token] of this.sockets)try{ws.send(JSON.stringify({type:'state',state:this.publicState(token),isHost:token===this.room.hostToken}))}catch{}}
   reply(body,status=200){return Response.json(body,{status})}
   async fetch(request){
     const path=new URL(request.url).pathname;
@@ -62,12 +92,15 @@ export class Room {
       const token=new URL(request.url).searchParams.get('token');
       if(!room.members[token])return this.reply({error:'Unauthorized'},401);
       const pair=new WebSocketPair();const client=pair[0],server=pair[1];server.accept();this.sockets.set(server,token);
-      server.send(JSON.stringify({type:'state',state:this.publicState(),isHost:token===room.hostToken}));
+      server.send(JSON.stringify({type:'state',state:this.publicState(token),isHost:token===room.hostToken}));
       server.addEventListener('message',async event=>{
         try{
           const msg=JSON.parse(event.data);if(token!==room.hostToken)throw Error('Host only');
           if(room.started)throw Error('Match already started');
-          if(msg.type==='visibility'&&['private','public'].includes(msg.visibility))room.visibility=msg.visibility;
+          if(msg.type==='startMatch'){
+            if(room.seats.filter(Boolean).length<2)throw Error('At least two players required');
+            this.dealFirstHand();
+          }else if(msg.type==='visibility'&&['private','public'].includes(msg.visibility))room.visibility=msg.visibility;
           else if(msg.type==='addBot'){
             const seat=Number(msg.seat),level=String(msg.level);
             if(!Number.isInteger(seat)||seat<0||seat>8||room.seats[seat]||!LEVELS[level])throw Error('Invalid seat or skill level');

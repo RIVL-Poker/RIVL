@@ -29,7 +29,16 @@
       seats.append(el);
     });
     const occupied=snapshot.seats.filter(Boolean).length;
-    $('roomStart').textContent=occupied<2?'NEED 2 PLAYERS':'START MATCH — GAMEPLAY COMING NEXT';
+    $('roomStart').disabled=!host||occupied<2||!!snapshot.started;
+    $('roomStart').textContent=snapshot.started?'HAND DEALT':occupied<2?'NEED 2 PLAYERS':'START MATCH';
+    const gameArea=$('roomGame');
+    gameArea.hidden=!snapshot.game;
+    if(snapshot.game){
+      const game=snapshot.game;
+      $('roomGamePhase').textContent='HAND '+game.handNumber+' · '+game.phase.toUpperCase();
+      $('roomHoleCards').textContent=game.holeCards?game.holeCards.map(card=>card.replace('S','♠').replace('H','♥').replace('D','♦').replace('C','♣')).join('     '):'No cards assigned';
+      $('roomGamePlayers').textContent=game.players.map(player=>player.name+' · '+player.stack+' chips').join('  |  ');
+    }
   }
   function send(message){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message));else status('Connection lost. Rejoin the room.')}
   function connect(){
@@ -51,6 +60,7 @@
   $('createRoom').onclick=()=>enter('create');
   $('joinRoom').onclick=()=>enter('join');
   $('leaveRoom').onclick=()=>{socket?.close();socket=null;roomCode='';token='';snapshot=null;$('roomLobby').hidden=true;$('roomEntry').hidden=false;status('Left room.')};
+  $('roomStart').onclick=()=>send({type:'startMatch'});
   $('roomPrivate').onclick=()=>send({type:'visibility',visibility:'private'});
   $('roomPublic').onclick=()=>send({type:'visibility',visibility:'public'});
   $('copyRoomCode').onclick=()=>navigator.clipboard?.writeText(roomCode).then(()=>status('Room code copied.'),()=>status('Room code: '+roomCode));
