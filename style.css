@@ -290,3 +290,59 @@ body.in-game .s7{top:-28px}
 .rivl-modal #cancelBotPicker{margin-top:22px;min-width:140px}
 body.rivl-modal-open{overflow:hidden}
 @media(max-width:480px){.rivl-modal{padding:20px 14px}.rivl-modal .room-levels{grid-template-columns:1fr}}
+
+/* PvP reuses the Cairo bot-table composition while retaining separate server state. */
+#rooms.rivl-match-mode{padding:0!important;max-width:none!important;width:100%;height:calc(100dvh - 68px);overflow:hidden}
+#rooms.rivl-match-mode #roomLobby{height:100%;display:flex;flex-direction:column}
+#rooms.rivl-match-mode .room-topline{position:absolute;z-index:3;right:14px;top:8px;margin:0;min-height:0}
+#rooms.rivl-match-mode .room-topline h2{display:none}
+#rooms.rivl-match-mode #roomGame{height:100%;min-height:0;display:flex;flex-direction:column;justify-content:initial;gap:0;padding:0;background:transparent;border:0;border-radius:0}
+#roomGame .rivl-pvp-gamebar{flex:0 0 58px;padding:5px 22px}
+#roomGame .rivl-pvp-scene{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding:8px 24px 16px}
+#roomGame .rivl-pvp-table{flex:0 1 auto;width:min(80%,760px,calc((100dvh - 290px)*2.05));height:auto;aspect-ratio:2.35/1;min-height:0;margin:12px auto 16px;border-width:clamp(5px,1.3vh,12px)}
+#roomGame .rivl-pvp-board{display:flex;gap:5px;align-items:center;justify-content:center}
+#roomGame .rivl-pvp-board .card{flex:0 0 auto}
+#roomGame .rivl-pvp-myseat{display:flex;align-items:center;gap:8px}
+#roomGame .rivl-pvp-opponents{display:contents}
+#roomGame .rivl-pvp-seat.is-turn{border-color:#fbd68b;box-shadow:0 0 16px #c89d56}
+#roomGame .rivl-pvp-seat.is-folded{opacity:.45}
+#roomGame .rivl-pvp-controls{flex:0 0 auto;background:#0c0c0d;padding:6px 20px 10px}
+#roomGame .rivl-timer-row{position:absolute;z-index:2;bottom:112px;left:20px;gap:10px;margin:0;font-size:11px;pointer-events:none}
+#roomGame #roomTimer{width:40px;height:40px}
+#roomGame #roomTimer span{width:30px;height:30px;font-size:10px}
+#roomGame .rivl-bet-actions{display:grid;grid-template-columns:1fr 1fr 1fr minmax(210px,2.5fr);gap:10px;align-items:stretch;max-width:980px;margin:auto}
+#roomGame .rivl-bet-actions>button{min-height:80px;min-width:0;font-size:16px}
+#roomGame .rivl-pvp-raise{min-width:0;display:flex;flex-direction:column}
+#roomGame .rivl-pvp-raise label{font-size:11px}
+#roomGame .rivl-pvp-raise .amount-row{display:flex}
+#roomGame .rivl-pvp-raise input[type=number]{width:100%;min-width:0}
+#roomGame .rivl-pvp-raise input[type=range]{width:100%}
+#roomGame .rivl-pvp-raise .quick-bets{display:grid;grid-template-columns:repeat(4,1fr)}
+#roomGame .rivl-pvp-raise .quick-bets button{min-width:0;font-size:10px;padding:5px}
+#roomGame #roomAllin{display:none}
+#roomGame #roomWinner{text-align:center;margin:5px 0}
+#roomGame #roomNext{display:block;margin:5px auto}
+#roomGame #roomNext[hidden]{display:none}
+#roomGame #roomActions[hidden]{display:none}
+#roomGame .rivl-pvp-table[data-player-count="2"] .s1{top:-24px;left:50%}
+#roomGame .rivl-pvp-table[data-player-count="4"] .s1{top:-24px;left:50%}
+#roomGame .rivl-pvp-table[data-player-count="4"] .s2{top:48%;left:2%}
+#roomGame .rivl-pvp-table[data-player-count="4"] .s3{top:48%;left:98%}
+#roomGame .rivl-pvp-table[data-player-count="5"] .s1{top:-24px;left:50%}
+#roomGame .rivl-pvp-table[data-player-count="5"] .s2{top:27%;left:3%}
+#roomGame .rivl-pvp-table[data-player-count="5"] .s3{top:27%;left:97%}
+#roomGame .rivl-pvp-table[data-player-count="5"] .s4{top:75%;left:97%}
+#roomGame .rivl-pvp-table[data-player-count="7"] .s1{top:-24px;left:50%}
+#roomGame .rivl-pvp-table[data-player-count="7"] .s2{top:20%;left:5%}
+#roomGame .rivl-pvp-table[data-player-count="7"] .s3{top:20%;left:95%}
+#roomGame .rivl-pvp-table[data-player-count="7"] .s4{top:60%;left:95%}
+#roomGame .rivl-pvp-table[data-player-count="7"] .s5{top:60%;left:5%}
+#roomGame .rivl-pvp-table[data-player-count="7"] .s6{top:88%;left:50%}
+#roomGame .rivl-pvp-table[data-player-count="8"] .s1{top:-24px;left:30%}
+#roomGame .rivl-pvp-table[data-player-count="8"] .s2{top:-24px;left:70%}
+#roomGame .rivl-pvp-table[data-player-count="8"] .s3{top:30%;left:3%}
+#roomGame .rivl-pvp-table[data-player-count="8"] .s4{top:30%;left:97%}
+#roomGame .rivl-pvp-table[data-player-count="8"] .s5{top:70%;left:3%}
+#roomGame .rivl-pvp-table[data-player-count="8"] .s6{top:70%;left:97%}
+#roomGame .rivl-pvp-table[data-player-count="8"] .s7{top:90%;left:50%}
+@media(max-width:750px){#roomGame .rivl-pvp-table{width:92%}#roomGame .rivl-bet-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}#roomGame .rivl-pvp-raise{grid-column:1/-1}#roomGame .rivl-bet-actions>button{min-height:50px;font-size:12px}#roomGame .rivl-timer-row{bottom:160px;left:10px}#roomGame .rivl-pvp-controls{padding:4px 8px}#roomGame .rivl-pvp-gamebar{padding-right:110px}}
