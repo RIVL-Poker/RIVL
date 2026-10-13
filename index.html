@@ -33,46 +33,27 @@
                     <div class="eyebrow">♠ RIVL POKER</div>
                     <h1>PLAY. IMPROVE.<br><em>CLIMB.</em></h1>
                     <p>Every decision you make is graded like a chess move. Play well and your rating climbs, even when
-                        the river doesn’t go your way. No real-money wagering.</p><button class="gold"
-                        id="quickplay">PLAY VS BOTS →</button>
+                        the river doesn’t go your way. No real-money wagering.</p>
                 </div>
                 <div class="practice-banner"><span>♠ <strong>RATED VS BOTS</strong> · 3 / 6 / 9 players · Rating saved
                         on this device · No real money</span><label><input id="coachToggle" type="checkbox" checked> AI
                         Learning Mode · live grades</label></div>
-                <div class="section-title">
-                    <h2>CHOOSE YOUR TABLE</h2><span>15-MINUTE MATCHES · RATED · 60% PLACEMENT / 40% DECISIONS</span>
+                <div id="modeSelect" class="rivl-menu-step">
+                    <div class="section-title"><h2>CHOOSE YOUR GAME</h2><span>SELECT A MODE TO BEGIN</span></div>
+                    <div class="rivl-mode-grid">
+                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>RANKED</h3><p>Play against real people and climb the ladder.</p><button class="outline" disabled aria-label="Ranked coming soon">COMING SOON</button></article>
+                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>BOT PRACTICE</h3><p>Sharpen your game against AI opponents.</p><button class="gold" id="selectBotPractice">CHOOSE PLAYERS →</button></article>
+                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>PRIVATE ROOM</h3><p>Invite friends to a private nine-seat table.</p><button class="outline" disabled aria-label="Private rooms coming soon">COMING SOON</button></article>
+                    </div>
                 </div>
-                <div class="modes">
-                    <article class="mode">
-                        <div class="mini-table">
-                            <div class="rivl-chip" role="img"
-                                aria-label="Black and gold RIVL poker chip with a single golden spade">
-                                <div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div>
-                            </div>
-                        </div>
-                        <h3>3 PLAYER</h3>
-                        <p>Fast · Competitive</p><button class="gold join" data-count="3">PLAY BOTS</button>
-                    </article>
-                    <article class="mode">
-                        <div class="mini-table">
-                            <div class="rivl-chip" role="img"
-                                aria-label="Black and gold RIVL poker chip with a single golden spade">
-                                <div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div>
-                            </div>
-                        </div>
-                        <h3>6 PLAYER</h3>
-                        <p>Balanced · Strategic</p><button class="gold join" data-count="6">PLAY BOTS</button>
-                    </article>
-                    <article class="mode">
-                        <div class="mini-table">
-                            <div class="rivl-chip" role="img"
-                                aria-label="Black and gold RIVL poker chip with a single golden spade">
-                                <div class="rivl-chip-inner"><span class="rivl-chip-spade">♠</span></div>
-                            </div>
-                        </div>
-                        <h3>9 PLAYER</h3>
-                        <p>High Action · Skilled</p><button class="gold join" data-count="9">PLAY BOTS</button>
-                    </article>
+                <div id="playerSelect" class="rivl-menu-step" hidden>
+                    <div class="section-title"><h2>CHOOSE YOUR TABLE</h2><span>BOT PRACTICE · 15-MINUTE MATCHES</span></div>
+                    <button class="rivl-back outline" id="backToModes">← BACK TO GAME MODES</button>
+                    <div class="modes rivl-card-modes">
+                        <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">A<span>♠</span></span><span class="rivl-playing-card">K<span>♠</span></span></div><h3>3 PLAYERS</h3><p>Fast · Competitive</p><button class="gold join" data-count="3">PLAY BOTS</button></article>
+                        <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">Q<span>♥</span></span><span class="rivl-playing-card">Q<span>♠</span></span></div><h3>6 PLAYERS</h3><p>Balanced · Strategic</p><button class="gold join" data-count="6">PLAY BOTS</button></article>
+                        <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">A<span>♦</span></span><span class="rivl-playing-card">A<span>♣</span></span></div><h3>9 PLAYERS</h3><p>High Action · Skilled</p><button class="gold join" data-count="9">PLAY BOTS</button></article>
+                    </div>
                 </div>
                 <div class="bottom-cards">
                     <article class="panel">
