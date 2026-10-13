@@ -5,6 +5,8 @@
   let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false;
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
+  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');el.textContent=back?'♠':pretty(code);return el};
+  const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   let clockTimer=null;
   let wasPlaying=false;
   const status=message=>{$('roomStatus').textContent=message};
@@ -42,18 +44,35 @@
     const gameArea=$('roomGame');
     gameArea.hidden=!snapshot.game;
     if(snapshot.game){
-      const g=snapshot.game,me=g.players.find(p=>snapshot.game.holeCards&&p.name===($('roomName').value||'').trim());
-      $('roomGamePhase').textContent='HAND '+g.handNumber+' · '+g.phase.toUpperCase()+' · BLINDS '+g.smallBlind+'/'+g.bigBlind;
-      $('roomHoleCards').textContent=g.holeCards?g.holeCards.map(pretty).join('    '):'Spectating';
-      $('roomBoard').textContent=g.board.map(pretty).join('    ')||'Waiting for the flop';
-      $('roomPot').textContent='POT · '+g.pot+' CHIPS';
-      $('roomGamePlayers').replaceChildren();
-      for(const p of g.players){
+      const g=snapshot.game;
+      $('roomBlinds').textContent=g.smallBlind+' / '+g.bigBlind;
+      $('roomGamePhase').textContent='HAND '+g.handNumber+' · '+g.phase.toUpperCase();
+      const active=g.players.filter(p=>p&&!p.sittingOut);
+      $('roomPlayerCount').textContent=active.length;
+      const meSeat=snapshot.seats.findIndex(s=>s&&s.type!=='bot'&&s.name===(isHost?$('roomName').value:$('joinName').value).trim());
+      const me=g.players.find(p=>p.seat===meSeat)||(g.players.find(p=>p.name===(isHost?$('roomName').value:$('joinName').value).trim()));
+      const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat));
+      $('roomMyName').textContent=me?.name||'Spectator';
+      $('roomMyAvatar').textContent=(me?.name||'P').slice(0,1).toUpperCase();
+      $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
+      $('roomMyTurn').textContent=g.turn===me?.seat?'●':'';
+      $('roomMyTurn').hidden=g.turn!==me?.seat;
+      $('roomHoleCards').replaceChildren();
+      if(g.holeCards?.length)g.holeCards.forEach(c=>$('roomHoleCards').append(cardNode(c)));
+      else for(let i=0;i<2;i++)$('roomHoleCards').append(cardNode(null,true));
+      $('roomBoard').replaceChildren();
+      for(let i=0;i<5;i++)$('roomBoard').append(cardNode(g.board[i],!g.board[i]));
+      $('roomPot').textContent=g.pot;
+      const seats=$('roomGamePlayers');seats.replaceChildren();
+      const count=Math.min(9,opponents.length+1);
+      $('roomPokerTable').dataset.playerCount=String(count);
+      opponents.forEach((p,i)=>{
         const item=document.createElement('div');
-        item.className='rivl-live-seat'+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'');
-        item.textContent=(p.seat===g.dealer?'Ⓓ ':'')+p.name+' · '+p.stack+' chips'+(p.bet?' · bet '+p.bet:'')+(p.folded?' · FOLDED':p.allIn?' · ALL IN':'')+(p.seat===g.turn?' ◀ TURN':'');
-        $('roomGamePlayers').append(item);
-      }
+        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'');
+        const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=(p.name||'P').slice(0,1).toUpperCase();
+        const label=document.createElement('span');label.textContent=p.name+' · '+p.stack.toLocaleString()+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');
+        item.append(avatar,label);seats.append(item);
+      });
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=!isHost||g.phase!=='showdown';
       const l=g.legal;
@@ -62,16 +81,17 @@
         $('roomCall').textContent=l.call?'CALL '+l.call:'CHECK';
         $('roomRaise').disabled=!l.canRaise;
         $('roomAllin').disabled=!l.canRaise&&l.raiseToMax>l.call;
-        const amount=$('roomRaiseAmount');
-        amount.min=l.raiseToMin;amount.max=l.raiseToMax;
+        const amount=$('roomRaiseAmount'),slider=$('roomRaiseSlider');
+        amount.min=slider.min=l.raiseToMin;amount.max=slider.max=l.raiseToMax;
         if(Number(amount.value)<l.raiseToMin||Number(amount.value)>l.raiseToMax)amount.value=l.raiseToMin;
+        slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
-      }
+      }else $('roomBetInfo').textContent=g.phase==='showdown'?'Hand complete':'Waiting for next turn';
       clearInterval(clockTimer);
       const tick=()=>{
         const ms=Math.max(0,g.deadline-Date.now()),percent=Math.min(100,ms/120);
         $('roomTimer').style.background='conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)';
-        $('roomTimerText').textContent=g.phase==='showdown'?'HAND OVER':g.turn<0?'WAITING':Math.ceil(ms/1000)+'s';
+        $('roomTimerText').textContent=g.phase==='showdown'?'DONE':g.turn<0?'WAIT':Math.ceil(ms/1000)+'s';
       };
       tick();clockTimer=setInterval(tick,200);
     }else clearInterval(clockTimer);
@@ -102,6 +122,14 @@
   $('roomRaise').onclick=()=>send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)});
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
   $('roomNext').onclick=()=>send({type:'nextHand'});
+  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const n=clamp(Math.round(Number(value)||l.raiseToMin),l.raiseToMin,l.raiseToMax);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
+  $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=e.target.value;}});
+  $('roomRaiseAmount').addEventListener('change',e=>setRoomBet(e.target.value));
+  $('roomRaiseSlider').addEventListener('input',e=>setRoomBet(e.target.value));
+  $('roomMinusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)-1);
+  $('roomPlusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)+1);
+  document.querySelectorAll('[data-room-bet]').forEach(button=>button.onclick=()=>{const l=snapshot?.game?.legal,g=snapshot?.game;if(!l||!g)return;const kind=button.dataset.roomBet;setRoomBet(kind==='min'?l.raiseToMin:kind==='all'?l.raiseToMax:kind==='half'?l.raiseToMin+Math.floor(g.pot/2):l.raiseToMin+g.pot)});
+
   $('roomPrivate').onclick=()=>send({type:'visibility',visibility:'private'});
   $('roomPublic').onclick=()=>send({type:'visibility',visibility:'public'});
   $('copyRoomCode').onclick=()=>navigator.clipboard?.writeText(roomCode).then(()=>status('Room code copied.'),()=>status('Room code: '+roomCode));
