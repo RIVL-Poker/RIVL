@@ -32,7 +32,6 @@ const pick=array=>array[Math.floor(Math.random()*array.length)];
 export class Room {
   constructor(state,env){this.state=state;this.env=env;this.sockets=new Map();this.room=null}
   async load(){if(!this.room)this.room=await this.state.storage.get('room')||null;return this.room}
-  async save(){await this.state.storage.put('room',this.room);this.broadcast()}
 
   publicState(token){
     const g=this.room.game,m=this.room.members[token];
