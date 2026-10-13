@@ -42,7 +42,7 @@ export class Room {
         winners:g.winners||[],result:g.result||'',legal:m?this.legal(m.seat):null}:null};
   }
   broadcast(){for(const [ws,token] of this.sockets)try{ws.send(JSON.stringify({type:'state',state:this.publicState(token),isHost:token===this.room.hostToken}))}catch{}}
-  async save(){await this.state.storage.put('room',this.room);this.broadcast()}
+  async save(){const g=this.room?.game;if(g?.phase==='showdown'&&g.result!=='Match complete'){g.nextHandAt ||= Date.now()+5000;await this.state.storage.setAlarm(g.nextHandAt)}await this.state.storage.put('room',this.room);this.broadcast()}
   next(seat,eligible){for(let n=1;n<=9;n++){const i=(seat+n)%9;if(eligible(i))return i}return -1}
   randomDeck(){
     const deck=[];for(const s of 'SHDC')for(const r of '23456789TJQKA')deck.push(r+s);
@@ -186,7 +186,8 @@ export class Room {
     else{g.turn=this.next(seat,i=>active.some(x=>x.seat===i));g.deadline=Date.now()+12000}
   }
   async alarm(){
-    await this.load();const g=this.room?.game;if(!g||g.phase==='showdown')return;
+    await this.load();const g=this.room?.game;if(!g)return;
+    if(g.phase==='showdown'){if(g.result==='Match complete')return;if(Date.now()<(g.nextHandAt||0)){await this.state.storage.setAlarm(g.nextHandAt);return}this.startHand(g);await this.save();return}
     if(Date.now()<g.deadline-50){await this.state.storage.setAlarm(g.deadline);return}
     const p=g.players.find(x=>x.seat===g.turn);
     if(p){const legal=this.legal(p.seat);if(legal)this.applyAction(p.seat,legal.check?'check':'fold')}
