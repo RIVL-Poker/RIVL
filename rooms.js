@@ -31,7 +31,7 @@
         const info=document.createElement('small');info.textContent=seat.type==='bot'?seat.level+' · Bot':seat.isHost?'Host · Human':'Human';el.append(info);
         if(host&&seat.type==='bot'){const remove=document.createElement('button');remove.className='room-remove';remove.textContent='REMOVE';remove.onclick=()=>send({type:'removeBot',seat:i});el.append(remove)}
       }else{
-        const add=document.createElement('button');add.textContent='+';add.title=host?'Add a bot':'Waiting for player';add.disabled=!host;add.onclick=()=>{selectedSeat=i;$('roomBotPicker').hidden=false};el.append(add);
+        const add=document.createElement('button');add.textContent='+';add.title=host?'Add a bot':'Waiting for player';add.disabled=!host;add.onclick=()=>{selectedSeat=i;openBotPicker()};el.append(add);
         const label=document.createElement('small');label.textContent='EMPTY · SEAT '+(i+1);el.append(label);
       }
       seats.append(el);
@@ -95,7 +95,7 @@
   $('openRooms').onclick=()=>show('rooms');
   $('createRoom').onclick=()=>enter('create');
   $('joinRoom').onclick=()=>enter('join');
-  $('leaveRoom').onclick=()=>{socket?.close();socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;$('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;status('Left room.')};
+  $('leaveRoom').onclick=()=>{closeBotPicker();socket?.close();socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;$('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;status('Left room.')};
   $('roomStart').onclick=()=>send({type:'startMatch'});
   $('roomFold').onclick=()=>send({type:'action',action:'fold'});
   $('roomCall').onclick=()=>send({type:'action',action:snapshot?.game?.legal?.check?'check':'call'});
@@ -105,6 +105,10 @@
   $('roomPrivate').onclick=()=>send({type:'visibility',visibility:'private'});
   $('roomPublic').onclick=()=>send({type:'visibility',visibility:'public'});
   $('copyRoomCode').onclick=()=>navigator.clipboard?.writeText(roomCode).then(()=>status('Room code copied.'),()=>status('Room code: '+roomCode));
-  $('cancelBotPicker').onclick=()=>$('roomBotPicker').hidden=true;
-  document.querySelectorAll('[data-level]').forEach(button=>button.onclick=()=>{send({type:'addBot',seat:selectedSeat,level:button.dataset.level});$('roomBotPicker').hidden=true});
+  function closeBotPicker(){ $('roomBotPicker').hidden=true;document.body.classList.remove('rivl-modal-open'); }
+  function openBotPicker(){ $('roomBotPicker').hidden=false;document.body.classList.add('rivl-modal-open');$('roomBotPicker').querySelector('[data-level]')?.focus(); }
+  $('cancelBotPicker').onclick=closeBotPicker;
+  $('roomBotPicker').addEventListener('click',event=>{if(event.target===$('roomBotPicker'))closeBotPicker()});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('roomBotPicker').hidden)closeBotPicker()});
+  document.querySelectorAll('[data-level]').forEach(button=>button.onclick=()=>{send({type:'addBot',seat:selectedSeat,level:button.dataset.level});closeBotPicker()});
 })();
