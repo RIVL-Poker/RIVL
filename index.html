@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>RIVL | Rated Poker</title>
+    <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -25,7 +27,7 @@
         <main>
             <header>
                 <div class="crumb">TEXAS HOLD’EM · RATED BOT PLAY</div>
-                <div class="account"><span class="coin">◉ 12,450</span><span class="avatar">K</span><span>KadenR</span>
+                <div class="account"><button type="button" class="account-name" id="editName" title="Change your name"><span class="avatar" data-player-initial>P</span><span data-player-name>Player</span></button>
                 </div>
             </header>
             <section id="play" class="view active">
@@ -74,10 +76,10 @@
             </section>
             <section id="rooms" class="view content-view">
               <div class="section-title"><h2>RIVL ROOMS</h2><span>LIVE LOBBY · UNRANKED</span></div>
-              <p id="roomStatus" role="status">Create or join a room. Online rooms require the Cloudflare Worker to be deployed.</p>
+              <p id="roomStatus" role="status">Create a room and share its code, or join a friend's room.</p>
               <div id="roomEntry" class="room-entry">
                 <div class="panel"><h3>CREATE A ROOM</h3><label>Your display name <input id="roomName" maxlength="20" value="Player"></label><button class="gold" id="createRoom">CREATE ROOM</button></div>
-                <div class="panel"><h3>JOIN A ROOM</h3><label>Room code <input id="roomCodeInput" maxlength="8" placeholder="AB12CD"></label><label>Your display name <input id="joinName" maxlength="20" value="Guest"></label><button class="gold" id="joinRoom">JOIN ROOM</button></div>
+                <div class="panel"><h3>JOIN A ROOM</h3><label>Room code <input id="roomCodeInput" maxlength="8" placeholder="AB12CD" autocapitalize="characters" autocomplete="off"></label><label>Your display name <input id="joinName" maxlength="20" value="Guest"></label><button class="gold" id="joinRoom">JOIN ROOM</button></div>
               </div>
               <div id="roomLobby" hidden>
                 <div class="room-topline"><h2>ROOM <span id="roomCodeLabel"></span></h2><button class="outline" id="leaveRoom">LEAVE ROOM</button></div>
@@ -122,10 +124,10 @@
                       <button id="roomAllin" class="outline">ALL IN</button>
                     </div>
                     <h3 id="roomWinner" aria-live="polite"></h3>
-                    <button id="roomNext" class="gold" hidden>DEAL NEXT HAND</button>
+                    <button id="roomNext" class="gold" hidden>BACK TO LOBBY</button>
                   </div>
                 </div>
-                <p class="room-disclaimer">Unranked multiplayer beta · server-controlled betting · no real-money wagering.</p>
+                <p class="room-disclaimer">Unranked multiplayer beta · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.</p>
               </div>
             </section>
             <section id="table" class="view">
@@ -177,8 +179,8 @@
                             <div class="card back">?</div>
                         </div>
                         <div class="myseat">
-                            <div id="holecards" class="holecards"></div><span class="avatar">K</span>
-                            <div><strong>KadenR</strong><small id="stack">1,000 chips</small></div><span class="turn"
+                            <div id="holecards" class="holecards"></div><span class="avatar" data-player-initial>P</span>
+                            <div><strong data-player-name>Player</strong><small id="stack">1,000 chips</small></div><span class="turn"
                                 id="turn">8</span>
                         </div>
                     </div>
@@ -214,9 +216,9 @@
             <section id="profile" class="view content-view">
                 <h1>YOUR PROFILE</h1>
                 <div class="panel profile-card">
-                    <div class="avatar large">K</div>
+                    <div class="avatar large" data-player-initial>P</div>
                     <div>
-                        <h2>KadenR</h2>
+                        <h2 data-player-name>Player</h2>
                         <p id="profTier">Silver</p><strong id="profRating">1,500 rating</strong>
                     </div>
                 </div>
@@ -305,11 +307,11 @@
             </section>
         </main>
     </div>
+    <script src="profile.js"></script>
     <script src="engine.js"></script>
     <script src="rating.js"></script>
     <script src="script.js"></script>
     <script src="ladder-ui.js"></script>
-    <script>window.RIVL_ROOM_API = "https://rivl-rooms.rushrush2005.workers.dev";</script>
     <script src="rooms.js"></script>
 </body>
 

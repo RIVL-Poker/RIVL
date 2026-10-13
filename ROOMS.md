@@ -1,28 +1,30 @@
-# RIVL online rooms — Phase 2 foundation
+# RIVL online rooms
 
-This branch adds a live shared **lobby**, not playable multiplayer poker yet.
+Private rooms let friends play Texas Hold'em together in the browser, with optional bots. The server deals, runs betting, side pots and showdown; browsers only see their own hole cards until showdown.
 
-## Deploy (Cloudflare)
-1. Install Node.js and run `npx wrangler login`.
-2. From the repo root run `npx wrangler deploy`. Cloudflare Durable Objects availability and plan requirements may apply.
-3. Copy the resulting Worker HTTPS URL.
-4. Set `window.RIVL_ROOM_API = 'https://YOUR-WORKER.workers.dev'` in `index.html` before the `rooms.js` script tag, or temporarily run `localStorage.setItem('rivlRoomApi','https://YOUR-WORKER.workers.dev')` in the browser console and reload.
-5. Serve the frontend via Cloudflare Pages (or a local web server). Open two browsers, create a room and join with its five-character code.
+## How it is hosted
+One Cloudflare Worker (`worker/rooms.js`, config in `wrangler.toml`) serves both the website (copied into `dist/` by `scripts/build-site.mjs`) and the room API (`/api/*`, `/ws/*`). Because the page and the API share one address, no server URL needs to be configured. To point the page at a different server, set `window.RIVL_ROOM_API` before `rooms.js` loads and add the site's origin to `ALLOWED_ORIGINS` in `wrangler.toml`.
 
-## Working scope
-- 9 slots, with the host occupying a seat after creating the room
-- Real-time join/visibility/bot updates via WebSockets and Durable Objects
-- Skill-only bot selection (Beginner, Intermediate, Advanced, Expert)
-- Duplicate personalities permitted, unique generated names and poker avatars
-- Host-only bot controls, private/public visibility state
-- Bot practice unchanged
+Pushing to `main` runs `.github/workflows/deploy.yml`: tests first, then `wrangler deploy`. It needs the `CLOUDFLARE_API_TOKEN` secret and the `CLOUDFLARE_ACCOUNT_ID` variable (see README).
 
-## Not yet implemented
-- Public room discovery/search (public visibility is stored but not listed)
-- Multiplayer poker gameplay, server-side shuffling, betting, turn clocks, and hand settlement
-- Reconnection/reservation/leave cleanup, persistent identity, authentication, moderation, rate limiting
-- Start match remains disabled deliberately; **do not advertise online poker as playable**.
-- Room tokens must be protected against leakage, origin abuse, replay, and brute-force attacks before public deployment.
+## Run it locally
+```
+npx wrangler dev
+```
+Open http://localhost:8787 in two browsers, create a room in one and join with its 6-character code in the other.
 
-## Security notes
-Do not publicly deploy this prototype until host authentication and authorization are hardened, including hiding host credentials from other clients, validating input and origins, handling disconnects, and limiting room creation. Room codes are not authorization tokens.
+## What works
+- Up to 9 seats, host adds bots (Beginner to Expert; stronger bots raise more and fold less)
+- Server-run hands: blinds that rise every 8 hands, 12-second turns, side pots, every hand at showdown revealed with its hand name
+- Your seat survives a refresh, closed tab or dropped connection (the seat token is kept in this browser and reconnects automatically)
+- Players who miss two turns sit out (auto check/fold) until they come back; when every human is away the table waits instead of dealing
+- Next hand deals automatically; the host is handed to another player if the host leaves
+- Leave room, host can remove players before a match, rematch or return to lobby after a match
+- Abuse limits: API only answers this site's origin, per-IP rate limits on creating and joining rooms, 6-character codes, size limits on requests and messages, rooms idle for 6 hours are deleted
+- Hibernating WebSockets, so idle rooms are not billed as active
+
+## Not yet
+- Accounts and online ratings (ratings stay per-browser and vs bots)
+- Public room listing (the public/private toggle is stored but not listed)
+- Joining a match that is already running (join between matches instead)
+- Chat, hand history download

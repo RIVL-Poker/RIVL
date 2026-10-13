@@ -1,8 +1,12 @@
-/* RIVL room lobby. A deployed Cloudflare Worker is required for shared rooms. */
+/* RIVL private rooms client. The room server is served from the same origin as the site unless window.RIVL_ROOM_API overrides it. */
 (()=>{
   const $=id=>document.getElementById(id);
-  const API=window.RIVL_ROOM_API||localStorage.getItem('rivlRoomApi')||'';
-  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false;
+  const stored=key=>{try{return localStorage.getItem(key)}catch{return null}};
+  const API=window.RIVL_ROOM_API||stored('rivlRoomApi')||(/^https?:$/.test(location.protocol)?location.origin:'');
+  const SESSION='rivlRoomSession';
+  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false,clockOffset=0,retry=0,retryTimer=null,pingTimer=null;
+  const saveSession=()=>{try{localStorage.setItem(SESSION,JSON.stringify({code:roomCode,token}))}catch{}};
+  const clearSession=()=>{try{localStorage.removeItem(SESSION)}catch{}};
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
   const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');el.textContent=back?'♠':pretty(code);return el};
@@ -13,7 +17,7 @@
   let wasPlaying=false;
   const status=message=>{$('roomStatus').textContent=message};
   const safeName=value=>(value||'Player').trim().slice(0,20)||'Player';
-  const request=async(path,method='GET',body)=>{if(!API)throw Error('Room server not configured. Set window.RIVL_ROOM_API to your deployed Worker URL in index.html.');const response=await fetch(API.replace(/\/$/,'')+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw Error(data.error||'Room server error');return data};
+  const request=async(path,method='GET',body)=>{if(!API)throw Error('Online rooms need the site to be opened from its web address, not as a local file.');const response=await fetch(API.replace(/\/$/,'')+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const data=await response.json().catch(()=>({error:'Room server unavailable ('+response.status+')'}));if(!response.ok)throw Error(data.error||'Room server error');return data};
   function render(){
     if(!snapshot)return;
     $('roomEntry').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=roomCode;
@@ -32,17 +36,19 @@
       if(seat){
         const avatar=document.createElement('div');avatar.className='room-avatar';avatar.textContent=seat.avatar||'♠';el.append(avatar);
         const name=document.createElement('strong');name.textContent=seat.name;el.append(name);
-        const info=document.createElement('small');info.textContent=seat.type==='bot'?seat.level+' · Bot':seat.isHost?'Host · Human':'Human';el.append(info);
-        if(host&&seat.type==='bot'){const remove=document.createElement('button');remove.className='room-remove';remove.textContent='REMOVE';remove.onclick=()=>send({type:'removeBot',seat:i});el.append(remove)}
+        const info=document.createElement('small');info.textContent=(seat.type==='bot'?seat.level+' · Bot':seat.isHost?'Host · Human':'Human')+(i===snapshot.mySeat?' · You':'');el.append(info);
+        if(!seat.online){el.classList.add('is-offline');const off=document.createElement('small');off.className='room-offline';off.textContent='Reconnecting…';el.append(off)}
+        if(host&&seat.type==='human'&&i!==snapshot.mySeat&&!lobbyLocked()){const kick=document.createElement('button');kick.className='room-remove';kick.textContent='REMOVE';kick.onclick=()=>send({type:'removePlayer',seat:i});el.append(kick)}
+        if(host&&seat.type==='bot'&&!lobbyLocked()){const remove=document.createElement('button');remove.className='room-remove';remove.textContent='REMOVE';remove.onclick=()=>send({type:'removeBot',seat:i});el.append(remove)}
       }else{
-        const add=document.createElement('button');add.textContent='+';add.title=host?'Add a bot':'Waiting for player';add.disabled=!host;add.onclick=()=>{selectedSeat=i;openBotPicker()};el.append(add);
+        const add=document.createElement('button');add.textContent='+';add.title=host?'Add a bot':'Waiting for player';add.disabled=!host||lobbyLocked();add.onclick=()=>{selectedSeat=i;openBotPicker()};el.append(add);
         const label=document.createElement('small');label.textContent='EMPTY · SEAT '+(i+1);el.append(label);
       }
       seats.append(el);
     });
     const occupied=snapshot.seats.filter(Boolean).length;
-    $('roomStart').disabled=!host||occupied<2||!!snapshot.started;
-    $('roomStart').textContent=snapshot.started?'MATCH IN PROGRESS':occupied<2?'NEED 2 PLAYERS':'START MATCH';
+    $('roomStart').disabled=!host||occupied<2||lobbyLocked();
+    $('roomStart').textContent=lobbyLocked()?'MATCH IN PROGRESS':occupied<2?'NEED 2 PLAYERS':snapshot.game?.matchOver?'REMATCH':'START MATCH';
     const gameArea=$('roomGame');
     gameArea.hidden=!snapshot.game;
     if(snapshot.game){
@@ -51,8 +57,7 @@
       $('roomGamePhase').textContent='HAND '+g.handNumber+' · '+g.phase.toUpperCase();
       const active=g.players.filter(p=>p&&!p.sittingOut);
       $('roomPlayerCount').textContent=active.length;
-      const meSeat=snapshot.seats.findIndex(s=>s&&s.type!=='bot'&&s.name===(isHost?$('roomName').value:$('joinName').value).trim());
-      const me=g.players.find(p=>p.seat===meSeat)||(g.players.find(p=>p.name===(isHost?$('roomName').value:$('joinName').value).trim()));
+      const me=g.players.find(p=>p.seat===snapshot.mySeat);
       const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat));
       $('roomMyName').textContent=me?.name||'Spectator';
       $('roomMyAvatar').textContent=(me?.name||'P').slice(0,1).toUpperCase();
@@ -95,11 +100,15 @@
         const item=document.createElement('div');
         item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'');
         const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=(p.name||'P').slice(0,1).toUpperCase();
-        const label=document.createElement('span');label.textContent=p.name+' · '+p.stack.toLocaleString()+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');
-        item.append(avatar,label);seats.append(item);
+        const label=document.createElement('span');label.textContent=p.name+' · '+p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');
+        item.append(avatar,label);
+        const cards=g.shown?.[p.seat];
+        if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
+        seats.append(item);
       });
       $('roomWinner').textContent=g.result||'';
-      $('roomNext').hidden=true;
+      $('roomNext').hidden=!(g.matchOver&&host);
+      if(g.matchOver){const best=[...g.players].sort((a,b)=>b.stack-a.stack)[0];$('roomWinner').textContent='Match complete · '+best.name+' wins the table'}
       const l=g.legal;
       $('roomActions').hidden=!l;
       if(l){
@@ -111,10 +120,10 @@
         if(Number(amount.value)<l.raiseToMin||Number(amount.value)>l.raiseToMax)amount.value=l.raiseToMin;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
-      }else $('roomBetInfo').textContent=g.phase==='showdown'?'Hand complete':'Waiting for next turn';
+      }else $('roomBetInfo').textContent=g.matchOver?(host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You were sitting out. Act on your next turn to rejoin play.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
       clearInterval(clockTimer);
       const tick=()=>{
-        const ms=Math.max(0,g.deadline-Date.now()),percent=Math.min(100,ms/120);
+        const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);
         $('roomTimer').style.background='conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)';
         const sec=Math.ceil(ms/1000);if(g.turn===me?.seat&&sec<=5&&sec>0&&sec!==lastTick){pvpSound('tick');lastTick=sec}
         $('roomTimerText').textContent=g.phase==='showdown'?'DONE':g.turn<0?'WAIT':Math.ceil(ms/1000)+'s';
@@ -122,32 +131,48 @@
       tick();clockTimer=setInterval(tick,200);
     }else clearInterval(clockTimer);
   }
-  function send(message){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message));else status('Connection lost. Rejoin the room.')}
+  function lobbyLocked(){return !!snapshot?.game&&!snapshot.game.matchOver}
+  function send(message){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message));else status('Reconnecting to the room…')}
+  function resetView(message){
+    clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
+    if(socket){socket.onclose=null;socket.close()}
+    socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;clearSession();
+    $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;status(message);
+  }
   function connect(){
-    if(socket)socket.close();
-    const wsUrl=API.replace(/^http/,'ws').replace(/\/$/,'')+'/ws/'+encodeURIComponent(roomCode)+'?token='+encodeURIComponent(token);
-    socket=new WebSocket(wsUrl);
-    socket.onopen=()=>status('Connected to room '+roomCode);
-    socket.onmessage=event=>{const message=JSON.parse(event.data);if(message.type==='state'){snapshot=message.state;isHost=!!message.isHost;render()}else if(message.error)status(message.error)};
-    socket.onclose=()=>status('Room connection closed. Refresh or rejoin.');
-    socket.onerror=()=>status('Could not connect to room server.');
+    clearTimeout(retryTimer);
+    if(socket){socket.onclose=null;socket.close()}
+    const ws=new WebSocket(API.replace(/^http/,'ws').replace(/\/$/,'')+'/ws/'+encodeURIComponent(roomCode));
+    socket=ws;
+    ws.onopen=()=>{retry=0;ws.send(JSON.stringify({type:'auth',token}));status('Connected to room '+roomCode);clearInterval(pingTimer);pingTimer=setInterval(()=>send({type:'ping'}),30000)};
+    ws.onmessage=event=>{
+      const message=JSON.parse(event.data);
+      if(message.type==='state'){snapshot=message.state;isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
+      else if(message.type==='removed')resetView(message.reason||'You are no longer in that room.');
+      else if(message.error)status(message.error);
+    };
+    // Reconnect automatically with backoff; the saved token keeps the seat.
+    ws.onclose=()=>{if(socket!==ws||!token)return;clearInterval(pingTimer);const wait=Math.min(15000,1000*2**retry++);status('Connection lost. Reconnecting…');retryTimer=setTimeout(connect,wait)};
   }
   async function enter(kind){try{
     const name=safeName($(kind==='create'?'roomName':'joinName').value);
+    window.rivlSetPlayerName?.(name);
     const code=kind==='join'?$('roomCodeInput').value.trim().toUpperCase():'';
+    if(kind==='join'&&!/^[A-Z2-9]{6}$/.test(code))throw Error('Room codes are 6 letters and numbers.');
     const result=await request(kind==='create'?'/api/rooms':'/api/rooms/'+encodeURIComponent(code)+'/join','POST',{name});
-    roomCode=kind==='join'?code:result.code;token=result.token;connect();
+    roomCode=kind==='join'?code:result.code;token=result.token;saveSession();connect();
   }catch(e){status(e.message)}}
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&token&&socket?.readyState!==WebSocket.OPEN){retry=0;connect()}});
   $('openRooms').onclick=()=>show('rooms');
   $('createRoom').onclick=()=>enter('create');
   $('joinRoom').onclick=()=>enter('join');
-  $('leaveRoom').onclick=()=>{closeBotPicker();socket?.close();socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;$('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;status('Left room.')};
+  $('leaveRoom').onclick=()=>{if(lobbyLocked()&&!confirm('Leave this match? You will forfeit your seat and chips.'))return;send({type:'leave'});resetView('Left room.')};
   $('roomStart').onclick=()=>send({type:'startMatch'});
   $('roomFold').onclick=()=>send({type:'action',action:'fold'});
   $('roomCall').onclick=()=>send({type:'action',action:snapshot?.game?.legal?.check?'check':'call'});
   $('roomRaise').onclick=()=>send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)});
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
-  $('roomNext').onclick=()=>send({type:'nextHand'});
+  $('roomNext').onclick=()=>send({type:'newMatch'});
   function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const n=clamp(Math.round(Number(value)||l.raiseToMin),l.raiseToMin,l.raiseToMax);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
   $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=e.target.value;}});
   $('roomRaiseAmount').addEventListener('change',e=>setRoomBet(e.target.value));
@@ -165,4 +190,6 @@
   $('roomBotPicker').addEventListener('click',event=>{if(event.target===$('roomBotPicker'))closeBotPicker()});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('roomBotPicker').hidden)closeBotPicker()});
   document.querySelectorAll('[data-level]').forEach(button=>button.onclick=()=>{send({type:'addBot',seat:selectedSeat,level:button.dataset.level});closeBotPicker()});
+  // Resume a saved seat after a refresh or a closed tab.
+  try{const saved=JSON.parse(stored(SESSION)||'null');if(API&&saved?.code&&saved?.token){roomCode=saved.code;token=saved.token;show('rooms');status('Rejoining room '+roomCode+'…');connect()}}catch{}
 })();

@@ -355,3 +355,7 @@ body.rivl-modal-open{overflow:hidden}
 #roomGame .rivl-pvp-board .card.red,#roomGame .rivl-pvp-myseat .card.red{color:#bd1e35}
 #roomGame .rivl-deal-in{animation:rivlPvpDeal .42s ease-out both}
 @keyframes rivlPvpDeal{0%{opacity:0;transform:translateY(-28px) rotateY(85deg) scale(.8)}100%{opacity:1;transform:translateY(0) rotateY(0) scale(1)}}
+.account-name{display:flex;align-items:center;gap:10px;background:none;border:0;color:inherit;font:inherit;padding:0}.account-name:hover span:last-child{text-decoration:underline}
+@media(max-width:750px){.account-name span:last-child{display:none}}
+#roomGame .rivl-shown{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}#roomGame .rivl-shown .card{width:24px;height:34px;font-size:12px;padding:2px}
+.room-seat.is-offline{opacity:.6}.room-seat .room-offline{color:#dc8f55}
