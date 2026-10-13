@@ -45,7 +45,7 @@
     const name=safeName($(kind==='create'?'roomName':'joinName').value);
     const code=kind==='join'?$('roomCodeInput').value.trim().toUpperCase():'';
     const result=await request(kind==='create'?'/api/rooms':'/api/rooms/'+encodeURIComponent(code)+'/join','POST',{name});
-    roomCode=result.code;token=result.token;connect();
+    roomCode=kind==='join'?code:result.code;token=result.token;connect();
   }catch(e){status(e.message)}}
   $('openRooms').onclick=()=>show('rooms');
   $('createRoom').onclick=()=>enter('create');
