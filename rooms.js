@@ -7,7 +7,9 @@
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
   const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');el.textContent=back?'♠':pretty(code);return el};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
-  let clockTimer=null;
+  let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
+  function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
+  function animatedCard(code,back,delay=0){const el=cardNode(code,back);if(delay){el.classList.add('rivl-deal-in');el.style.animationDelay=delay+'ms'}return el}
   let wasPlaying=false;
   const status=message=>{$('roomStatus').textContent=message};
   const safeName=value=>(value||'Player').trim().slice(0,20)||'Player';
@@ -55,13 +57,23 @@
       $('roomMyName').textContent=me?.name||'Spectator';
       $('roomMyAvatar').textContent=(me?.name||'P').slice(0,1).toUpperCase();
       $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
-      $('roomMyTurn').textContent=g.turn===me?.seat?'●':'';
-      $('roomMyTurn').hidden=g.turn!==me?.seat;
-      $('roomHoleCards').replaceChildren();
-      if(g.holeCards?.length)g.holeCards.forEach(c=>$('roomHoleCards').append(cardNode(c)));
-      else for(let i=0;i<2;i++)$('roomHoleCards').append(cardNode(null,true));
-      $('roomBoard').replaceChildren();
-      for(let i=0;i<5;i++)$('roomBoard').append(cardNode(g.board[i],!g.board[i]));
+      $('roomTimer').hidden=g.turn!==me?.seat||g.phase==='showdown';
+      const newHand=g.handNumber!==previousHand;
+      if(newHand){previousHand=g.handNumber;previousBoard=[];previousTurn=-1;lastTick=-1}
+      const hole=$('roomHoleCards');
+      if(newHand||hole.children.length!==2){
+        hole.replaceChildren();
+        for(let i=0;i<2;i++)hole.append(animatedCard(g.holeCards?.[i],!g.holeCards?.[i],i*170+100));
+        if(g.holeCards?.length){setTimeout(()=>pvpSound('card'),100);setTimeout(()=>pvpSound('card'),270)}
+      }
+      const board=$('roomBoard');
+      if(newHand)board.replaceChildren();
+      for(let i=board.children.length;i<5;i++)board.append(animatedCard(g.board[i],!g.board[i],g.board[i]?(i-Math.max(0,previousBoard.length))*180+100:0));
+      if(g.board.length>previousBoard.length)g.board.slice(previousBoard.length).forEach((_,i)=>setTimeout(()=>pvpSound('card'),100+i*180));
+      previousBoard=[...g.board];
+      if(previousTurn!==g.turn&&g.phase!=='showdown'){if(previousTurn!==-1)pvpSound('chip');previousTurn=g.turn}
+      if(previousPhase!=='showdown'&&g.phase==='showdown')pvpSound('win');
+      previousPhase=g.phase;
       $('roomPot').textContent=g.pot;
       const seats=$('roomGamePlayers');seats.replaceChildren();
       const count=Math.min(9,opponents.length+1);
@@ -74,7 +86,7 @@
         item.append(avatar,label);seats.append(item);
       });
       $('roomWinner').textContent=g.result||'';
-      $('roomNext').hidden=!isHost||g.phase!=='showdown';
+      $('roomNext').hidden=true;
       const l=g.legal;
       $('roomActions').hidden=!l;
       if(l){
@@ -91,6 +103,7 @@
       const tick=()=>{
         const ms=Math.max(0,g.deadline-Date.now()),percent=Math.min(100,ms/120);
         $('roomTimer').style.background='conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)';
+        const sec=Math.ceil(ms/1000);if(g.turn===me?.seat&&sec<=5&&sec>0&&sec!==lastTick){pvpSound('tick');lastTick=sec}
         $('roomTimerText').textContent=g.phase==='showdown'?'DONE':g.turn<0?'WAIT':Math.ceil(ms/1000)+'s';
       };
       tick();clockTimer=setInterval(tick,200);
