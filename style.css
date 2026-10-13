@@ -346,3 +346,12 @@ body.rivl-modal-open{overflow:hidden}
 #roomGame .rivl-pvp-table[data-player-count="8"] .s6{top:70%;left:97%}
 #roomGame .rivl-pvp-table[data-player-count="8"] .s7{top:90%;left:50%}
 @media(max-width:750px){#roomGame .rivl-pvp-table{width:92%}#roomGame .rivl-bet-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}#roomGame .rivl-pvp-raise{grid-column:1/-1}#roomGame .rivl-bet-actions>button{min-height:50px;font-size:12px}#roomGame .rivl-timer-row{bottom:160px;left:10px}#roomGame .rivl-pvp-controls{padding:4px 8px}#roomGame .rivl-pvp-gamebar{padding-right:110px}}
+
+#roomGame .rivl-timer-row{position:static;display:flex;justify-content:center;min-height:18px;margin:0 0 3px;pointer-events:none}
+#roomGame .rivl-seat-clock{width:43px;height:43px;flex:0 0 43px;border-radius:50%;display:grid;place-items:center;background:#52bd76;box-shadow:0 0 0 2px #0a0a0a}
+#roomGame .rivl-seat-clock span{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:#101112;color:#f7d291;font-weight:800;font-size:11px}
+#roomGame .rivl-seat-clock[hidden]{display:none}
+#roomGame .rivl-pvp-myseat{overflow:visible}
+#roomGame .rivl-pvp-board .card.red,#roomGame .rivl-pvp-myseat .card.red{color:#bd1e35}
+#roomGame .rivl-deal-in{animation:rivlPvpDeal .42s ease-out both}
+@keyframes rivlPvpDeal{0%{opacity:0;transform:translateY(-28px) rotateY(85deg) scale(.8)}100%{opacity:1;transform:translateY(0) rotateY(0) scale(1)}}
