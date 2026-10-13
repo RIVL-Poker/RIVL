@@ -5,7 +5,7 @@
   let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false;
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
-  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');el.textContent=back?'♠':pretty(code);return el};
+  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');if(back){el.textContent='♠';return el}if(!code)return el;const rank=document.createElement('strong');rank.textContent=code[0]+suit[code[1]];const center=document.createElement('span');center.className='rivl-card-center';center.textContent=suit[code[1]];el.append(rank,center);return el};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
@@ -96,7 +96,16 @@
         item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'');
         const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=(p.name||'P').slice(0,1).toUpperCase();
         const label=document.createElement('span');label.textContent=p.name+' · '+p.stack.toLocaleString()+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');
-        item.append(avatar,label);seats.append(item);
+        item.append(avatar,label);
+        // Evenly distribute opponents along a mirrored arc around the Cairo table.
+        const total=opponents.length;
+        const span=total===1?0:total===2?70:Math.min(220,100+Math.max(0,total-3)*24);
+        const angle=(270-span/2+(total===1?0:span*i/(total-1)))*Math.PI/180;
+        item.style.left=(50+51*Math.cos(angle))+'%';
+        item.style.top=(50+59*Math.sin(angle))+'%';
+        item.style.right='auto';item.style.bottom='auto';
+        item.style.transform='translate(-50%,-50%)';
+        seats.append(item);
       });
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=true;
