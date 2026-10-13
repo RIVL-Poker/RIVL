@@ -6,12 +6,17 @@
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
   let clockTimer=null;
+  let wasPlaying=false;
   const status=message=>{$('roomStatus').textContent=message};
   const safeName=value=>(value||'Player').trim().slice(0,20)||'Player';
   const request=async(path,method='GET',body)=>{if(!API)throw Error('Room server not configured. Set window.RIVL_ROOM_API to your deployed Worker URL in index.html.');const response=await fetch(API.replace(/\/$/,'')+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw Error(data.error||'Room server error');return data};
   function render(){
     if(!snapshot)return;
     $('roomEntry').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=roomCode;
+    const playing=!!snapshot.started&&!!snapshot.game;
+    $('rooms').classList.toggle('rivl-match-mode',playing);
+    if(playing&&!wasPlaying){window.scrollTo({top:0,behavior:'instant'});}
+    wasPlaying=playing;
     const host=isHost;
     $('roomHostNotice').textContent=host?'You are the host. Add bots using +, remove bots, or switch visibility.':'Waiting for the host. Open seats are reserved for players joining.';
     $('roomPrivate').disabled=!host;$('roomPublic').disabled=!host;
@@ -90,7 +95,7 @@
   $('openRooms').onclick=()=>show('rooms');
   $('createRoom').onclick=()=>enter('create');
   $('joinRoom').onclick=()=>enter('join');
-  $('leaveRoom').onclick=()=>{socket?.close();socket=null;roomCode='';token='';snapshot=null;$('roomLobby').hidden=true;$('roomEntry').hidden=false;status('Left room.')};
+  $('leaveRoom').onclick=()=>{socket?.close();socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;$('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;status('Left room.')};
   $('roomStart').onclick=()=>send({type:'startMatch'});
   $('roomFold').onclick=()=>send({type:'action',action:'fold'});
   $('roomCall').onclick=()=>send({type:'action',action:snapshot?.game?.legal?.check?'check':'call'});
