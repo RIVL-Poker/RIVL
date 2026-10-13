@@ -366,3 +366,15 @@ body.rivl-modal-open{overflow:hidden}
 #roomGame .card:not(.back)>strong{font-size:15px;font-weight:900;align-self:flex-start}
 #roomGame .card:not(.back)>.rivl-card-center{position:absolute;inset:0;display:grid;place-items:center;font-size:29px;font-weight:400;pointer-events:none}
 #roomGame .rivl-pvp-myseat .card:not(.back)>.rivl-card-center{font-size:22px}
+
+/* Private room bottom game panel follows original bot-table controls. */
+#roomGame .rivl-room-panel-toggle{display:flex;justify-content:center;margin-top:4px}
+#roomGame .rivl-room-panel-toggle button{font-size:12px}
+#roomGame #roomGamePanel{width:min(980px,100%);margin:5px auto 0;max-height:180px;overflow:auto}
+#roomGame #roomGamePanel.collapsed{display:none}
+#roomGame #roomGamePanel .tabs{display:flex;flex-wrap:wrap}
+#roomGame #roomGamePanel .tab{flex:1;min-width:100px}
+#roomGame #roomTabContent{padding:12px 16px;font-size:13px;color:#d7c4a8}
+#roomGame .rivl-pvp-myseat .card{width:37px;height:49px;padding:4px}
+#roomGame .rivl-pvp-myseat .card:not(.back)>strong{font-size:12px}
+#roomGame .rivl-pvp-myseat .card:not(.back)>.rivl-card-center{font-size:20px}
