@@ -10,6 +10,27 @@
   let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
   function animatedCard(code,back,delay=0){const el=cardNode(code,back);if(delay){el.classList.add('rivl-deal-in');el.style.animationDelay=delay+'ms'}return el}
+  let roomTab='chat',roomHistory=[];
+  function renderRoomPanel(){
+    const target=$('roomTabContent');if(!target)return;
+    const g=snapshot?.game;
+    if(roomTab==='chat'){target.textContent='Room chat is not connected yet. Messages cannot be sent until server-backed chat is implemented.';return}
+    if(roomTab==='history'){target.textContent=roomHistory.length?roomHistory.slice(-12).reverse().join(' • '):'No completed hands yet.';return}
+    if(roomTab==='stats'){target.textContent=g?.players?.map(p=>p.name+': '+p.stack.toLocaleString()+' chips'+(p.folded?' (folded)':'')).join(' • ')||'Waiting for match.';return}
+    target.textContent='Cairo table · Unranked private-room PvP · 12-second turns · Sound effects enabled.';
+  }
+  $('roomTogglePanel')?.addEventListener('click',()=>{
+    const collapsed=$('roomGamePanel').classList.toggle('collapsed');
+    $('roomTogglePanel').textContent=collapsed?'⌃   OPEN GAME PANEL':'⌄   HIDE GAME PANEL';
+    $('roomTogglePanel').setAttribute('aria-expanded',String(!collapsed));
+    renderRoomPanel();
+  });
+  document.querySelectorAll('[data-room-tab]').forEach(button=>button.addEventListener('click',()=>{
+    roomTab=button.dataset.roomTab;
+    document.querySelectorAll('[data-room-tab]').forEach(b=>b.classList.toggle('selected',b===button));
+    renderRoomPanel();
+  }));
+  let lastRecordedResult='';
   let wasPlaying=false;
   const status=message=>{$('roomStatus').textContent=message};
   const safeName=value=>(value||'Player').trim().slice(0,20)||'Player';
@@ -107,6 +128,8 @@
         item.style.transform='translate(-50%,-50%)';
         seats.append(item);
       });
+      if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);lastRecordedResult=g.handNumber+':'+g.result}
+      renderRoomPanel();
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=true;
       const l=g.legal;
