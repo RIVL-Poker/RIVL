@@ -184,6 +184,7 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   await say(room,sockets[0],{type:'visibility',visibility:'public'});
   assert.equal(room.room.visibility,'private');
   const view=sockets[0].last('state').state;assert.ok(view.ranked&&view.rated);
+  let sent=null;const dirCall=room.dir.bind(room);room.dir=(path,body)=>{if(path==='/results')sent=body;return dirCall(path,body)};
   await say(room,sockets[0],{type:'startMatch'});
   await say(room,sockets[2],{type:'leave'});   // Cat abandons with chips: places last, below anyone who busts later
   const busted=new Set(),bustOrder=[];
@@ -193,18 +194,40 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
     if(g.phase==='showdown'){for(const p of g.players)if(p.stack===0&&!busted.has(p.seat)){busted.add(p.seat);bustOrder.push(p.seat)}g.nextHandAt=0;await room.alarm();continue}
     const seat=g.turn,idx=[0,1,3].find(k=>room.room.members[tokens[k]]?.seat===seat);
     if(idx===undefined){g.deadline=0;await room.alarm();continue}
-    const l=room.legal(seat);await say(room,sockets[idx],{type:'action',...(Math.random()<.3&&l.canRaise?{action:'allin'}:{action:l.check?'check':'call'})});
+    const l=room.legal(seat);await say(room,sockets[idx],{type:'action',...(Math.random()<.04&&l.canRaise?{action:'allin'}:{action:l.check?'check':'call'})});
   }
   assert.ok(room.matchOver(),'match finished');
   assert.ok(bustOrder.length>=1,'someone else busted after Cat left');
   const changes=room.room.game.ratingChanges;
   assert.equal(changes.length,4,'all four signed-in players rated');
   const cat=changes.find(c=>c.name==='Cat');assert.ok(cat.after<cat.before,'the leaver loses rating');
+  // Every explicit action by a Ranked player was graded on the server; long-lasting players have an accuracy.
+  const graded=sent.players.filter(p=>p.decisions>0);
+  assert.ok(graded.length>=1&&graded.every(p=>p.acc>=0&&p.acc<=100),'ranked decisions are graded on the server');
+  assert.equal(sent.players.find(p=>p.id===acc[2].account.id).decisions,0,'Cat made no decisions before leaving');
   assert.ok(changes.every(c=>c.name==='Cat'||c.after>cat.after),'the leaver finishes below everyone, busted players included');
   const board=(await api(env,'/api/leaderboard')).data.players;
   assert.equal(board.length,4);assert.ok(board.every(p=>p.games===1));
   assert.equal(board.at(-1).name,'Cat');
   assert.equal(board.reduce((n,p)=>n+p.wins,0),1,'only the match winner is credited a win');
+  checks++;
+}
+
+// 9a. Ranked Elo blends place (60%) with decision accuracy (40%); too few graded decisions means place only.
+{
+  const env=makeEnv();
+  const ids=[];for(const n of ['Gus','Hal','Ivy','Joe'])ids.push((await api(env,'/api/accounts',{name:n})).data.account.id);
+  const results=async body=>(await env.DIRECTORY.get('global').fetch('https://dir/results',{method:'POST',body:JSON.stringify(body)})).json();
+  // Same finish both times; in the second match the loser played far better.
+  const plain=await results({matchId:'m1',players:[{id:ids[0],place:1,acc:70,decisions:10},{id:ids[1],place:2,acc:70,decisions:10}]});
+  const skill=await results({matchId:'m2',players:[{id:ids[2],place:1,acc:40,decisions:10},{id:ids[3],place:2,acc:98,decisions:10}]});
+  const gain=r=>r.changes[0].after-r.changes[0].before;
+  assert.ok(gain(skill)<gain(plain),'a winner with poor decisions gains less');
+  const loss=r=>r.changes[1].before-r.changes[1].after;
+  assert.ok(loss(skill)<loss(plain),'a loser with much better decisions loses less');
+  assert.equal(skill.changes[1].accuracy,98);
+  const few=await results({matchId:'m3',players:[{id:ids[0],place:2,acc:99,decisions:2},{id:ids[1],place:1,acc:10,decisions:10}]});
+  assert.equal(few.changes[0].accuracy,null,'fewer than 3 decisions: place only');assert.ok(few.changes[0].after<few.changes[0].before);
   checks++;
 }
 

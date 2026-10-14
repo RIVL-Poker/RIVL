@@ -1,6 +1,7 @@
 /* RIVL directory — one Durable Object (SQLite) holding accounts, online ratings, the public lobby
    and a daily usage budget that keeps the game inside Cloudflare's free plan. */
 import {glicko} from './glicko.js';
+import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
 const LOBBY_TTL=15*60*1000;
@@ -92,7 +93,9 @@ export class Directory {
       return this.reply({error:'Not found'},404);
     }catch(e){return this.reply({error:e.message||'Directory error'},500)}
   }
-  // Ranked rooms only: placement-only Glicko-2 among signed-in players. Ratings are computed here, never trusted from browsers.
+  // Ranked rooms only: Glicko-2 among signed-in players. Against each opponent the score is 60% finishing place
+  // and 40% decision accuracy, as in bot practice; with fewer than 3 graded decisions on either side it is place only.
+  // Ratings and grades are computed on the server, never trusted from browsers.
   recordResults({matchId,players}){
     if(!matchId||!Array.isArray(players))return {error:'Bad results'};
     if(this.one('SELECT id FROM matches WHERE id=?',String(matchId)))return {duplicate:true,changes:[]};
@@ -101,8 +104,10 @@ export class Directory {
     if(unique.length<2)return {rated:false,changes:[]};
     this.sql.exec('INSERT INTO matches(id,t) VALUES (?,?)',String(matchId),Date.now());
     const w=1/Math.sqrt(unique.length-1);
-    const updates=unique.map(({p,a})=>({a,place:Number(p.place),next:glicko({r:a.rr,rd:a.rrd,vol:a.rvol},unique.filter(o=>o.a.id!==a.id).map(o=>({r:o.a.rr,rd:o.a.rrd,w,s:p.place<o.p.place?1:p.place>o.p.place?0:.5})))}));
+    const graded=p=>Number(p.decisions)>=MIN_DECISIONS&&Number.isFinite(Number(p.acc));
+    const score=(me,o)=>{const place=me.place<o.place?1:me.place>o.place?0:.5;return graded(me)&&graded(o)?W_PLACE*place+W_DEC*pairAcc(Number(me.acc),Number(o.acc)):place};
+    const updates=unique.map(({p,a})=>({a,p,place:Number(p.place),next:glicko({r:a.rr,rd:a.rrd,vol:a.rvol},unique.filter(o=>o.a.id!==a.id).map(o=>({r:o.a.rr,rd:o.a.rrd,w,s:score(p,o.p)})))}));
     for(const u of updates)this.sql.exec('UPDATE accounts SET rr=?,rrd=?,rvol=?,rgames=rgames+1,rwins=rwins+?,last_played=? WHERE id=?',u.next.r,u.next.rd,u.next.vol,u.place===1?1:0,Date.now(),u.a.id);
-    return {rated:true,changes:updates.map(u=>({id:u.a.id,name:u.a.name,before:Math.round(u.a.rr),after:Math.round(u.next.r)}))};
+    return {rated:true,changes:updates.map(u=>({id:u.a.id,name:u.a.name,before:Math.round(u.a.rr),after:Math.round(u.next.r),accuracy:graded(u.p)?Math.round(Number(u.p.acc)):null}))};
   }
 }

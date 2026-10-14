@@ -1,6 +1,7 @@
 /* RIVL — Cloudflare Worker + Durable Objects. Serves the site (static assets), runs poker rooms,
    and talks to the Directory (accounts, online ratings, lobby, free-plan budget). */
 export {Directory} from './directory.js';
+import {gradeDecision} from './grading.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=5000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4;
 // Blinds rise every 8 hands so a match reaches a finish.
@@ -189,7 +190,9 @@ export class Room {
     if(!m.ranked){this.room.match=null;return}
     const order=[...standing.sort((a,b)=>b.stack-a.stack).map(p=>[p.seat]),...[...m.out].reverse(),...[...(m.left||[])].reverse().map(s=>[s])];
     const place={};let next=1;for(const group of order){for(const s of group)place[s]=next;next+=group.length}
-    const players=Object.entries(m.accounts).map(([seat,id])=>({id,place:place[seat]??next}));
+    // Each Ranked player's decision accuracy (weighted like bot practice) goes with their place.
+    const accuracy=seat=>{const d=m.grades?.[seat];return d?.n?{acc:d.s/d.w,decisions:d.n}:{acc:null,decisions:0}};
+    const players=Object.entries(m.accounts).map(([seat,id])=>({id,place:place[seat]??next,...accuracy(seat)}));
     if(players.length>=2)this.room.pendingResults={matchId:m.id,players};
     else if(this.room.game)this.room.game.note='Unrated: at least two signed-in players are needed for a rated match.';
     this.room.match=null;
@@ -294,6 +297,8 @@ export class Room {
     const g=this.room.game,p=g.players.find(x=>x.seat===seat),legal=this.legal(seat);
     if(!legal)throw Error('Not your turn');
     const call=Math.max(0,g.currentBet-p.bet);
+    // How each player has bet this hand shapes the ranges decision grading assumes for them.
+    const line=action==='raise'||action==='allin'&&p.stack>call?2:(action==='call'||action==='allin')&&call>0?1:0;
     if(action==='fold')p.folded=true;
     else if(action==='check'){if(call)throw Error('Must call, raise, or fold')}
     else if(action==='call'||action==='allin'&&p.stack<=call){const v=Math.min(p.stack,call);p.stack-=v;p.bet+=v;p.contribution+=v;g.pot+=v}
@@ -309,6 +314,7 @@ export class Room {
       else g.raiseLocked=[...new Set([...g.raiseLocked,...g.acted])];
     }else throw Error('Invalid action');
     if(p.stack===0)p.allIn=true;
+    p.line=Math.max(p.line||0,line);
     g.acted=[...new Set([...g.acted,seat])];
     const active=g.players.filter(x=>!x.folded&&!x.allIn);
     const alive=g.players.filter(x=>!x.folded);
@@ -467,7 +473,11 @@ export class Room {
       if(msg.type==='action'){
         if(this.matchOver(room.game))throw Error('Match not started');
         const p=room.game.players.find(x=>x.seat===member.seat);
+        // Ranked: grade the decision before it changes the table; a failed grade never blocks play.
+        let graded=null;
+        if(room.match?.ranked&&member.accountId&&this.legal(member.seat))try{graded=gradeDecision(room.game,member.seat,msg.action,msg.amount)}catch{}
         this.applyAction(member.seat,msg.action,msg.amount);
+        if(graded){const d=(room.match.grades||={})[member.seat]||={s:0,w:0,n:0};d.s+=graded.acc*graded.weight;d.w+=graded.weight;d.n++}
         if(p){p.timeouts=0;p.away=false}
         this.autoAdvance();await this.save();return;
       }

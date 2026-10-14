@@ -22,7 +22,7 @@
     if(roomTab==='chat'){target.textContent='Room chat is not connected yet. Messages cannot be sent until server-backed chat is implemented.';return}
     if(roomTab==='history'){target.textContent=roomHistory.length?roomHistory.slice(-12).reverse().join(' • '):'No completed hands yet.';return}
     if(roomTab==='stats'){target.textContent=g?.players?.map(p=>p.name+': '+p.stack.toLocaleString()+' chips'+(p.folded?' (folded)':'')).join(' • ')||'Waiting for match.';return}
-    target.textContent='Cairo table · '+(snapshot?.ranked?'Ranked PvP · Elo by finishing place · leaving early places you last':'Unranked PvP')+' · 12-second turns · Sound effects enabled.';
+    target.textContent='Cairo table · '+(snapshot?.ranked?'Ranked PvP · Elo from finishing place (60%) and decision accuracy (40%) · leaving early places you last':'Unranked PvP')+' · 12-second turns · Sound effects enabled.';
   }
   $('roomTogglePanel')?.addEventListener('click',()=>{
     const collapsed=$('roomGamePanel').classList.toggle('collapsed');
@@ -67,7 +67,7 @@
     if(playing&&!wasPlaying){window.scrollTo({top:0,behavior:'instant'});}
     wasPlaying=playing;
     const host=isHost;
-    $('roomHostNotice').textContent=snapshot.ranked?(host?'Ranked room: share the code with signed-in friends. Start when 2 or more are seated. ':'Ranked room. Waiting for the host to start. ')+'Elo moves by finishing place; leaving early places you last.':
+    $('roomHostNotice').textContent=snapshot.ranked?(host?'Ranked room: share the code with signed-in friends. Start when 2 or more are seated. ':'Ranked room. Waiting for the host to start. ')+'Elo comes from finishing place and your graded decisions; leaving early places you last.':
       (host?'You are the host. Add bots using +, remove bots, or switch visibility. Public rooms appear in Open Tables.':'Waiting for the host to start.')+' Unranked: this match does not change Elo.';
     $('roomPrivate').disabled=!host;$('roomPublic').disabled=!host;
     document.querySelector('.room-visibility')?.querySelectorAll('#roomPrivate,#roomPublic').forEach(b=>b.hidden=!!snapshot.ranked);
@@ -173,7 +173,7 @@
       if(g.matchOver){const best=g.players.filter(p=>!p.left).sort((a,b)=>b.stack-a.stack)[0];$('roomWinner').textContent=best?'Match complete · '+best.name+' wins the table':'Match complete'}
       const ratings=$('roomRatings');ratings.replaceChildren();
       if(g.matchOver&&(g.ratingChanges?.length||g.note)){
-        for(const c of g.ratingChanges||[]){const line=document.createElement('div'),d=c.after-c.before;line.textContent=`${c.name}: ${c.before} → ${c.after} `;const delta=document.createElement('span');delta.className=d>=0?'up':'down';delta.textContent=(d>=0?'+':'')+d;line.append(delta);ratings.append(line)}
+        for(const c of g.ratingChanges||[]){const line=document.createElement('div'),d=c.after-c.before;line.textContent=`${c.name}: ${c.before} → ${c.after} `;const delta=document.createElement('span');delta.className=d>=0?'up':'down';delta.textContent=(d>=0?'+':'')+d;line.append(delta);if(c.accuracy!=null)line.append(` · ${c.accuracy}% decision accuracy`);ratings.append(line)}
         if(g.note){const n=document.createElement('p');n.className='muted';n.textContent=g.note;ratings.append(n)}
       }
       const l=g.legal;
