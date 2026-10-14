@@ -153,7 +153,7 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const env=makeEnv();
   assert.equal((await api(env,'/api/accounts',{name:'x'})).status,400);
   const ann=(await api(env,'/api/accounts',{name:'Ann'})).data;
-  assert.ok(ann.key&&ann.account.rating===1500);
+  assert.ok(ann.key&&ann.account.rating===0);
   assert.equal((await api(env,'/api/accounts',{name:'ann'})).status,409,'names are unique ignoring case');
   assert.equal((await api(env,'/api/me',{key:ann.key})).data.account.name,'Ann');
   assert.equal((await api(env,'/api/me',{key:'x'.repeat(30)})).status,401);
@@ -280,17 +280,17 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
 // 9d. Leagues: every account carries its league; "My league" lists that league, or the 10 nearest when it is small.
 {
   const env=makeEnv();
-  const elos=[1300,1450,1500,1520,1600,1650,1700,1720,1740,1745,1749,1800,2900];
+  const elos=[100,400,450,475,500,525,550,575,600,625,650,800,1900];
   const accts=[];for(let i=0;i<elos.length;i++)accts.push((await api(env,'/api/accounts',{name:'League'+i})).data.account);
   const d=env.DIRECTORY.instances.get('global');
-  accts.forEach((a,i)=>d.sql.exec('UPDATE accounts SET rr=?,rgames=1 WHERE id=?',elos[i],a.id));
-  const mine=(await api(env,'/api/leaderboard/league?r=1500')).data;
+  accts.forEach((a,i)=>d.sql.exec('UPDATE accounts SET rr=?,rgames=1 WHERE id=?',elos[i]+1500,a.id));
+  const mine=(await api(env,'/api/leaderboard/league?r=500')).data;
   assert.equal(mine.league,'Challenger');assert.equal(mine.near,false);assert.equal(mine.total,10);
-  assert.ok(mine.players.every(p=>p.league==='Challenger'&&p.rating>=1400&&p.rating<1750),'only Challenger players');
+  assert.ok(mine.players.every(p=>p.league==='Challenger'&&p.rating>=350&&p.rating<700),'only Challenger players');
   assert.deepEqual(mine.players.map(p=>p.rating),[...mine.players.map(p=>p.rating)].sort((x,y)=>y-x),'sorted by Elo');
-  const champ=(await api(env,'/api/leaderboard/league?r=2950')).data;
+  const champ=(await api(env,'/api/leaderboard/league?r=1950')).data;
   assert.equal(champ.league,'Champion');assert.equal(champ.near,true,'a small league falls back to nearest players');
-  assert.equal(champ.players.length,10);assert.equal(champ.players[0].rating,2900);
+  assert.equal(champ.players.length,10);assert.equal(champ.players[0].rating,1900);
   assert.equal((await api(env,'/api/leaderboard/league?r=abc')).status,400);
   assert.equal((await (await d.fetch(new Request('https://dir/leaderboard'))).json()).players[0].league,'Champion','the top 50 shows leagues too');
   checks++;

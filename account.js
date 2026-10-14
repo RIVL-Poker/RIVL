@@ -53,13 +53,13 @@
       if(!players.length){note('No ranked matches yet.');return}
       players.forEach((p,i)=>{
         const row=document.createElement('div');row.className='online-row'+(state&&p.id===state.id?' me':'');
-        for(const v of [board==='mine'?p.rank:i+1,p.name+(p.provisional?' ?':''),p.league,p.rating.toLocaleString(),'±'+p.rd,p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
+        for(const v of [board==='mine'?p.rank:i+1,p.name,p.league,p.rating.toLocaleString(),'±'+p.rd,p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
         window.rivlLeagueIcons?.decorate(row.children[1],p.leagueKey||window.RivlRating?.tier(p.rating).key,{prepend:true});
         row.children[2].className='league-'+p.leagueKey;
         rows.append(row);
       });
-      if(board==='mine'&&!data.near&&total>players.length)note(`The ${players.length} of ${total} ${data.league} players nearest your Elo. "?" marks a provisional rating.`);
-      if(board==='top'&&total>players.length)note(`Top ${players.length} of ${total} ranked players. "?" marks a provisional rating.`);
+      if(board==='mine'&&!data.near&&total>players.length)note(`The ${players.length} of ${total} ${data.league} players nearest your Elo.`);
+      if(board==='top'&&total>players.length)note(`Top ${players.length} of ${total} ranked players.`);
     }catch(e){rows.replaceChildren();note(e.message)}
   }
 
