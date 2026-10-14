@@ -588,3 +588,10 @@ body.rivl-modal-open{overflow:hidden}
 .league-tabs{display:flex;gap:6px}.league-tabs button{padding:7px 12px;font-size:11px;letter-spacing:.08em;font-weight:800}.league-tabs button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
 #rtBar[class*="league-"]{background:linear-gradient(90deg,color-mix(in srgb,var(--league) 55%,#000),var(--league))}
 @media(max-width:600px){.online-row{grid-template-columns:28px minmax(70px,1fr) 92px 52px;min-width:0;font-size:13px}.online-row span:nth-child(n+5){display:none}}
+
+/* League emblems appear to the left of the player name, never replace the name. */
+.rivl-league-name{display:inline-flex;align-items:center;gap:5px;vertical-align:middle}
+.rivl-league-icon{width:19px;height:19px;flex:none;filter:drop-shadow(0 1px 2px #0008)}
+.rt-id .rivl-league-icon{width:25px;height:25px}
+.online-row .rivl-league-icon{width:17px;height:17px}
+.rivl-seat-label .rivl-league-icon{width:15px;height:15px}

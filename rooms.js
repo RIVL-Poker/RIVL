@@ -91,7 +91,7 @@
       const el=document.createElement('div');el.className='room-seat';
       if(seat){
         const avatar=document.createElement('div');avatar.className='room-avatar';avatar.textContent=avatarFor(seat);el.append(avatar);
-        const name=document.createElement('strong');name.textContent=seat.name;if(seat.verified){const v=document.createElement('span');v.className='verified-badge';v.title='Signed-in player';v.textContent='✓';name.append(v)}el.append(name);
+        const name=document.createElement('strong');name.textContent=seat.name;if(seat.name===window.rivlAccount?.current()?.name&&seat.verified)window.rivlLeagueIcons?.decorate(name,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});if(seat.verified){const v=document.createElement('span');v.className='verified-badge';v.title='Signed-in player';v.textContent='✓';name.append(v)}el.append(name);
         const info=document.createElement('small');info.textContent=(seat.type==='bot'?seat.level+' · Bot':seat.isHost?'Host · Human':'Human')+(i===snapshot.mySeat?' · You':'');el.append(info);
         if(!seat.online){el.classList.add('is-offline');const off=document.createElement('small');off.className='room-offline';off.textContent='Reconnecting…';el.append(off)}
         if(host&&!snapshot.ranked&&seat.type==='human'&&i!==snapshot.mySeat&&!lobbyLocked()){const kick=document.createElement('button');kick.className='room-remove';kick.textContent='REMOVE';kick.onclick=()=>send({type:'removePlayer',seat:i});el.append(kick)}
@@ -157,7 +157,7 @@
         const item=document.createElement('div');
         item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'');
         const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=avatarFor(p);
-        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');label.append(who,info);
+        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
         const cards=g.shown?.[p.seat];
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
