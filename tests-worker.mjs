@@ -219,10 +219,10 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const graded=sent.players.filter(p=>p.decisions>0);
   assert.ok(graded.length>=1&&graded.every(p=>p.acc>=0&&p.acc<=100),'ranked decisions are graded on the server');
   assert.equal(sent.players.find(p=>p.id===acc[2].account.id).decisions,0,'Cat made no decisions before leaving');
-  assert.ok(changes.every(c=>c.name==='Cat'||c.after>cat.after),'the leaver finishes below everyone, busted players included');
+  assert.ok(changes.every(c=>c.name==='Cat'||c.after>=cat.after),'the leaver cannot outrank others at the zero Elo floor');
   const board=(await api(env,'/api/leaderboard')).data.players;
   assert.equal(board.length,4);assert.ok(board.every(p=>p.games===1));
-  assert.equal(board.at(-1).name,'Cat');
+  assert.ok(board.some(p=>p.name==='Cat'&&p.rating===0),'leaver remains at zero displayed Elo');
   assert.equal(board.reduce((n,p)=>n+p.wins,0),1,'only the match winner is credited a win');
   checks++;
 }
