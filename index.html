@@ -236,10 +236,11 @@
                 <h1>YOUR PROFILE</h1>
                 <article class="panel ranked-tracker" aria-labelledby="rtTitle">
                     <div class="rt-head">
-                        <div class="rt-hero-gem profile-avatar" id="rtHeroGem" aria-label="Your profile picture or initial"></div>
-                        <div class="rt-id"><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier league-prospect" id="rtTier">Prospect</span><div class="profile-photo-actions"><label for="profilePhotoInput" class="profile-photo-button">ADD / CHANGE PHOTO</label><button class="outline" type="button" id="removeProfilePhoto" hidden>REMOVE PHOTO</button><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" capture="user" hidden></div><small id="profilePhotoStatus" class="muted" role="status">Sign in to add a photo visible to players at tables.</small><small class="muted">Only upload images you have permission to share. Other players can report inappropriate photos; reported photos are hidden pending review.</small></div>
+                        <button type="button" class="rt-hero-gem profile-avatar rivl-avatar-edit" id="rtHeroGem" aria-label="Change profile picture" title="Change profile picture"><span class="rivl-avatar-plus" aria-hidden="true">+</span></button>
+                        <div class="rt-id"><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier league-prospect" id="rtTier">Prospect</span><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden><small id="profilePhotoStatus" class="muted" role="status" hidden></small></div>
                         <div class="rt-score"><strong id="onlineProfileRating">0</strong><small id="rtRd" hidden></small></div>
                     </div>
+<dialog id="rivlPhotoNotice" class="rivl-photo-notice" aria-labelledby="rivlPhotoNoticeTitle"><h2 id="rivlPhotoNoticeTitle">♠ PROFILE PHOTO GUIDELINES</h2><p>Your profile picture is visible to other players at your tables. Only upload images you own or have permission to share. Do not upload offensive, explicit, harassing, or impersonating images.</p><p>Other players can report inappropriate pictures. Reported pictures may be hidden while they are reviewed. Repeated violations may lead to restrictions.</p><button type="button" class="gold" id="rivlPhotoNoticeClose">CLOSE</button></dialog>
                     <div class="rt-progress"><div class="rt-bar"><span id="rtBar"></span></div><div class="rt-bar-labels"><span id="rtBarFrom">Prospect 0</span><span id="rtBarTo">Challenger 350</span></div></div>
                     <div class="rt-tiles">
                         <div><small>RANKED MATCHES</small><b id="rtGames">0</b></div>
