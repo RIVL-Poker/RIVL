@@ -96,16 +96,15 @@ function refreshRatingUI(){
   const st=RivlRating.store(),me=st.players.You,rows=ladderRows(),rank=rows.findIndex(r=>r.name==='You')+1;
   const t=RivlRating.tier(me.r),prov=me.rd>110,r=Math.round(me.r);
   const set=(id,v)=>{const el=$(id);if(el)el.textContent=v};
-  const online=window.rivlAccount?.current();
-  const onlineTier=online?RivlRating.tier(Number(online.rating)||1500):null;
-  set('sideTier',online?`✦ ONLINE · ${onlineTier.name.toUpperCase()}`:'✦ ONLINE · RATED ROOMS');
-  set('sideRating',online?Math.round(Number(online.rating)||1500).toLocaleString():'—');
-  set('sideRatingLabel',online?`${online.games||0} rated room matches · ±${Math.round(Number(online.rd)||350)}`:'Sign in to track your online rating');
-  set('sideRank',online?(online.rank?`Online leaderboard #${online.rank}`:online.games?'Online leaderboard · provisional':'No rated matches yet'):'Rated PvP requires an account');
-  document.querySelectorAll('.tier-progress').forEach(el=>el.style.width=(online?onlineTier.progress*100:0).toFixed(0)+'%');
-  set('onlineProfileRating',online?Math.round(Number(online.rating)||1500).toLocaleString():'—');
-  set('onlineProfileDetails',online?`${onlineTier.name} · ±${Math.round(Number(online.rd)||350)} · ${online.games||0} rated matches${online.rank?' · Rank #'+online.rank:''}`:'Sign in or create an account to track rated room matches.');
-  set('onlineProfileRecord',online?`${online.wins||0} wins · ${online.games?Math.round(100*(online.wins||0)/online.games):0}% win rate`:'Your online match record appears here.');
+  // Ranked Elo is not launched. Keep the ranked tracker at zero until the ranked system is enabled.
+  set('sideTier','✦ RANKED · ELO');
+  set('sideRating','0');
+  set('sideRatingLabel','Ranked coming soon · 0 matches');
+  set('sideRank','Unranked rooms do not affect Elo');
+  document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width='0%');
+  set('onlineProfileRating','0');
+  set('onlineProfileDetails','Ranked Elo · 0 ranked matches');
+  set('onlineProfileRecord','0 wins · 0% win rate · Ranked coming soon');
   set('homeRating',r.toLocaleString());
   const avg=me.accN?(me.accSum/me.accN).toFixed(1)+'% avg accuracy':'no matches yet';
   set('homeStatsLine',`${t.name} · ${me.games||0} rated matches · ${avg}`);
