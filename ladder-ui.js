@@ -91,6 +91,25 @@ function sparkline(points,w=560,h=120){
     <circle cx="${X(points.length-1)}" cy="${Y(points[points.length-1])}" r="4" fill="#efbd70"/></svg>
     <div class="spark-axis"><span>First match</span><span>High ${Math.round(hi-15)} · Low ${Math.round(lo+15)} · Now ${Math.round(points[points.length-1])}</span></div>`;
 }
+function renderRankedTracker(acct,elo,games,set){
+  const rt=RivlRating.tier(elo);
+  set('rtTier',rt.name);const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
+  set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
+  const bar=$('rtBar');if(bar)bar.style.width=(rt.progress*100).toFixed(0)+'%';
+  const lo=rt.next?rt.next-200:null;
+  set('rtBarFrom',`${rt.name}${lo?' '+Math.max(lo,0).toLocaleString():''}`);
+  set('rtBarTo',rt.next?`${RivlRating.tier(rt.next).name} ${rt.next.toLocaleString()}`:'Top tier');
+  set('rtGames',games);set('rtWins',acct?.wins||0);
+  set('rtWinRate',games?Math.round(100*(acct.wins||0)/games)+'%':'–');
+  set('rtRank',acct?.rank?'#'+acct.rank:'–');
+  const btn=$('rtPlay');if(btn)btn.textContent=acct?'FIND RANKED MATCH':'SIGN IN TO PLAY';
+  let hist=[];try{hist=JSON.parse(localStorage.getItem('rivlRankedHistory')||'[]')}catch{}
+  hist=Array.isArray(hist)&&acct?hist.filter(m=>m.account===acct.id):[];
+  const ch=$('rtChart');
+  if(ch)ch.innerHTML=hist.length?sparkline([hist[0].before,...hist.map(m=>m.after)]):'<p class="muted">Your Elo chart starts after your first Ranked match.</p>';
+  const ms=$('rtMatches');
+  if(ms)ms.innerHTML=hist.length?`<div class="mr-row head"><span>RESULT</span><span>TABLE</span><span>ACC</span><span>ELO</span></div>`+hist.slice(-6).reverse().map(m=>`<div class="mr-row"><span class="${m.result==='Win'?'positive':''}">${m.result==='Win'?'WIN':'LOSS'}</span><span>${m.players} players</span><span>${m.acc==null?'–':m.acc+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)}</span></div>`).join(''):'<p class="muted">No Ranked matches on this device yet.</p>';
+}
 function refreshRatingUI(){
   if(!window.RivlRating)return;
   const st=RivlRating.store(),me=st.players.You,rows=ladderRows(),rank=rows.findIndex(r=>r.name==='You')+1;
@@ -104,8 +123,9 @@ function refreshRatingUI(){
   set('sideRank',acct?.rank?`Ranked #${acct.rank}`:'Quick Play and private rooms are unranked');
   document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=Math.max(0,Math.min(100,(elo-1000)/10)).toFixed(0)+'%');
   set('onlineProfileRating',elo.toLocaleString());
-  set('onlineProfileDetails',acct?`Ranked Elo · ${games} ranked ${games===1?'match':'matches'}${acct.rank?' · #'+acct.rank+' on the ladder':''}`:'Sign in or create an account to play Ranked');
+  set('onlineProfileDetails',acct?`Ranked Elo is 60% finishing place and 40% graded decisions. Quick Play, private rooms and bot games never change it.`:'Sign in or create an account below to play Ranked. Quick Play, private rooms and bot games are unranked.');
   set('onlineProfileRecord',`${acct?.wins||0} wins · ${games?Math.round(100*(acct.wins||0)/games):0}% win rate`);
+  renderRankedTracker(acct,elo,games,set);
   set('homeRating',r.toLocaleString());
   const avg=me.accN?(me.accSum/me.accN).toFixed(1)+'% avg accuracy':'no matches yet';
   set('homeStatsLine',`${t.name} · ${me.games||0} rated matches · ${avg}`);

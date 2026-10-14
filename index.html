@@ -233,8 +233,40 @@
             </section>
             <section id="profile" class="view content-view">
                 <h1>YOUR PROFILE</h1>
-                <div class="panel profile-card"><div class="avatar large" data-player-initial>P</div><div><h2 data-player-name>Player</h2><p>RANKED ELO</p><strong id="onlineProfileRating" class="online-profile-score">1,500</strong></div></div>
-                <article class="panel online-profile-summary"><h3>RANKED LEADERBOARD · ELO</h3><p id="onlineProfileDetails">Ranked Elo · 0 ranked matches</p><p id="onlineProfileRecord">0 wins · 0% win rate</p><p class="muted">Quick Play and private rooms are unranked and do not change Elo.</p></article>
+                <article class="panel ranked-tracker" aria-labelledby="rtTitle">
+                    <div class="rt-head">
+                        <div class="avatar large" data-player-initial>P</div>
+                        <div class="rt-id"><small class="rt-eyebrow">✦ RANKED · ELO</small><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier" id="rtTier">Silver</span><span class="rt-flag" id="rtFlag" hidden>Provisional</span></div>
+                        <div class="rt-score"><strong id="onlineProfileRating">1,500</strong><small id="rtRd">±350</small></div>
+                    </div>
+                    <div class="rt-progress"><div class="rt-bar"><span id="rtBar"></span></div><div class="rt-bar-labels"><span id="rtBarFrom">Silver 1,400</span><span id="rtBarTo">Gold 1,600</span></div></div>
+                    <div class="rt-tiles">
+                        <div><small>RANKED MATCHES</small><b id="rtGames">0</b></div>
+                        <div><small>WINS</small><b id="rtWins">0</b></div>
+                        <div><small>WIN RATE</small><b id="rtWinRate">–</b></div>
+                        <div><small>LADDER RANK</small><b id="rtRank">–</b></div>
+                    </div>
+                    <div class="rt-body">
+                        <div><h3>ELO HISTORY</h3><div id="rtChart"></div></div>
+                        <div><h3>RECENT RANKED MATCHES</h3><div id="rtMatches" class="mr-table"></div></div>
+                    </div>
+                    <div class="rt-foot"><p id="onlineProfileDetails" class="muted">Sign in or create an account to play Ranked.</p><button class="gold" id="rtPlay" type="button">FIND RANKED MATCH</button></div>
+                    <p id="onlineProfileRecord" hidden></p>
+                </article>
+                <h2 class="profile-section-heading">BOT PRACTICE RATING · UNRANKED</h2>
+                <div class="panel profile-card"><div><p id="profTier">Silver · Bot practice</p><strong id="profRating">1,500 practice rating</strong><p class="muted">Every decision you make against bots is graded. This rating is for training only and never changes Ranked Elo.</p></div></div>
+                <div class="stat-grid">
+                    <article class="panel"><h3>BOT PRACTICE MATCHES</h3><h2 id="profGames">0</h2></article>
+                    <article class="panel"><h3>WINS</h3><h2 id="profWins">0</h2></article>
+                    <article class="panel"><h3>WIN RATE</h3><h2 id="profWinRate">–</h2></article>
+                    <article class="panel"><h3>AVG ACCURACY</h3><h2 id="profAcc">–</h2></article>
+                </div>
+                <div class="profile-grid">
+                    <article class="panel"><h3>BOT PRACTICE RATING HISTORY</h3><div id="profChart"></div></article>
+                    <article class="panel"><h3>DECISION QUALITY · ALL BOT MATCHES</h3><div id="profLabels"></div></article>
+                </div>
+                <article class="panel"><h3>RECENT BOT PRACTICE MATCHES</h3><div id="profMatches" class="mr-table"></div></article>
+                <p class="muted">Bot practice ratings and match history are saved in this browser.</p>
                 <article class="panel account-panel" id="accountPanel">
                     <h3>ONLINE ACCOUNT</h3>
                     <div id="accountSignedOut">
@@ -260,6 +292,30 @@
                     <h3>RANKED · ELO</h3>
                     <div class="online-row head"><span>#</span><span>PLAYER</span><span>ELO</span><span>RD</span><span>MATCHES</span><span>WINS</span></div>
                     <div id="onlineRows"><p class="muted">Loading…</p></div>
+                </div>
+                <div class="panel ladder">
+                    <h3>BOT PRACTICE · UNRANKED · THIS DEVICE</h3>
+                    <div class="ladder-row head"><span>#</span><span>PLAYER</span><span>TIER</span><span>RATING</span><span>RD</span><span>MATCHES</span><span>ACCURACY</span></div>
+                    <div id="ladderRows"></div>
+                </div>
+                <div class="panel how">
+                    <h3>HOW THE BOT PRACTICE RATING WORKS</h3>
+                    <p><b>1. Every decision is graded.</b> When you fold, call or raise, RIVL works out your equity
+                        against the hands each opponent likely holds, based on how they’ve bet. It compares the expected
+                        value of your choice with the best option and labels it like a chess move: Brilliant, Best,
+                        Excellent, Good, Inaccuracy, Mistake or Blunder.</p>
+                    <p><b>2. Each match gives you a score against every bot.</b> 60% comes from placement (finish
+                        above them and you win that part). 40% comes from decision accuracy (play more accurately than
+                        them and you win that part).</p>
+                    <p><b>3. Glicko-2 updates everyone’s rating.</b> Beating higher-rated bots is worth more.
+                        <b>RD</b> is how sure the system is about your rating: you start at ±350 and move fast,
+                        then settle as you play. Below ±110 your rating is no longer provisional.</p>
+                    <p><b>It is practice only.</b> Each bot has a fixed skill level and its own rating, so you can measure
+                        yourself against them. Bot games never change Ranked Elo. Leaving a match early leaves it unrated.</p>
+                    <div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET
+                            BOT LADDER</button><span id="resetConfirm" hidden>Erase all bot practice ratings and match history on this
+                            device? <button class="outline" id="resetYes" type="button">ERASE</button> <button
+                                class="outline" id="resetNo" type="button">KEEP</button></span></div>
                 </div>
             </section>
             <section id="themes" class="view content-view">
