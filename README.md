@@ -1,6 +1,17 @@
-# RIVL v1.4.1 — Rated play
+# RIVL — Rated play
 
-Open index.html in Chrome. Bot opponents only; no real money. Ratings are saved in this browser (localStorage).
+Free Texas Hold'em, no real money. Play rated matches against bots, or open a private room and play friends online. Ratings are saved in this browser (localStorage).
+
+## Play
+- **Online:** once deployed, open the site's address (for example `https://rivl.<your-subdomain>.workers.dev`).
+- **Locally:** `npx wrangler dev`, then open http://localhost:8787. Opening `index.html` as a file still works for bot games, but online rooms need the server.
+
+## Deploy (one time setup)
+Every push to `main` tests and deploys the site and the rooms server together to Cloudflare (`.github/workflows/deploy.yml`). It needs two settings in GitHub, under Settings > Secrets and variables > Actions:
+1. Secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token made from the **Edit Cloudflare Workers** template.
+2. Variable `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID (shown on the Workers & Pages overview page).
+
+Then run the workflow from the Actions tab (or push to `main`). The site appears at `https://rivl.<your-subdomain>.workers.dev`; a custom domain can be added in the Cloudflare dashboard under the Worker's Settings > Domains & Routes. See ROOMS.md for how online rooms work.
 
 ## v1.4.1
 - Rating blend switched to **60% placement + 40% decision accuracy** (was 40/60). Interface is the original v1.4.0 RIVL look.
@@ -19,8 +30,13 @@ Open index.html in Chrome. Bot opponents only; no real money. Ratings are saved 
 - rating.js — fast evaluator, range-based equity, decision grader, bot brain, Glicko-2, storage
 - script.js — game flow (hooks added for grading, bust order and match results)
 - ladder-ui.js — live grades, results screen, profile, leaderboard
+- profile.js — your display name (stored in this browser)
+- rooms.js — private rooms client
+- worker/rooms.js — Cloudflare Worker: serves the site and runs rooms
 
 ## Tests
+`node tests-worker.mjs` plays 60 simulated room matches (chip conservation, no stuck turns, matches end) and checks reveal, reconnect, sit-out, leave/host hand-off and idle cleanup.
+
 `node tests.js` runs the 12 engine checks plus 6 rating checks (fast evaluator vs engine on 3,000 showdowns, equity sanity, Glicko-2 against Glickman's published example, and grading of clear right and wrong plays).
 
 ## Known limits of the grader
