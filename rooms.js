@@ -47,6 +47,7 @@
     const winner=[...g.players].sort((a,b)=>b.stack-a.stack)[0];
     records.push({id,date:Date.now(),mode:snapshot.rated?'Rated PvP':'Unrated PvP',players:g.players.length,result:winner?.seat===me.seat?'Win':'Loss',stack:me.stack});
     try{localStorage.setItem(MATCH_KEY,JSON.stringify(records.slice(-50)))}catch{}
+    if(snapshot.rated)window.rivlAccount?.refresh?.();
     window.refreshRatingUI?.();
   }
   let lastRecordedResult='';

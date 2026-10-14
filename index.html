@@ -17,9 +17,9 @@
             <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav"
                     data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp;
                     Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button></nav>
-            <div class="season"><small id="sideTier">✦ SEASON 1</small>
+            <div class="season"><small id="sideTier">✦ ONLINE · RATED ROOMS</small>
                 <h2 id="sideRating">1,500</h2>
-                <p id="sideRatingLabel">Your rating</p>
+                <p id="sideRatingLabel">Sign in to track your online rating</p>
                 <div class="progress"><span class="tier-progress"></span></div><small id="sideRank">Ladder</small>
             </div>
             <div class="sidefoot">DEMO BUILD · v1.4.1</div>
@@ -236,9 +236,11 @@
                     <div class="avatar large" data-player-initial>P</div>
                     <div>
                         <h2 data-player-name>Player</h2>
-                        <p id="profTier">Silver</p><strong id="profRating">1,500 rating</strong>
+                        <p id="profTier">Silver · Bot practice</p><strong id="profRating">1,500 practice rating</strong>
                     </div>
                 </div>
+                <article class="panel online-profile-summary"><h3>RATED ROOM MATCHES · ONLINE</h3><strong id="onlineProfileRating" class="online-profile-score">—</strong><p id="onlineProfileDetails" class="muted">Sign in or create an account to track rated room matches.</p><p id="onlineProfileRecord" class="muted">Your online match record appears here.</p></article>
+                <h2 class="profile-section-heading">PRACTICE RATING · BOT PLAY</h2>
                 <article class="panel account-panel" id="accountPanel">
                     <h3>ONLINE ACCOUNT</h3>
                     <div id="accountSignedOut">
@@ -259,7 +261,7 @@
                 </article>
                 <div class="stat-grid">
                     <article class="panel">
-                        <h3>RATED MATCHES</h3>
+                        <h3>BOT PRACTICE MATCHES</h3>
                         <h2 id="profGames">0</h2>
                     </article>
                     <article class="panel">
@@ -277,7 +279,7 @@
                 </div>
                 <div class="profile-grid">
                     <article class="panel">
-                        <h3>RATING HISTORY</h3>
+                        <h3>BOT PRACTICE RATING HISTORY</h3>
                         <div id="profChart"></div>
                     </article>
                     <article class="panel">
@@ -286,10 +288,10 @@
                     </article>
                 </div>
                 <article class="panel">
-                    <h3>RECENT MATCHES</h3>
+                    <h3>RECENT BOT PRACTICE MATCHES</h3>
                     <div id="profMatches" class="mr-table"></div>
                 </article>
-                <p class="muted">The stats above are from bot practice and are saved in this browser. Your online rating comes from rated room matches and is shown on the leaderboard.</p>
+                <p class="muted">Bot practice ratings and match history are saved in this browser. Rated room results use your online account and the shared leaderboard.</p>
             </section>
             <section id="leaderboard" class="view content-view">
                 <h1>LEADERBOARDS</h1>

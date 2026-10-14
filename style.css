@@ -418,6 +418,12 @@ body.rivl-modal-open{overflow:hidden}
 #roomGame .rivl-pvp-seat{max-width:none;gap:5px;flex-wrap:nowrap}
 @media(max-width:650px){#roomGame .rivl-shown .card{width:27px;height:39px;flex-basis:27px}#roomGame .rivl-shown .card>.rivl-card-center{font-size:18px}}
 
+/* Separate online rated PvP from browser-local bot practice */
+.online-profile-summary{border:1px solid #8e6534;background:linear-gradient(130deg,#251b12,#101011);padding:22px;margin:18px 0}
+.online-profile-summary h3{color:var(--gold);letter-spacing:.12em;font-size:12px;margin:0 0 12px}
+.online-profile-score{display:block;font-size:38px;line-height:1.2;color:#f4d197;font-weight:800}
+.online-profile-summary p{margin:7px 0}
+.profile-section-heading{color:var(--gold);font-size:15px;letter-spacing:.12em;margin:28px 0 12px}
 /* Showdown: revealed opponent cards hang off the seat pill toward the felt, fully drawn, without hiding the name or stack. */
 #roomGame .rivl-pvp-seat.has-shown{z-index:4}
 #roomGame .rivl-pvp-seat>span:not(.rivl-shown){flex-shrink:0}
