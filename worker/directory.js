@@ -22,8 +22,14 @@ export class Directory {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS matches(id TEXT PRIMARY KEY,t INTEGER NOT NULL)`);
     // Ranked Elo is a fresh ladder kept apart from the older all-rooms rating (r, rd, vol, games, wins).
     const cols=new Set(this.rows('PRAGMA table_info(accounts)').map(c=>c.name));
-    for(const [name,def] of [['rr','REAL NOT NULL DEFAULT 1500'],['rrd','REAL NOT NULL DEFAULT 350'],['rvol','REAL NOT NULL DEFAULT 0.06'],['rgames','INTEGER NOT NULL DEFAULT 0'],['rwins','INTEGER NOT NULL DEFAULT 0']])
+    for(const [name,def] of [['rr','REAL NOT NULL DEFAULT 1500'],['rrd','REAL NOT NULL DEFAULT 350'],['rvol','REAL NOT NULL DEFAULT 0.06'],['rgames','INTEGER NOT NULL DEFAULT 0'],['rwins','INTEGER NOT NULL DEFAULT 0'],['elo_offset','INTEGER NOT NULL DEFAULT 0']])
       if(!cols.has(name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
+    // One-time season reset: preserve account identities and sign-in keys, reset ranked progress.
+    this.sql.exec('CREATE TABLE IF NOT EXISTS migrations(name TEXT PRIMARY KEY, applied INTEGER NOT NULL)');
+    if(!this.one("SELECT name FROM migrations WHERE name='zero_elo_season_v1'")){
+      this.sql.exec('UPDATE accounts SET rr=1500,rrd=350,rvol=0.06,rgames=0,rwins=0,elo_offset=1500,last_played=NULL');
+      this.sql.exec("INSERT INTO migrations(name,applied) VALUES ('zero_elo_season_v1',?)",Date.now());
+    }
     // Ranked tables waiting for players sit in the same lobby table, flagged so Open Tables and Quick Play never show them.
     if(!this.rows('PRAGMA table_info(lobby)').some(c=>c.name==='ranked'))this.sql.exec('ALTER TABLE lobby ADD COLUMN ranked INTEGER NOT NULL DEFAULT 0');
     if(!this.rows('PRAGMA table_info(lobby)').some(c=>c.name==='size'))this.sql.exec('ALTER TABLE lobby ADD COLUMN size INTEGER NOT NULL DEFAULT 6');
@@ -47,8 +53,9 @@ export class Directory {
   publicAccount(a){
     if(!a)return null;
     const rank=a.rgames>0?this.one('SELECT COUNT(*)+1 AS n FROM accounts WHERE rgames>0 AND rr>?',a.rr).n:null;
-    const t=R.tier(a.rr);
-    return {id:a.id,name:a.name,rating:Math.round(a.rr),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
+    const displayed=Math.max(0,a.rr-(a.elo_offset||0));
+    const t=R.tier(displayed);
+    return {id:a.id,name:a.name,rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
   }
   async byKey(key){
     if(typeof key!=='string'||key.length<20||key.length>64)return null;
@@ -66,7 +73,7 @@ export class Directory {
         const s=this.status();if(s.usage.accounts>=s.limits.accounts)return this.reply({error:'New accounts are paused for today. Try again tomorrow.'},503);
         if(this.one('SELECT id FROM accounts WHERE name=?',name))return this.reply({error:'That name is taken.'},409);
         const id=crypto.randomUUID(),key=randomKey();
-        this.sql.exec('INSERT INTO accounts(id,name,key_hash,created) VALUES (?,?,?,?)',id,name,await sha256(key),Date.now());
+        this.sql.exec('INSERT INTO accounts(id,name,key_hash,created,elo_offset) VALUES (?,?,?,?,1500)',id,name,await sha256(key),Date.now());
         this.sql.exec('UPDATE usage SET accounts=accounts+1 WHERE day=?',day());
         return this.reply({account:this.publicAccount(this.one('SELECT * FROM accounts WHERE id=?',id)),key});
       }
@@ -84,10 +91,10 @@ export class Directory {
         // falls back to the 10 players nearest r on the whole ladder.
         const r=Number(url.searchParams.get('r'));if(!Number.isFinite(r))return this.reply({error:'Missing rating.'},400);
         const t=R.tier(r),[,lo,hi]=R.LEAGUES.find(l=>l[0]===t.name),top=hi===Infinity?1e9:hi;
-        const total=this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0 AND rr>=? AND rr<?',lo,top).n;
+        const total=this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0 AND MAX(0,rr-elo_offset)>=? AND MAX(0,rr-elo_offset)<?',lo,top).n;
         const near=total<10;
-        const rows=near?this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY ABS(rr-?) LIMIT 10',r)
-          :this.rows('SELECT * FROM accounts WHERE rgames>0 AND rr>=? AND rr<? ORDER BY ABS(rr-?) LIMIT 50',lo,top,r);
+        const rows=near?this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY ABS(MAX(0,rr-elo_offset)-?) LIMIT 10',r)
+          :this.rows('SELECT * FROM accounts WHERE rgames>0 AND MAX(0,rr-elo_offset)>=? AND MAX(0,rr-elo_offset)<? ORDER BY ABS(MAX(0,rr-elo_offset)-?) LIMIT 50',lo,top,r);
         return this.reply({league:t.name,leagueKey:t.key,near,total,players:rows.sort((x,y)=>y.rr-x.rr).map(a=>this.publicAccount(a))});
       }
       if(path==='/results')return this.reply(this.recordResults(body));
@@ -125,6 +132,6 @@ export class Directory {
     const score=(me,o)=>{const place=me.place<o.place?1:me.place>o.place?0:.5;return graded(me)&&graded(o)?W_PLACE*place+W_DEC*pairAcc(Number(me.acc),Number(o.acc)):place};
     const updates=unique.map(({p,a})=>({a,p,place:Number(p.place),next:glicko({r:a.rr,rd:a.rrd,vol:a.rvol},unique.filter(o=>o.a.id!==a.id).map(o=>({r:o.a.rr,rd:o.a.rrd,w,s:score(p,o.p)})))}));
     for(const u of updates)this.sql.exec('UPDATE accounts SET rr=?,rrd=?,rvol=?,rgames=rgames+1,rwins=rwins+?,last_played=? WHERE id=?',u.next.r,u.next.rd,u.next.vol,u.place===1?1:0,Date.now(),u.a.id);
-    return {rated:true,changes:updates.map(u=>({id:u.a.id,name:u.a.name,before:Math.round(u.a.rr),after:Math.round(u.next.r),accuracy:graded(u.p)?Math.round(Number(u.p.acc)):null}))};
+    return {rated:true,changes:updates.map(u=>({id:u.a.id,name:u.a.name,before:Math.max(0,Math.round(u.a.rr-(u.a.elo_offset||0))),after:Math.max(0,Math.round(u.next.r-(u.a.elo_offset||0))),accuracy:graded(u.p)?Math.round(Number(u.p.acc)):null}))};
   }
 }

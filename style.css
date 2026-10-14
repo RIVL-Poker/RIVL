@@ -595,3 +595,10 @@ body.rivl-modal-open{overflow:hidden}
 .rt-id .rivl-league-icon{width:25px;height:25px}
 .online-row .rivl-league-icon{width:17px;height:17px}
 .rivl-seat-label .rivl-league-icon{width:15px;height:15px}
+
+/* Compact league badges; profile shows rank + badge instead of badge beside name. */
+.rivl-league-icon{width:15px;height:15px}
+.rt-id .rivl-league-icon{width:16px;height:16px}
+.online-row .rivl-league-icon{width:14px;height:14px}
+.rivl-seat-label .rivl-league-icon{width:13px;height:13px}
+#rtTier.rivl-league-name{display:inline-flex;align-items:center;gap:6px}

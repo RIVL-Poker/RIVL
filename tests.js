@@ -42,6 +42,6 @@ assert(['Best','Excellent','Good'].includes(R.grade(R.analyze(g2,0,400),'raise',
 let g3=mk(['9♥','8♥'],['7♣','2♥','K♦'],30,80);const once=JSON.stringify(R.analyze(g3,0,R.GRADE_ITERS).opts.map(o=>o.ev));
 assert(once===JSON.stringify(R.analyze(g3,0,R.GRADE_ITERS).opts.map(o=>o.ev)),'the same spot always gets the same analysis (seeded)');
 const lg=r=>R.tier(r).name;
-assert(lg(1399)==='Prospect'&&lg(1400)==='Challenger'&&lg(1500)==='Challenger'&&lg(1750)==='Elite'&&lg(2100)==='Master'&&lg(2450)==='Grandmaster'&&lg(2799)==='Grandmaster'&&lg(2800)==='Champion'&&lg(3500)==='Champion','league bands');
-assert(R.tier(1575).progress===.5&&R.tier(1500).next===1750&&R.tier(3000).next===null,'league progress');
+assert(lg(0)==='Prospect'&&lg(349)==='Prospect'&&lg(350)==='Challenger'&&lg(699)==='Challenger'&&lg(700)==='Elite'&&lg(1050)==='Master'&&lg(1400)==='Grandmaster'&&lg(1749)==='Grandmaster'&&lg(1750)==='Champion'&&lg(3500)==='Champion','league bands');
+assert(R.tier(525).progress===.5&&R.tier(350).next===700&&R.tier(3000).next===null,'league progress');
 console.log('PASS: 12 poker engine checks + 8 rating checks');

@@ -153,7 +153,7 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const env=makeEnv();
   assert.equal((await api(env,'/api/accounts',{name:'x'})).status,400);
   const ann=(await api(env,'/api/accounts',{name:'Ann'})).data;
-  assert.ok(ann.key&&ann.account.rating===1500);
+  assert.ok(ann.key&&ann.account.rating===0);
   assert.equal((await api(env,'/api/accounts',{name:'ann'})).status,409,'names are unique ignoring case');
   assert.equal((await api(env,'/api/me',{key:ann.key})).data.account.name,'Ann');
   assert.equal((await api(env,'/api/me',{key:'x'.repeat(30)})).status,401);
@@ -212,7 +212,9 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   assert.ok(bustOrder.length>=1,'someone else busted after Cat left');
   const changes=room.room.game.ratingChanges;
   assert.equal(changes.length,4,'all four signed-in players rated');
-  const cat=changes.find(c=>c.name==='Cat');assert.ok(cat.after<cat.before,'the leaver loses rating');
+  const cat=changes.find(c=>c.name==='Cat');assert.equal(cat.before,0,'new ranked accounts begin at zero');assert.equal(cat.after,0,'displayed Elo cannot drop below zero');
+  const catInternal=env.DIRECTORY.instances.get('global').sql.exec('SELECT rr FROM accounts WHERE id=?',acc[2].account.id).toArray()[0].rr;
+  assert.ok(catInternal<1500,'the leaver loses internal Glicko rating even at the zero display floor');
   // Every explicit action by a Ranked player was graded on the server; long-lasting players have an accuracy.
   const graded=sent.players.filter(p=>p.decisions>0);
   assert.ok(graded.length>=1&&graded.every(p=>p.acc>=0&&p.acc<=100),'ranked decisions are graded on the server');
@@ -250,11 +252,11 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const skill=await results({matchId:'m2',players:[{id:ids[2],place:1,acc:40,decisions:10},{id:ids[3],place:2,acc:98,decisions:10}]});
   const gain=r=>r.changes[0].after-r.changes[0].before;
   assert.ok(gain(skill)<gain(plain),'a winner with poor decisions gains less');
-  const loss=r=>r.changes[1].before-r.changes[1].after;
-  assert.ok(loss(skill)<loss(plain),'a loser with much better decisions loses less');
+  const internal=id=>env.DIRECTORY.instances.get('global').sql.exec('SELECT rr FROM accounts WHERE id=?',id).toArray()[0].rr;
+  assert.ok(internal(ids[3])>internal(ids[1]),'a loser with much better decisions loses less internally, even when both display zero');
   assert.equal(skill.changes[1].accuracy,98);
   const few=await results({matchId:'m3',players:[{id:ids[0],place:2,acc:99,decisions:2},{id:ids[1],place:1,acc:10,decisions:10}]});
-  assert.equal(few.changes[0].accuracy,null,'fewer than 3 decisions: place only');assert.ok(few.changes[0].after<few.changes[0].before);
+  assert.equal(few.changes[0].accuracy,null,'fewer than 3 decisions: place only');assert.ok(internal(ids[0])<plain.changes[0].after+1500,'the place-only loss is recorded internally');
   checks++;
 }
 
@@ -280,17 +282,17 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
 // 9d. Leagues: every account carries its league; "My league" lists that league, or the 10 nearest when it is small.
 {
   const env=makeEnv();
-  const elos=[1300,1450,1500,1520,1600,1650,1700,1720,1740,1745,1749,1800,2900];
+  const elos=[100,400,450,475,500,525,550,575,600,625,650,800,1900];
   const accts=[];for(let i=0;i<elos.length;i++)accts.push((await api(env,'/api/accounts',{name:'League'+i})).data.account);
   const d=env.DIRECTORY.instances.get('global');
-  accts.forEach((a,i)=>d.sql.exec('UPDATE accounts SET rr=?,rgames=1 WHERE id=?',elos[i],a.id));
-  const mine=(await api(env,'/api/leaderboard/league?r=1500')).data;
+  accts.forEach((a,i)=>d.sql.exec('UPDATE accounts SET rr=?,rgames=1 WHERE id=?',elos[i]+1500,a.id));
+  const mine=(await api(env,'/api/leaderboard/league?r=500')).data;
   assert.equal(mine.league,'Challenger');assert.equal(mine.near,false);assert.equal(mine.total,10);
-  assert.ok(mine.players.every(p=>p.league==='Challenger'&&p.rating>=1400&&p.rating<1750),'only Challenger players');
+  assert.ok(mine.players.every(p=>p.league==='Challenger'&&p.rating>=350&&p.rating<700),'only Challenger players');
   assert.deepEqual(mine.players.map(p=>p.rating),[...mine.players.map(p=>p.rating)].sort((x,y)=>y-x),'sorted by Elo');
-  const champ=(await api(env,'/api/leaderboard/league?r=2950')).data;
+  const champ=(await api(env,'/api/leaderboard/league?r=1950')).data;
   assert.equal(champ.league,'Champion');assert.equal(champ.near,true,'a small league falls back to nearest players');
-  assert.equal(champ.players.length,10);assert.equal(champ.players[0].rating,2900);
+  assert.equal(champ.players.length,10);assert.equal(champ.players[0].rating,1900);
   assert.equal((await api(env,'/api/leaderboard/league?r=abc')).status,400);
   assert.equal((await (await d.fetch(new Request('https://dir/leaderboard'))).json()).players[0].league,'Champion','the top 50 shows leagues too');
   checks++;

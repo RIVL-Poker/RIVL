@@ -93,7 +93,7 @@ function sparkline(points,w=560,h=120){
 }
 function renderRankedTracker(acct,elo,games,set){
   const rt=RivlRating.tier(elo);
-  set('rtTier',rt.name);window.rivlLeagueIcons?.decorate($('rtTitle'),rt.key,{prepend:true});const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
+  set('rtTier','Rank: '+rt.name);window.rivlLeagueIcons?.decorate($('rtTier'),rt.key,{prepend:true});window.rivlLeagueIcons?.decorate($('rtTitle'),null,{prepend:true});const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
   set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
   const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
   set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
@@ -115,8 +115,8 @@ function refreshRatingUI(){
   const t=RivlRating.tier(me.r),prov=me.rd>110,r=Math.round(me.r);
   const set=(id,v)=>{const el=$(id);if(el)el.textContent=v};
   // Ranked Elo comes from the signed-in account; only Ranked rooms change it.
-  const acct=window.rivlAccount?.current?.(),games=acct?.games||0,elo=acct?acct.rating:1500;
-  set('sideTier','✦ RANKED · ELO');
+  const acct=window.rivlAccount?.current?.(),games=acct?.games||0,elo=acct?acct.rating:0;
+  set('sideTier','ELO');
   set('sideRating',elo.toLocaleString());
   set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${acct.provisional?'Provisional · ':''}±${acct.rd} · ${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
   set('sideRank',acct?.rank?`Ranked #${acct.rank}`:'');
