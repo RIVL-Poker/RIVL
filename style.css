@@ -481,3 +481,8 @@ body.rivl-modal-open{overflow:hidden}
 .rt-tiles b{float:none!important;text-align:left}
 #profile .profile-card:not(.ranked-tracker){max-width:none}
 @media(max-width:520px){.ranked-tracker{padding:16px}.rt-score strong{font-size:40px}.rt-body .mr-row{grid-template-columns:44px minmax(0,1fr) 40px 44px;font-size:12px}}
+
+/* Ranked has its own three-card selection screen; Casual lobby contains no ranked entry. */
+#rankedSelect .rivl-card-modes{margin-top:18px}
+#rankedSelect .ranked-join{width:100%}
+#rankedSelectStatus{margin:18px 0 0}

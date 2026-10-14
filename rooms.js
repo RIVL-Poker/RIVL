@@ -66,7 +66,7 @@
   const request=async(path,method='GET',body)=>{if(!API)throw Error('Online rooms need the site to be opened from its web address, not as a local file.');const response=await fetch(API.replace(/\/$/,'')+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const data=await response.json().catch(()=>({error:'Room server unavailable ('+response.status+')'}));if(!response.ok)throw Error(data.error||'Room server error');return data};
   function render(){
     if(!snapshot)return;
-    $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=snapshot.ranked?'· RANKED':roomCode;
+    $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=snapshot.ranked?'· RANKED '+(snapshot.rankedMax||6)+' PLAYERS':roomCode;
     const playing=!!snapshot.started&&!!snapshot.game;
     const disclaimer=document.querySelector('.room-disclaimer');
     if(disclaimer)disclaimer.textContent=(snapshot.ranked?'Ranked':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
@@ -244,6 +244,7 @@
     // Reconnect automatically with backoff; the saved token keeps the seat.
     ws.onclose=()=>{if(socket!==ws||!token)return;clearInterval(pingTimer);const wait=Math.min(15000,1000*2**retry++);status('Connection lost. Reconnecting…');retryTimer=setTimeout(connect,wait)};
   }
+  let rankedSize=6;
   async function enter(kind){try{
     rankedEntry=kind==='ranked';
     if(kind==='ranked'&&!window.rivlAccount?.key())throw Error('Sign in or create an account on your Profile to play Ranked.');
@@ -253,10 +254,10 @@
     if(kind==='join'&&!/^[A-Z2-9]{6}$/.test(code))throw Error('Room codes are 6 letters and numbers.');
     const key=window.rivlAccount?.key()||undefined;
     const result=kind==='quick'?await request('/api/quickplay','POST',{name,key}):
-      kind==='ranked'?await request('/api/ranked','POST',{key}):
+      kind==='ranked'?await request('/api/ranked','POST',{key,size:rankedSize}):
       await request(kind==='create'?'/api/rooms':'/api/rooms/'+encodeURIComponent(code)+'/join','POST',{name,key,visibility:$('roomListPublic').checked?'public':'private'});
     roomCode=result.code;token=result.token;saveSession();connect();
-  }catch(e){status(e.message);refreshCapacity()}}
+  }catch(e){status(e.message);if(kind==='ranked')$('rankedSelectStatus').textContent=e.message;refreshCapacity()}}
   // Open tables: public rooms waiting for players. Refreshed only while this screen is on show.
   let lobbyTimer=null;
   function finderVisible(){return $('rooms').classList.contains('active')&&!$('roomEntry').hidden&&document.visibilityState==='visible'}
@@ -286,9 +287,10 @@
   $('openRooms').onclick=()=>{show('rooms');startFinder()};
   $('quickPlay').onclick=()=>enter('quick');
   $('createRoom').onclick=()=>enter('create');
-  $('findRanked').onclick=()=>enter('ranked');
+  document.querySelectorAll('[data-ranked-count]').forEach(btn=>btn.addEventListener('click',()=>{rankedSize=Number(btn.dataset.rankedCount);enter('ranked')}));
   $('rtPlay').onclick=()=>{if(window.rivlAccount?.key())$('openRanked').click();else $('accountName')?.focus()};
-  $('openRanked').onclick=()=>{show('rooms');startFinder();if(window.rivlAccount?.key())enter('ranked');else{$('rankedPanel').scrollIntoView({block:'center'});status('Sign in or create an account on your Profile to play Ranked.')}};
+  $('openRanked').onclick=()=>{show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;$('rankedSelectStatus').textContent=window.rivlAccount?.key()?'Select 3, 6, or 9 players to join a real-player ranked queue.':'Sign in or create an account in Profile before joining ranked.'};
+  $('backFromRanked').onclick=()=>{show('play');$('rankedSelect').hidden=true;$('modeSelect').hidden=false};
   $('joinRoom').onclick=()=>enter('join');
   $('leaveRoom').onclick=()=>{if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return;send({type:'leave'});resetView('Left room.')};
   $('roomStart').onclick=()=>send({type:'startMatch'});
