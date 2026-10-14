@@ -602,3 +602,22 @@ body.rivl-modal-open{overflow:hidden}
 .online-row .rivl-league-icon{width:14px;height:14px}
 .rivl-seat-label .rivl-league-icon{width:13px;height:13px}
 #rtTier.rivl-league-name{display:inline-flex;align-items:center;gap:6px}
+
+/* Profile identity: large metallic league emblem left of name, league pill underneath. */
+.ranked-tracker .rt-head{display:flex;align-items:center;gap:22px;flex-wrap:nowrap}
+.ranked-tracker .rt-hero-gem{width:132px;height:132px;flex:0 0 132px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 7px #000a)}
+.ranked-tracker .rt-hero-gem .rivl-league-icon{width:120px;height:120px;display:block;filter:drop-shadow(0 3px 3px #000b)}
+.ranked-tracker .rt-id{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;min-width:0}
+.ranked-tracker .rt-id h2{margin:0;font-size:clamp(26px,3vw,38px);line-height:1.1;overflow-wrap:anywhere}
+.ranked-tracker #rtTier{margin:0;font-size:13px;letter-spacing:.07em;padding:6px 17px;display:inline-flex;align-items:center;justify-content:center}
+.ranked-tracker .rt-score{margin-left:auto;flex-shrink:0}
+.ranked-tracker .rt-foot{justify-content:flex-start}
+@media(max-width:600px){
+ .ranked-tracker .rt-head{gap:12px}
+ .ranked-tracker .rt-hero-gem{width:76px;height:76px;flex-basis:76px}
+ .ranked-tracker .rt-hero-gem .rivl-league-icon{width:72px;height:72px}
+ .ranked-tracker .rt-id h2{font-size:23px}
+ .ranked-tracker #rtTier{font-size:10px;padding:4px 10px}
+ .ranked-tracker .rt-score strong{font-size:32px}
+ .ranked-tracker .rt-score small{font-size:10px}
+}

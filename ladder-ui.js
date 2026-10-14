@@ -93,7 +93,7 @@ function sparkline(points,w=560,h=120){
 }
 function renderRankedTracker(acct,elo,games,set){
   const rt=RivlRating.tier(elo);
-  set('rtTier','Rank: '+rt.name);window.rivlLeagueIcons?.decorate($('rtTier'),rt.key,{prepend:true});window.rivlLeagueIcons?.decorate($('rtTitle'),null,{prepend:true});const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
+  set('rtTier',rt.name);const gem=$('rtHeroGem');if(gem){gem.replaceChildren();const svg=window.rivlLeagueIcons?.icon(rt.key);if(svg)gem.append(svg);gem.setAttribute('aria-label',rt.name+' league emblem')}const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;
   set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
   const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
   set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
@@ -101,7 +101,6 @@ function renderRankedTracker(acct,elo,games,set){
   set('rtGames',games);set('rtWins',acct?.wins||0);
   set('rtWinRate',games?Math.round(100*(acct.wins||0)/games)+'%':'–');
   set('rtRank',acct?.rank?'#'+acct.rank:'–');
-  const btn=$('rtPlay');if(btn)btn.textContent=acct?'FIND RANKED MATCH':'SIGN IN TO PLAY';
   let hist=[];try{hist=JSON.parse(localStorage.getItem('rivlRankedHistory')||'[]')}catch{}
   hist=Array.isArray(hist)&&acct?hist.filter(m=>m.account===acct.id):[];
   const ch=$('rtChart');

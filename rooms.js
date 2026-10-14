@@ -290,7 +290,6 @@
   $('quickPlay').onclick=()=>enter('quick');
   $('createRoom').onclick=()=>enter('create');
   document.querySelectorAll('[data-ranked-count]').forEach(btn=>btn.addEventListener('click',()=>{rankedSize=Number(btn.dataset.rankedCount);enter('ranked')}));
-  $('rtPlay').onclick=()=>{if(window.rivlAccount?.key())$('openRanked').click();else $('accountName')?.focus()};
   $('openRanked').onclick=()=>{show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;$('rankedSelectStatus').textContent=window.rivlAccount?.key()?'':'Sign in on your Profile to play Ranked.'};
   $('backFromRanked').onclick=()=>{show('play');$('rankedSelect').hidden=true;$('modeSelect').hidden=false};
   $('joinRoom').onclick=()=>enter('join');
