@@ -256,7 +256,7 @@
     const result=kind==='quick'?await request('/api/quickplay','POST',{name,key}):
       kind==='ranked'?await request('/api/ranked','POST',{key,size:rankedSize}):
       await request(kind==='create'?'/api/rooms':'/api/rooms/'+encodeURIComponent(code)+'/join','POST',{name,key,visibility:$('roomListPublic').checked?'public':'private'});
-    roomCode=result.code;token=result.token;saveSession();connect();
+    roomCode=result.code;token=result.token;saveSession();if(kind==='ranked')show('rooms');connect();
   }catch(e){status(e.message);if(kind==='ranked')$('rankedSelectStatus').textContent=e.message;refreshCapacity()}}
   // Open tables: public rooms waiting for players. Refreshed only while this screen is on show.
   let lobbyTimer=null;
