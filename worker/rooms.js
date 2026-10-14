@@ -16,9 +16,9 @@ function allowedOrigin(request,env){
   const extra=String(env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
   return {ok:origin===self||extra.includes(origin),origin};
 }
-async function readBody(request){
+async function readBody(request,maxLength=MAX_BODY){
   const text=await request.text();
-  if(text.length>MAX_BODY)throw Object.assign(Error('Request too large'),{status:413});
+  if(text.length>maxLength)throw Object.assign(Error('Request too large'),{status:413});
   try{return text?JSON.parse(text):{}}catch{throw Object.assign(Error('Invalid JSON'),{status:400})}
 }
 const dirStub=env=>env.DIRECTORY.get(env.DIRECTORY.idFromName('global'));
@@ -92,7 +92,7 @@ export default {
       }
       if(url.pathname==='/api/avatar'){
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Please wait before changing your photo again.'},429);
-        return send(await dir(env,'/accounts/avatar',await readBody(request)));
+        return send(await dir(env,'/accounts/avatar',await readBody(request,50000)));
       }
       if(url.pathname==='/api/me'){
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
