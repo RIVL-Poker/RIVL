@@ -93,12 +93,11 @@ function sparkline(points,w=560,h=120){
 }
 function renderRankedTracker(acct,elo,games,set){
   const rt=RivlRating.tier(elo);
-  set('rtTier',rt.name);const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
+  set('rtTier',rt.name);const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
   set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
-  const bar=$('rtBar');if(bar)bar.style.width=(rt.progress*100).toFixed(0)+'%';
-  const lo=rt.next?rt.next-200:null;
-  set('rtBarFrom',`${rt.name}${lo?' '+Math.max(lo,0).toLocaleString():''}`);
-  set('rtBarTo',rt.next?`${RivlRating.tier(rt.next).name} ${rt.next.toLocaleString()}`:'Top tier');
+  const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
+  set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
+  set('rtBarTo',rt.next?`${RivlRating.tier(rt.next).name} ${rt.next.toLocaleString()}`:'Top league');
   set('rtGames',games);set('rtWins',acct?.wins||0);
   set('rtWinRate',games?Math.round(100*(acct.wins||0)/games)+'%':'–');
   set('rtRank',acct?.rank?'#'+acct.rank:'–');
@@ -121,7 +120,7 @@ function refreshRatingUI(){
   set('sideRating',elo.toLocaleString());
   set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${acct.provisional?'Provisional · ':''}±${acct.rd} · ${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
   set('sideRank',acct?.rank?`Ranked #${acct.rank}`:'');
-  document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=Math.max(0,Math.min(100,(elo-1000)/10)).toFixed(0)+'%');
+  document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=(RivlRating.tier(elo).progress*100).toFixed(0)+'%');
   set('onlineProfileRating',elo.toLocaleString());
   set('onlineProfileDetails',acct?`Ranked Elo is 60% finishing place and 40% graded decisions. Only Ranked matches change it.`:'Sign in below to play Ranked.');
   set('onlineProfileRecord',`${acct?.wins||0} wins · ${games?Math.round(100*(acct.wins||0)/games):0}% win rate`);
@@ -149,7 +148,7 @@ function refreshRatingUI(){
   if(pm){const ms=st.matches.slice(-8).reverse();pm.innerHTML=ms.length?`<div class="mr-row head"><span>PLACE</span><span>TABLE</span><span>ACCURACY</span><span>RATING</span></div>`+ms.map(m=>`<div class="mr-row"><span>${ord(m.place)}</span><span>${m.size}-max</span><span>${m.acc==null?'–':m.acc.toFixed(1)+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)} · ${Math.round(m.after)}</span></div>`).join(''):'<p class="muted">No rated matches yet.</p>'}
   // leaderboard
   const lt=$('ladderRows');
-  if(lt)lt.innerHTML=rows.map((x,k)=>`<div class="ladder-row${x.name==='You'?' me':''}"><span>${k+1}</span><span>${x.name==='You'?esc((window.rivlPlayerName?.()||'You')+' (you)'):esc(x.name)}${x.name==='You'?'':' <small>BOT</small>'}</span><span>${RivlRating.tier(x.r).name}</span><span>${Math.round(x.r).toLocaleString()}</span><span>±${Math.round(x.rd)}</span><span>${x.games||0}</span><span>${x.avg==null?'–':x.avg.toFixed(1)+'%'}</span></div>`).join('');
+  if(lt)lt.innerHTML=rows.map((x,k)=>`<div class="ladder-row${x.name==='You'?' me':''}"><span>${k+1}</span><span>${x.name==='You'?esc((window.rivlPlayerName?.()||'You')+' (you)'):esc(x.name)}${x.name==='You'?'':' <small>BOT</small>'}</span><span class="league-${RivlRating.tier(x.r).key}">${RivlRating.tier(x.r).name}</span><span>${Math.round(x.r).toLocaleString()}</span><span>±${Math.round(x.rd)}</span><span>${x.games||0}</span><span>${x.avg==null?'–':x.avg.toFixed(1)+'%'}</span></div>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded',refreshRatingUI);

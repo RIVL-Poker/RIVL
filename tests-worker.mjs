@@ -277,6 +277,25 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+// 9d. Leagues: every account carries its league; "My league" lists that league, or the 10 nearest when it is small.
+{
+  const env=makeEnv();
+  const elos=[1300,1450,1500,1520,1600,1650,1700,1720,1740,1745,1749,1800,2900];
+  const accts=[];for(let i=0;i<elos.length;i++)accts.push((await api(env,'/api/accounts',{name:'League'+i})).data.account);
+  const d=env.DIRECTORY.instances.get('global');
+  accts.forEach((a,i)=>d.sql.exec('UPDATE accounts SET rr=?,rgames=1 WHERE id=?',elos[i],a.id));
+  const mine=(await api(env,'/api/leaderboard/league?r=1500')).data;
+  assert.equal(mine.league,'Challenger');assert.equal(mine.near,false);assert.equal(mine.total,10);
+  assert.ok(mine.players.every(p=>p.league==='Challenger'&&p.rating>=1400&&p.rating<1750),'only Challenger players');
+  assert.deepEqual(mine.players.map(p=>p.rating),[...mine.players.map(p=>p.rating)].sort((x,y)=>y-x),'sorted by Elo');
+  const champ=(await api(env,'/api/leaderboard/league?r=2950')).data;
+  assert.equal(champ.league,'Champion');assert.equal(champ.near,true,'a small league falls back to nearest players');
+  assert.equal(champ.players.length,10);assert.equal(champ.players[0].rating,2900);
+  assert.equal((await api(env,'/api/leaderboard/league?r=abc')).status,400);
+  assert.equal((await (await d.fetch(new Request('https://dir/leaderboard'))).json()).players[0].league,'Champion','the top 50 shows leagues too');
+  checks++;
+}
+
 // 10. Lobby and Quick Play: public rooms waiting for players are listed and joined; private and started rooms are not listed.
 {
   const env=makeEnv();
