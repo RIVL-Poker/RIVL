@@ -19,7 +19,7 @@
     if($('accountSignedIn'))$('accountSignedIn').hidden=!a;
     if(a){
       $('accountTitle').textContent=a.name;
-      $('accountRating').textContent=a.games?`Ranked Elo ${a.rating.toLocaleString()} (±${a.rd})${a.rank?' · #'+a.rank+' on the ladder':''} · ${a.games} ranked ${a.games===1?'match':'matches'}`:'Ranked Elo 1,500 · no ranked matches yet';
+      $('accountRating').textContent=a.games?`Ranked Elo ${a.rating.toLocaleString()} (±${a.rd})${a.rank?' · #'+a.rank+' on the ladder':''} · ${a.games} ranked ${a.games===1?'match':'matches'}`:'Ranked Elo '+a.rating.toLocaleString()+' · no ranked matches yet';
       $('accountKey').textContent=a.key;
     }
     if($('accountHint'))$('accountHint').innerHTML=a?`Signed in as <b></b>.`:`<a href="#" id="goSignIn">Sign in</a> to play Ranked.`;
@@ -46,7 +46,7 @@
     mine?.setAttribute('aria-pressed',String(board==='mine'));top?.setAttribute('aria-pressed',String(board==='top'));
     const note=text=>{const p=document.createElement('p');p.className='muted';p.textContent=text;rows.append(p)};
     try{
-      const data=board==='mine'?await call('/api/leaderboard/league?r='+(state.rating||1500)):await call('/api/leaderboard');
+      const data=board==='mine'?await call('/api/leaderboard/league?r='+state.rating+'&key='+encodeURIComponent(state.key)):await call('/api/leaderboard');
       const {players,total}=data;
       rows.replaceChildren();
       if(board==='mine'&&data.near&&players.length)note(`${data.league} has ${total} ${total===1?'player':'players'} so far. Showing the ${players.length} players nearest your Elo.`);

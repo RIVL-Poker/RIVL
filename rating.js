@@ -242,8 +242,8 @@ function recordMatch(players,places){
   return summary;
 }
 
-// Ranked leagues: fixed 350-point bands. Everyone starts at 1,500, in Challenger.
-const LEAGUES=[['Prospect',0,1400,'prospect'],['Challenger',1400,1750,'challenger'],['Elite',1750,2100,'elite'],['Master',2100,2450,'master'],['Grandmaster',2450,2800,'grandmaster'],['Champion',2800,Infinity,'champion']];
+// Ranked leagues: fixed 350-point bands. New accounts display zero Elo in Prospect; existing accounts keep their previous displayed Elo and league.
+const LEAGUES=[['Prospect',0,350,'prospect'],['Challenger',350,700,'challenger'],['Elite',700,1050,'elite'],['Master',1050,1400,'master'],['Grandmaster',1400,1750,'grandmaster'],['Champion',1750,Infinity,'champion']];
 const BAND=350;
 function tier(r){const t=LEAGUES.find(([,lo,hi])=>r>=lo&&r<hi)||LEAGUES[0];const lo=t[1]||t[2]-BAND,hi=t[2]===Infinity?lo+BAND:t[2];return{name:t[0],key:t[3],lo,progress:Math.max(0,Math.min(1,(r-lo)/(hi-lo))),next:t[2]===Infinity?null:t[2]}}
 
