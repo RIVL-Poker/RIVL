@@ -6,7 +6,7 @@
   window.rivlPlayerName=()=>window.rivlAccount?.current()?.name||read()||'Player';
   function paint(){
     const name=window.rivlPlayerName();
-    document.querySelectorAll('[data-player-name]').forEach(el=>{el.textContent=name;window.rivlLeagueIcons?.decorate(el,window.rivlAccount?.current()?.leagueKey||window.RivlRating?.tier(window.rivlAccount?.current()?.rating??0,!!window.rivlAccount?.current()?.legacyLeague).key,{prepend:true})});
+    document.querySelectorAll('[data-player-name]').forEach(el=>{el.textContent=name;window.rivlLeagueIcons?.decorate(el,window.rivlAccount?.current()?.leagueKey||window.RivlRating?.tier(window.rivlAccount?.current()?.rating??0).key,{prepend:true})});
     document.querySelectorAll('[data-player-initial]').forEach(el=>el.textContent=name[0].toUpperCase());
     const signedIn=!!window.rivlAccount?.current();
     for(const id of ['roomName','joinName']){const input=document.getElementById(id);if(!input)continue;if(read()||signedIn)input.value=name;input.disabled=signedIn;input.title=signedIn?'Signed in: your account name is used':''}

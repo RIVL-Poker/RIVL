@@ -92,12 +92,12 @@ function sparkline(points,w=560,h=120){
     <div class="spark-axis"><span>First match</span><span>High ${Math.round(hi-15)} · Low ${Math.round(lo+15)} · Now ${Math.round(points[points.length-1])}</span></div>`;
 }
 function renderRankedTracker(acct,elo,games,set){
-  const rt=RivlRating.tier(elo,!!acct?.legacyLeague);
+  const rt=RivlRating.tier(elo);
   set('rtTier','Rank: '+rt.name);window.rivlLeagueIcons?.decorate($('rtTier'),rt.key,{prepend:true});window.rivlLeagueIcons?.decorate($('rtTitle'),null,{prepend:true});const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
   set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
   const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
   set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
-  set('rtBarTo',rt.next?`${RivlRating.tier(rt.next,!!acct?.legacyLeague).name} ${rt.next.toLocaleString()}`:'Top league');
+  set('rtBarTo',rt.next?`${RivlRating.tier(rt.next).name} ${rt.next.toLocaleString()}`:'Top league');
   set('rtGames',games);set('rtWins',acct?.wins||0);
   set('rtWinRate',games?Math.round(100*(acct.wins||0)/games)+'%':'–');
   set('rtRank',acct?.rank?'#'+acct.rank:'–');
@@ -120,7 +120,7 @@ function refreshRatingUI(){
   set('sideRating',elo.toLocaleString());
   set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${acct.provisional?'Provisional · ':''}±${acct.rd} · ${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
   set('sideRank',acct?.rank?`Ranked #${acct.rank}`:'');
-  document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=(RivlRating.tier(elo,!!acct?.legacyLeague).progress*100).toFixed(0)+'%');
+  document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=(RivlRating.tier(elo).progress*100).toFixed(0)+'%');
   set('onlineProfileRating',elo.toLocaleString());
   set('onlineProfileDetails',acct?`Ranked Elo is 60% finishing place and 40% graded decisions. Only Ranked matches change it.`:'Sign in below to play Ranked.');
   set('onlineProfileRecord',`${acct?.wins||0} wins · ${games?Math.round(100*(acct.wins||0)/games):0}% win rate`);

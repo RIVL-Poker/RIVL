@@ -54,7 +54,7 @@
       players.forEach((p,i)=>{
         const row=document.createElement('div');row.className='online-row'+(state&&p.id===state.id?' me':'');
         for(const v of [board==='mine'?p.rank:i+1,p.name+(p.provisional?' ?':''),p.league,p.rating.toLocaleString(),'±'+p.rd,p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
-        window.rivlLeagueIcons?.decorate(row.children[1],p.leagueKey||window.RivlRating?.tier(p.rating,!!p.legacyLeague).key,{prepend:true});
+        window.rivlLeagueIcons?.decorate(row.children[1],p.leagueKey||window.RivlRating?.tier(p.rating).key,{prepend:true});
         row.children[2].className='league-'+p.leagueKey;
         rows.append(row);
       });
