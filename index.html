@@ -16,7 +16,7 @@
             <div class="brand">♠ <span>RIVL</span></div>
             <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav"
                     data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp;
-                    Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button></nav>
+                    Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button><button class="nav" data-view="support">? &nbsp; Support</button></nav>
             <div class="season"><small id="sideTier">✦ RANKED · ELO</small>
                 <h2 id="sideRating">1,500</h2>
                 <p id="sideRatingLabel">Sign in to play Ranked</p>
@@ -333,8 +333,58 @@
                     </div>
                 </div>
             </section>
+            <section id="support" class="view content-view">
+                <h1>SUPPORT</h1>
+                <div class="panel rivl-support-panel">
+                    <h3>REPORT A BUG</h3>
+                    <p class="muted">Found something that isn't working? Tell us what happened so we can improve RIVL. Don't include your private sign-in code or other sensitive information.</p>
+                    <form id="bugReportForm">
+                        <label for="bugCategory">What went wrong?</label>
+                        <select id="bugCategory" required><option value="Gameplay">Gameplay or betting</option><option value="Ranked / Elo">Ranked or Elo</option><option value="Account">Account or sign-in</option><option value="Matchmaking">Matchmaking or online rooms</option><option value="Other">Other</option></select>
+                        <label for="bugDetails">Describe the issue</label>
+                        <textarea id="bugDetails" rows="6" maxlength="3000" required minlength="10" placeholder="What happened? What did you expect? Steps to reproduce..."></textarea>
+                        <button type="submit" class="gold">PREPARE BUG REPORT</button>
+                        <p id="bugReportStatus" class="muted" role="status"></p>
+                    </form>
+                    <p class="muted">Reports are prepared in your email app. They are not sent automatically.</p>
+                </div>
+                <div class="panel rivl-support-panel">
+                    <h3>PRIVACY &amp; FAIR PLAY</h3>
+                    <p>RIVL is free-to-play poker with no real-money wagering. Ranked matches affect your online Elo; casual and bot games do not.</p>
+                    <button type="button" class="outline" id="viewPrivacy">READ PRIVACY POLICY</button>
+                </div>
+            </section>
+            <section id="privacy" class="view content-view">
+                <h1>PRIVACY POLICY</h1>
+                <p class="muted">Draft for review before public launch · Updated October 14, 2026</p>
+                <div class="panel rivl-privacy-panel">
+                    <h3>What RIVL collects</h3>
+                    <p>When you create an account, RIVL stores your chosen display name and a securely hashed version of your private sign-in code to recognize your account. We also store ranked match results, ratings, and information needed to run multiplayer rooms. Your browser may store your sign-in code, game preferences, and bot-practice statistics locally on your device.</p>
+                    <h3>How we use information</h3>
+                    <p>We use this information to provide accounts, multiplayer games, rankings, and the leaderboard, prevent abuse, troubleshoot problems, and maintain the service. Your display name, Elo rating, and certain match statistics may be visible to other players.</p>
+                    <h3>Hosting and technical information</h3>
+                    <p>RIVL is hosted on Cloudflare. Like other web hosting providers, Cloudflare may process technical data such as IP addresses, request details, and security signals when delivering and protecting the site. Cloudflare's own policies apply to its processing.</p>
+                    <h3>Sharing and retention</h3>
+                    <p>We do not offer real-money wagering. We do not intentionally sell player information. Account and match records may remain stored while the service operates; retention and deletion procedures are being finalized for launch. We may share information when legally required or necessary to protect the service.</p>
+                    <h3>Your choices</h3>
+                    <p>You can play bot practice without an online account. You can sign out and clear locally stored browser data. For account or privacy questions, use the Support tab. Do not share your private sign-in code in bug reports.</p>
+                    <h3>Children and policy updates</h3>
+                    <p>RIVL is not intended for children under 13. We may update this policy as features and service providers change. Material changes will be reflected here.</p>
+                    <p class="muted"><strong>Before public launch:</strong> The RIVL operators should confirm the contact address, applicable age requirements, retention practices, and any analytics or advertising providers, then replace this draft with an approved policy.</p>
+                    <button type="button" class="outline" id="backToSupport">← BACK TO SUPPORT</button>
+                </div>
+            </section>
         </main>
     </div>
+    <div id="welcomeOverlay" class="rivl-welcome-overlay" hidden>
+        <div class="rivl-welcome-dialog" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" aria-describedby="welcomeDescription" tabindex="-1">
+            <div class="rivl-welcome-mark">♠</div>
+            <h2 id="welcomeTitle">WELCOME TO RIVL</h2>
+            <p id="welcomeDescription">Play free Texas Hold'em, challenge real players, and climb the Elo rankings. Every ranked match is another step toward the top. <strong>Compete. Improve. Become RIVL Champion.</strong></p>
+            <button type="button" class="gold" id="welcomeOk">GET STARTED</button>
+        </div>
+    </div>
+    <script src="welcome-support.js"></script>
     <script src="profile.js"></script>
     <script src="account.js"></script>
     <script src="engine.js"></script>
