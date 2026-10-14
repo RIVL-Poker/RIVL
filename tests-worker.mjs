@@ -166,26 +166,38 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
-// 9. Ranked rooms: only they are rated, on the server, from the real finishing order; a leaver places last.
+// 9. Ranked is a matchmaking queue: only it is rated, on the server, from the real finishing order; a leaver places last.
 {
   const env=makeEnv();
-  const acc=[];for(const n of ['Ann','Bob','Cat','Dan'])acc.push((await api(env,'/api/accounts',{name:n})).data);
-  // Guests cannot create or join Ranked; Ranked has no bots and never goes public.
-  assert.equal((await api(env,'/api/rooms',{name:'Guest',mode:'ranked'})).status,401);
-  const {code,token}=(await api(env,'/api/rooms',{key:acc[0].key,mode:'ranked',visibility:'public'})).data;
+  const acc=[];for(const n of ['Ann','Bob','Cat','Dan','Eve'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  // Guests cannot queue; there is no way to create a Ranked room directly.
+  assert.equal((await api(env,'/api/ranked',{name:'Guest'})).status,401);
+  const plain=(await api(env,'/api/rooms',{key:acc[0].key,mode:'ranked'})).data;
+  assert.ok(!roomOf(env,plain.code).room.ranked,'room creation cannot make a Ranked room');
+  // Four players queue one after another and land at the same table.
+  const seated=[];for(const a of acc.slice(0,4))seated.push((await api(env,'/api/ranked',{key:a.key})).data);
+  const code=seated[0].code,tokens=seated.map(x=>x.token);
+  assert.ok(seated.every(x=>x.code===code),'the queue fills one table');
   const room=roomOf(env,code);
-  assert.ok(room.room.ranked);assert.equal(room.room.visibility,'private','ranked rooms stay out of Open Tables');
-  const guest=await api(env,'/api/rooms/'+code+'/join',{name:'Guest'});
-  assert.equal(guest.status,401);assert.match(guest.data.error,/Ranked/);
-  const tokens=[token];for(const a of acc.slice(1))tokens.push((await api(env,'/api/rooms/'+code+'/join',{key:a.key})).data.token);
+  assert.ok(room.room.ranked);assert.equal(room.room.visibility,'private');
+  // Ranked tables never show in Open Tables, cannot be joined by code, and Quick Play never lands in one.
+  assert.equal((await (await env.DIRECTORY.get('global').fetch('https://dir/lobby')).json()).rooms.length,0);
+  const byCode=await api(env,'/api/rooms/'+code+'/join',{key:acc[4].key});
+  assert.equal(byCode.status,403);assert.match(byCode.data.error,/matchmade/);
+  assert.notEqual((await api(env,'/api/quickplay',{key:acc[4].key})).data.code,code);
   const sockets=[];for(const t of tokens)sockets.push(await sit(env,code,t));
   await say(room,sockets[0],{type:'addBot',seat:5,level:'Expert'});
   assert.match(sockets[0].last('error').error,/no bots/);
   await say(room,sockets[0],{type:'visibility',visibility:'public'});
   assert.equal(room.room.visibility,'private');
-  const view=sockets[0].last('state').state;assert.ok(view.ranked&&view.rated);
-  let sent=null;const dirCall=room.dir.bind(room);room.dir=(path,body)=>{if(path==='/results')sent=body;return dirCall(path,body)};
+  await say(room,sockets[0],{type:'removePlayer',seat:1});
+  assert.match(sockets[0].last('error').error,/matchmade/);assert.ok(room.room.seats[1],'the first player cannot kick anyone');
   await say(room,sockets[0],{type:'startMatch'});
+  assert.match(sockets[0].last('error').error,/start on their own/);
+  const view=sockets[0].last('state').state;assert.ok(view.ranked&&view.rated&&view.startsAt>Date.now(),'a countdown runs once two players sit');
+  let sent=null;const dirCall=room.dir.bind(room);room.dir=(path,body)=>{if(path==='/results')sent=body;return dirCall(path,body)};
+  room.room.startsAt=Date.now()-1;await room.alarm();   // the countdown ends
+  assert.ok(room.room.started&&room.room.game,'the match starts on its own');
   await say(room,sockets[2],{type:'leave'});   // Cat abandons with chips: places last, below anyone who busts later
   const busted=new Set(),bustOrder=[];
   for(let i=0;i<20000&&!room.matchOver();i++){
@@ -210,6 +222,21 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   assert.equal(board.length,4);assert.ok(board.every(p=>p.games===1));
   assert.equal(board.at(-1).name,'Cat');
   assert.equal(board.reduce((n,p)=>n+p.wins,0),1,'only the match winner is credited a win');
+  checks++;
+}
+
+// 9c. A Ranked table starts at once when full, the next player opens a new table, and the countdown stops below two players.
+{
+  const env=makeEnv();
+  const keys=[];for(let i=0;i<7;i++)keys.push((await api(env,'/api/accounts',{name:'Rank'+i})).data.key);
+  const first=(await api(env,'/api/ranked',{key:keys[0]})).data,second=(await api(env,'/api/ranked',{key:keys[1]})).data;
+  const room=roomOf(env,first.code);assert.ok(room.room.startsAt>0);
+  await room.webSocketMessage(await sit(env,first.code,second.token),JSON.stringify({type:'leave'}));
+  assert.equal(room.room.startsAt,0,'countdown stops when a player leaves the queue');
+  for(let i=1;i<6;i++)await api(env,'/api/ranked',{key:keys[i]});
+  assert.ok(room.room.started,'a full table of six starts immediately');
+  const next=(await api(env,'/api/ranked',{key:keys[6]})).data;
+  assert.notEqual(next.code,first.code,'started tables leave the queue');
   checks++;
 }
 

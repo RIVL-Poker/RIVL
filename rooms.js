@@ -57,7 +57,7 @@
   const request=async(path,method='GET',body)=>{if(!API)throw Error('Online rooms need the site to be opened from its web address, not as a local file.');const response=await fetch(API.replace(/\/$/,'')+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const data=await response.json().catch(()=>({error:'Room server unavailable ('+response.status+')'}));if(!response.ok)throw Error(data.error||'Room server error');return data};
   function render(){
     if(!snapshot)return;
-    $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=roomCode;
+    $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=snapshot.ranked?'· RANKED':roomCode;
     const playing=!!snapshot.started&&!!snapshot.game;
     const disclaimer=document.querySelector('.room-disclaimer');
     if(disclaimer)disclaimer.textContent=(snapshot.ranked?'Ranked':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
@@ -67,21 +67,25 @@
     if(playing&&!wasPlaying){window.scrollTo({top:0,behavior:'instant'});}
     wasPlaying=playing;
     const host=isHost;
-    $('roomHostNotice').textContent=snapshot.ranked?(host?'Ranked room: share the code with signed-in friends. Start when 2 or more are seated. ':'Ranked room. Waiting for the host to start. ')+'Elo comes from finishing place and your graded decisions; leaving early places you last.':
+    $('roomHostNotice').textContent=snapshot.ranked?rankedQueueText():
       (host?'You are the host. Add bots using +, remove bots, or switch visibility. Public rooms appear in Open Tables.':'Waiting for the host to start.')+' Unranked: this match does not change Elo.';
     $('roomPrivate').disabled=!host;$('roomPublic').disabled=!host;
-    document.querySelector('.room-visibility')?.querySelectorAll('#roomPrivate,#roomPublic').forEach(b=>b.hidden=!!snapshot.ranked);
+    // Ranked tables are matchmade: no visibility switch, no room code to share and no Start button.
+    const visibilityRow=document.querySelector('.room-visibility');if(visibilityRow)visibilityRow.hidden=!!snapshot.ranked;
+    $('roomStart').hidden=!!snapshot.ranked;
+    clearInterval(queueTimer);if(snapshot.ranked&&!snapshot.started)queueTimer=setInterval(()=>{$('roomHostNotice').textContent=rankedQueueText()},1000);
     $('roomPrivate').className=snapshot.visibility==='private'?'gold':'outline';
     $('roomPublic').className=snapshot.visibility==='public'?'gold':'outline';
     const seats=$('roomSeats');seats.replaceChildren();
     snapshot.seats.forEach((seat,i)=>{
+      if(snapshot.ranked&&i>=(snapshot.rankedMax||6))return;
       const el=document.createElement('div');el.className='room-seat';
       if(seat){
         const avatar=document.createElement('div');avatar.className='room-avatar';avatar.textContent=avatarFor(seat);el.append(avatar);
         const name=document.createElement('strong');name.textContent=seat.name;if(seat.verified){const v=document.createElement('span');v.className='verified-badge';v.title='Signed-in player';v.textContent='✓';name.append(v)}el.append(name);
         const info=document.createElement('small');info.textContent=(seat.type==='bot'?seat.level+' · Bot':seat.isHost?'Host · Human':'Human')+(i===snapshot.mySeat?' · You':'');el.append(info);
         if(!seat.online){el.classList.add('is-offline');const off=document.createElement('small');off.className='room-offline';off.textContent='Reconnecting…';el.append(off)}
-        if(host&&seat.type==='human'&&i!==snapshot.mySeat&&!lobbyLocked()){const kick=document.createElement('button');kick.className='room-remove';kick.textContent='REMOVE';kick.onclick=()=>send({type:'removePlayer',seat:i});el.append(kick)}
+        if(host&&!snapshot.ranked&&seat.type==='human'&&i!==snapshot.mySeat&&!lobbyLocked()){const kick=document.createElement('button');kick.className='room-remove';kick.textContent='REMOVE';kick.onclick=()=>send({type:'removePlayer',seat:i});el.append(kick)}
         if(host&&seat.type==='bot'&&!lobbyLocked()){const remove=document.createElement('button');remove.className='room-remove';remove.textContent='REMOVE';remove.onclick=()=>send({type:'removeBot',seat:i});el.append(remove)}
       }else{
         const add=document.createElement('button');add.textContent='+';add.title=host?'Add a bot':'Waiting for player';add.disabled=!host||lobbyLocked()||!!snapshot.ranked;if(snapshot.ranked)add.title='Open seat for a signed-in player';add.onclick=()=>{selectedSeat=i;openBotPicker()};el.append(add);
@@ -168,7 +172,8 @@
       if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
       renderRoomPanel();
       $('roomWinner').textContent=g.result||'';
-      $('roomNext').hidden=!(g.matchOver&&host);
+      $('roomNext').hidden=!(g.matchOver&&(host||snapshot.ranked));
+      $('roomNext').textContent=snapshot.ranked?'FIND NEXT RANKED MATCH':'BACK TO LOBBY';
       if(g.matchOver)recordMatch(g);
       if(g.matchOver){const best=g.players.filter(p=>!p.left).sort((a,b)=>b.stack-a.stack)[0];$('roomWinner').textContent=best?'Match complete · '+best.name+' wins the table':'Match complete'}
       const ratings=$('roomRatings');ratings.replaceChildren();
@@ -187,7 +192,7 @@
         if(Number(amount.value)<l.raiseToMin||Number(amount.value)>l.raiseToMax)amount.value=l.raiseToMin;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
-      }else $('roomBetInfo').textContent=g.matchOver?(host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You were sitting out. Act on your next turn to rejoin play.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
+      }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You were sitting out. Act on your next turn to rejoin play.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
       clearInterval(clockTimer);
       const tick=()=>{
         const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);
@@ -198,12 +203,19 @@
       tick();clockTimer=setInterval(tick,200);
     }else clearInterval(clockTimer);
   }
+  let queueTimer=null,rankedEntry=false;
+  function rankedQueueText(){
+    const seated=snapshot.seats.filter(Boolean).length,max=snapshot.rankedMax||6;
+    const wait=snapshot.startsAt?Math.max(0,Math.ceil((snapshot.startsAt-Date.now()-clockOffset)/1000)):0;
+    const head=snapshot.started?'Ranked match.':seated<2?`Finding Ranked players… ${seated} of ${max} seated. The match starts once a second player joins.`:`Ranked match starts in ${wait}s · ${seated} of ${max} seated (starts now at ${max}).`;
+    return head+' Elo comes from finishing place and your graded decisions; leaving early places you last.';
+  }
   function lobbyLocked(){return !!snapshot?.game&&!snapshot.game.matchOver}
   function send(message){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message));else status('Reconnecting to the room…')}
   function resetView(message){
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
-    socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];lastRecordedResult='';clearSession();
+    clearInterval(queueTimer);socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];lastRecordedResult='';clearSession();
     const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM · RATED BOT PLAY';
     $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
   }
@@ -212,7 +224,7 @@
     if(socket){socket.onclose=null;socket.close()}
     const ws=new WebSocket(API.replace(/^http/,'ws').replace(/\/$/,'')+'/ws/'+encodeURIComponent(roomCode));
     socket=ws;
-    ws.onopen=()=>{retry=0;ws.send(JSON.stringify({type:'auth',token}));status('Connected to room '+roomCode);clearInterval(pingTimer);pingTimer=setInterval(()=>{if(socket?.readyState===WebSocket.OPEN)socket.send('ping')},30000)};
+    ws.onopen=()=>{retry=0;ws.send(JSON.stringify({type:'auth',token}));status(snapshot?.ranked||rankedEntry?'Connected to the Ranked queue':'Connected to room '+roomCode);clearInterval(pingTimer);pingTimer=setInterval(()=>{if(socket?.readyState===WebSocket.OPEN)socket.send('ping')},30000)};
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
@@ -224,14 +236,15 @@
     ws.onclose=()=>{if(socket!==ws||!token)return;clearInterval(pingTimer);const wait=Math.min(15000,1000*2**retry++);status('Connection lost. Reconnecting…');retryTimer=setTimeout(connect,wait)};
   }
   async function enter(kind){try{
+    rankedEntry=kind==='ranked';
     if(kind==='ranked'&&!window.rivlAccount?.key())throw Error('Sign in or create an account on your Profile to play Ranked.');
-    const name=safeName($(kind==='create'||kind==='ranked'?'roomName':'joinName').value);
+    const name=safeName($(kind==='create'?'roomName':'joinName').value);
     window.rivlSetPlayerName?.(name);
     const code=kind==='join'?$('roomCodeInput').value.trim().toUpperCase():'';
     if(kind==='join'&&!/^[A-Z2-9]{6}$/.test(code))throw Error('Room codes are 6 letters and numbers.');
     const key=window.rivlAccount?.key()||undefined;
     const result=kind==='quick'?await request('/api/quickplay','POST',{name,key}):
-      kind==='ranked'?await request('/api/rooms','POST',{name,key,mode:'ranked'}):
+      kind==='ranked'?await request('/api/ranked','POST',{key}):
       await request(kind==='create'?'/api/rooms':'/api/rooms/'+encodeURIComponent(code)+'/join','POST',{name,key,visibility:$('roomListPublic').checked?'public':'private'});
     roomCode=result.code;token=result.token;saveSession();connect();
   }catch(e){status(e.message);refreshCapacity()}}
@@ -256,7 +269,7 @@
     if(!API)return;
     try{const s=await request('/api/status');const note=$('capacityNote');note.hidden=!s.busy;
       note.textContent=s.busy?'Online play has used its free capacity for today, so new rooms are paused. Bot practice still works, and rooms open again after midnight UTC.':'';
-      for(const id of ['createRoom','createRanked','quickPlay'])$(id).disabled=s.busy}catch{}
+      for(const id of ['createRoom','findRanked','quickPlay'])$(id).disabled=s.busy}catch{}
   }
   function startFinder(){clearInterval(lobbyTimer);refreshLobby();refreshCapacity();lobbyTimer=setInterval(()=>finderVisible()?refreshLobby():null,15000)}
   document.querySelectorAll('.nav').forEach(n=>n.addEventListener('click',()=>{if(n.dataset.view!=='rooms')clearInterval(lobbyTimer)}));
@@ -264,8 +277,8 @@
   $('openRooms').onclick=()=>{show('rooms');startFinder()};
   $('quickPlay').onclick=()=>enter('quick');
   $('createRoom').onclick=()=>enter('create');
-  $('createRanked').onclick=()=>enter('ranked');
-  $('openRanked').onclick=()=>{show('rooms');startFinder();$('rankedPanel').scrollIntoView({block:'center'});$('createRanked').focus()};
+  $('findRanked').onclick=()=>enter('ranked');
+  $('openRanked').onclick=()=>{show('rooms');startFinder();if(window.rivlAccount?.key())enter('ranked');else{$('rankedPanel').scrollIntoView({block:'center'});status('Sign in or create an account on your Profile to play Ranked.')}};
   $('joinRoom').onclick=()=>enter('join');
   $('leaveRoom').onclick=()=>{if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return;send({type:'leave'});resetView('Left room.')};
   $('roomStart').onclick=()=>send({type:'startMatch'});
@@ -273,7 +286,7 @@
   $('roomCall').onclick=()=>send({type:'action',action:snapshot?.game?.legal?.check?'check':'call'});
   $('roomRaise').onclick=()=>send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)});
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
-  $('roomNext').onclick=()=>send({type:'newMatch'});
+  $('roomNext').onclick=()=>{if(!snapshot?.ranked)return send({type:'newMatch'});send({type:'leave'});resetView('Finding your next Ranked match…');enter('ranked')};
   function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const n=clamp(Math.round(Number(value)||l.raiseToMin),l.raiseToMin,l.raiseToMax);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
   $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=e.target.value;}});
   $('roomRaiseAmount').addEventListener('change',e=>setRoomBet(e.target.value));
