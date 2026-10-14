@@ -109,7 +109,7 @@ export default {
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many join attempts. Try again in a minute.'},429);
         const body=await readBody(request);
         if(!body.key)return json({error:RANKED_SIGN_IN},401);
-        const size=Number(body.size);
+        const size=body.size==null?6:Number(body.size);
         if(!RANKED_SIZES.includes(size))return json({error:'Choose a 3, 6, or 9-player ranked table.'},400);
         const lobby=await dir(env,'/lobby/ranked?size='+size);
         for(const room of (lobby.data.rooms||[]).slice(0,3)){
