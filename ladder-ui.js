@@ -125,7 +125,7 @@ function refreshRatingUI(){
   set('onlineProfileRecord',`${acct?.wins||0} wins · ${games?Math.round(100*(acct.wins||0)/games):0}% win rate`);
   renderRankedTracker(acct,elo,games,set);
   window.rivlPaintName?.();
-  set('homeRating',r.toLocaleString());
+  set('homeRating',Math.max(0,Math.round(me.r-1500)).toLocaleString());
   const avg=me.accN?' · '+(me.accSum/me.accN).toFixed(1)+'% avg accuracy':'';
   set('homeStatsLine',`${t.name} · ${me.games||0} bot matches${avg}`);
   const recent=st.matches.slice(-3).reverse();
@@ -146,9 +146,22 @@ function refreshRatingUI(){
     lb.innerHTML=total?RivlRating.LABELS.map(l=>{const n=st.labels[l]||0,w=n/total*100;return `<div class="lbar ${LABEL_CLASS(l)}"><span><b>${RivlRating.GLYPH[l]}</b> ${l}</span><i><em style="width:${w.toFixed(1)}%"></em></i><span>${n}</span></div>`}).join(''):'<p class="muted">Your decision breakdown appears after your first rated match.</p>'}
   const pm=$('profMatches');
   if(pm){const ms=st.matches.slice(-8).reverse();pm.innerHTML=ms.length?`<div class="mr-row head"><span>PLACE</span><span>TABLE</span><span>ACCURACY</span><span>RATING</span></div>`+ms.map(m=>`<div class="mr-row"><span>${ord(m.place)}</span><span>${m.size}-max</span><span>${m.acc==null?'–':m.acc.toFixed(1)+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)} · ${Math.round(m.after)}</span></div>`).join(''):'<p class="muted">No rated matches yet.</p>'}
-  // leaderboard
+  // Bot Practice is a personal performance summary, not a leaderboard of bot opponents.
   const lt=$('ladderRows');
-  if(lt)lt.innerHTML=rows.map((x,k)=>`<div class="ladder-row${x.name==='You'?' me':''}"><span>${k+1}</span><span>${x.name==='You'?esc((window.rivlPlayerName?.()||'You')+' (you)'):esc(x.name)}${x.name==='You'?'':' <small>BOT</small>'}</span><span class="league-${RivlRating.tier(x.r).key}">${RivlRating.tier(x.r).name}</span><span>${Math.round(x.r).toLocaleString()}</span><span class="rating-deviation-cell">±${Math.round(x.rd)}</span><span>${x.games||0}</span><span>${x.avg==null?'–':x.avg.toFixed(1)+'%'}</span></div>`).join('');
+  if(lt){
+    const skill=Math.max(0,Math.round(me.r-1500));
+    const decisions=RivlRating.LABELS.reduce((n,l)=>n+(st.labels[l]||0),0);
+    const quality=RivlRating.LABELS.map(l=>({label:l,count:st.labels[l]||0})).filter(x=>x.count>0);
+    const qualityText=quality.length?quality.map(x=>esc(x.label)+': '+x.count).join(' · '):'No decisions graded yet';
+    const player=esc(window.rivlPlayerName?.()||'You');
+    lt.innerHTML=`<div class="bot-skill-name"><span class="bot-skill-caption">PLAYER</span><strong>${player}</strong></div>
+      <div class="bot-skill-stat bot-skill-feature"><span>SKILL RATING</span><strong>${skill.toLocaleString()}</strong></div>
+      <div class="bot-skill-stat"><span>WINS</span><strong>${me.wins||0}</strong></div>
+      <div class="bot-skill-stat"><span>MATCHES</span><strong>${me.games||0}</strong></div>
+      <div class="bot-skill-stat"><span>WIN RATE</span><strong>${me.games?Math.round(100*(me.wins||0)/me.games)+'%':'–'}</strong></div>
+      <div class="bot-skill-stat"><span>DECISION ACCURACY</span><strong>${me.accN?(me.accSum/me.accN).toFixed(1)+'%':'–'}</strong></div>
+      <div class="bot-skill-decisions"><span>DECISION QUALITY · ${decisions} GRADED</span><strong>${qualityText}</strong></div>`;
+  }
 }
 
 document.addEventListener('DOMContentLoaded',refreshRatingUI);
