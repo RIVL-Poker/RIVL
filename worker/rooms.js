@@ -90,6 +90,13 @@ export default {
         if(await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/create',await readBody(request)));
       }
+      if(url.pathname==='/api/report-avatar'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many reports. Please try later.'},429);
+        return send(await dir(env,'/accounts/report-avatar',await readBody(request)));
+      }
+      if(url.pathname==='/api/avatar-reports'||url.pathname==='/api/moderate-avatar'){
+        return send(await dir(env,url.pathname==='/api/avatar-reports'?'/accounts/avatar-reports':'/accounts/moderate-avatar',await readBody(request)));
+      }
       if(url.pathname==='/api/avatar'){
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Please wait before changing your photo again.'},429);
         return send(await dir(env,'/accounts/avatar',await readBody(request,50000)));
