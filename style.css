@@ -486,3 +486,20 @@ body.rivl-modal-open{overflow:hidden}
 #rankedSelect .rivl-card-modes{margin-top:18px}
 #rankedSelect .ranked-join{width:100%}
 #rankedSelectStatus{margin:18px 0 0}
+
+/* Dealer button: a small "D" chip on the dealer's avatar, in bot practice and online rooms. */
+.is-dealer>.avatar{position:relative}
+.is-dealer>.avatar::after{content:'D';position:absolute;right:-4px;bottom:-3px;width:15px;height:15px;border-radius:50%;background:#f4efe4;color:#111;border:1px solid #b88a3e;font:900 9px/15px Inter,Arial,sans-serif;text-align:center;box-shadow:0 1px 3px #000a}
+/* Bot practice showdown: bots' hole cards beside their seat. */
+.bot-shown{position:absolute;transform:translateX(-50%);display:flex;gap:3px;z-index:5;pointer-events:none}
+.bot-shown.above{transform:translate(-50%,-100%)}
+.bot-shown .card{width:28px;height:40px;padding:3px;font-size:13px;box-shadow:0 2px 5px #0008}
+/* Bot practice result banner: one compact line placed under the board (top is set in script.js) so the board stays visible. */
+#table .win-fx{min-width:0;max-width:92%;width:max-content;padding:7px 16px;border-radius:999px}
+#table .win-fx strong{display:inline;font-size:16px}
+#table .win-fx .win-hand{display:inline;margin:0 0 0 8px;font-size:13px}
+#table .win-fx small{display:inline;margin:0 0 0 8px;font-size:12px}
+@media(max-width:600px){.bot-shown .card{width:22px;height:32px;padding:2px;font-size:11px}
+#table .win-fx{max-width:none;white-space:nowrap;padding:5px 12px}
+#table .win-fx strong{font-size:14px}
+#table .win-fx .win-hand,#table .win-fx small{margin-left:6px;font-size:11px}}
