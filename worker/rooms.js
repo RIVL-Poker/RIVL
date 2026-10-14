@@ -1,4 +1,6 @@
-/* RIVL — Cloudflare Worker + Durable Objects. Serves the site (static assets) and runs private poker rooms. */
+/* RIVL — Cloudflare Worker + Durable Objects. Serves the site (static assets), runs poker rooms,
+   and talks to the Directory (accounts, online ratings, lobby, free-plan budget). */
+export {Directory} from './directory.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=5000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4;
 // Blinds rise every 8 hands so a match reaches a finish.
@@ -17,6 +19,18 @@ async function readBody(request){
   if(text.length>MAX_BODY)throw Object.assign(Error('Request too large'),{status:413});
   try{return text?JSON.parse(text):{}}catch{throw Object.assign(Error('Invalid JSON'),{status:400})}
 }
+const dirStub=env=>env.DIRECTORY.get(env.DIRECTORY.idFromName('global'));
+async function dir(env,path,body){
+  const response=await dirStub(env).fetch('https://dir'+path,body===undefined?undefined:{method:'POST',body:JSON.stringify(body)});
+  return {status:response.status,data:await response.json()};
+}
+// Short in-memory cache for public lists, so polling pages do not each wake the Directory.
+const cache=new Map();
+async function cached(env,path,ttl){
+  const hit=cache.get(path);if(hit&&Date.now()-hit.t<ttl)return hit.value;
+  const value=await dir(env,path);if(value.status===200)cache.set(path,{t:Date.now(),value});return value;
+}
+const CLOSED_MESSAGE='Online play has used its free capacity for today. Bot practice still works. New rooms open again after midnight UTC.';
 async function limited(limiter,request){
   if(!limiter)return false;
   const {success}=await limiter.limit({key:request.headers.get('CF-Connecting-IP')||'unknown'});
@@ -30,32 +44,66 @@ export default {
     if(!api&&!socket)return env.ASSETS?env.ASSETS.fetch(request):new Response('Not found',{status:404});
     const {ok,origin}=allowedOrigin(request,env);
     const headers={'Content-Type':'application/json','Cache-Control':'no-store'};
-    if(origin&&ok)Object.assign(headers,{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Allow-Headers':'Content-Type',Vary:'Origin'});
+    if(origin&&ok)Object.assign(headers,{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'GET,POST,OPTIONS','Access-Control-Allow-Headers':'Content-Type',Vary:'Origin'});
     const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers});
     if(!ok)return json({error:'Origin not allowed'},403);
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
     try{
-      if(url.pathname==='/api/rooms'&&request.method==='POST'){
-        if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
-        const body=await readBody(request);
+      const createRoom=async body=>{
+        const usage=await dir(env,'/usage/room',{});
+        if(!usage.data.ok)return {status:503,data:{error:CLOSED_MESSAGE}};
         for(let attempt=0;attempt<4;attempt++){
           const code=Array.from(crypto.getRandomValues(new Uint8Array(6)),n=>CODE_CHARS[n%32]).join('');
-          const response=await env.ROOMS.get(env.ROOMS.idFromName(code)).fetch('https://room/create',{method:'POST',body:JSON.stringify(body)});
+          const response=await env.ROOMS.get(env.ROOMS.idFromName(code)).fetch('https://room/create',{method:'POST',body:JSON.stringify({...body,code})});
           if(response.status===409)continue;
-          const data=await response.json();return json(response.ok?{...data,code}:data,response.status);
+          const data=await response.json();return {status:response.status,data:response.ok?{...data,code}:data};
         }
-        return json({error:'Could not allocate a room code'},503);
-      }
-      const join=url.pathname.match(/^\/api\/rooms\/([A-Z2-9]{6})\/join$/);
-      if(join&&request.method==='POST'){
-        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many join attempts. Try again in a minute.'},429);
-        const body=await readBody(request);
-        const response=await env.ROOMS.get(env.ROOMS.idFromName(join[1])).fetch('https://room/join',{method:'POST',body:JSON.stringify(body)});
-        return json(await response.json(),response.status);
-      }
+        return {status:503,data:{error:'Could not allocate a room code'}};
+      };
+      const joinRoom=async(code,body)=>{
+        const response=await env.ROOMS.get(env.ROOMS.idFromName(code)).fetch('https://room/join',{method:'POST',body:JSON.stringify(body)});
+        return {status:response.status,data:{...await response.json(),code}};
+      };
+      const send=r=>json(r.data,r.status);
       const ws=url.pathname.match(/^\/ws\/([A-Z2-9]{6})$/);
       if(ws&&request.headers.get('Upgrade')==='websocket'){
         return env.ROOMS.get(env.ROOMS.idFromName(ws[1])).fetch('https://room/ws',{headers:{Upgrade:'websocket'}});
+      }
+      if(request.method==='GET'){
+        if(url.pathname==='/api/status')return send(await cached(env,'/status',10000));
+        if(url.pathname==='/api/lobby')return send(await cached(env,'/lobby',5000));
+        if(url.pathname==='/api/leaderboard')return send(await cached(env,'/leaderboard',10000));
+      }
+      if(request.method!=='POST')return json({error:'Not found'},404);
+      if(url.pathname==='/api/accounts'){
+        if(await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
+        return send(await dir(env,'/accounts/create',await readBody(request)));
+      }
+      if(url.pathname==='/api/me'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        return send(await dir(env,'/accounts/me',await readBody(request)));
+      }
+      if(url.pathname==='/api/rooms'){
+        if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
+        const body=await readBody(request);
+        return send(await createRoom({name:body.name,key:body.key,visibility:body.visibility==='public'?'public':'private'}));
+      }
+      if(url.pathname==='/api/quickplay'){
+        // Join the busiest open public table, or open a new public one.
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many join attempts. Try again in a minute.'},429);
+        const body=await readBody(request),lobby=await dir(env,'/lobby');
+        for(const room of (lobby.data.rooms||[]).slice(0,3)){
+          const joined=await joinRoom(room.code,{name:body.name,key:body.key});
+          if(joined.status===200)return send(joined);
+        }
+        if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
+        return send(await createRoom({name:body.name,key:body.key,visibility:'public'}));
+      }
+      const join=url.pathname.match(/^\/api\/rooms\/([A-Z2-9]{6})\/join$/);
+      if(join){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many join attempts. Try again in a minute.'},429);
+        const body=await readBody(request);
+        return send(await joinRoom(join[1],{name:body.name,key:body.key}));
       }
       return json({error:'Not found'},404);
     }catch(e){return json({error:e.status?e.message:'Server error'},e.status||500)}
@@ -70,7 +118,17 @@ const cleanName=(value,fallback)=>String(value||'').replace(/[\u0000-\u001f]/g,'
 const rankOf=c=>'23456789TJQKA'.indexOf(c[0])+2;
 
 export class Room {
-  constructor(state,env){this.state=state;this.env=env;this.room=null}
+  constructor(state,env){
+    this.state=state;this.env=env;this.room=null;this.alarmAt=0;
+    // Keep-alive pings are answered by Cloudflare without waking the room, so idle tables cost nothing.
+    if(typeof WebSocketRequestResponsePair!=='undefined')state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping','pong'));
+  }
+  async dir(path,body){
+    if(!this.env.DIRECTORY)return null;
+    try{const r=await dirStub(this.env).fetch('https://dir'+path,{method:'POST',body:JSON.stringify(body||{})});return await r.json()}catch{return null}
+  }
+  // One alarm write per turn clock is enough: an early alarm just re-arms itself for the real deadline.
+  async armAlarm(at){if(this.alarmAt>Date.now()&&this.alarmAt<=at)return;this.alarmAt=at;await this.state.storage.setAlarm(at)}
   async load(){if(!this.room)this.room=await this.state.storage.get('room')||null;return this.room}
   sockets(){return this.state.getWebSockets().filter(ws=>ws.readyState===1).map(ws=>[ws,ws.deserializeAttachment()?.token]).filter(([,token])=>token)}
 
@@ -79,23 +137,59 @@ export class Room {
     const onlineSeats=new Set(this.sockets().map(([,t])=>this.room.members[t]?.seat));
     const shown=g?.phase==='showdown'&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
-      seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:!!s.isHost,online:s.type==='bot'||onlineSeats.has(i)}:null),
+      seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
+      rated:this.ratedSeats().length>=2,
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,
-        winners:g.winners||[],result:g.result||'',matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
+        winners:g.winners||[],result:g.result||'',note:g.note||'',ratingChanges:g.ratingChanges||null,matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
   }
   send(ws,message){try{ws.send(JSON.stringify(message))}catch{}}
   broadcast(){for(const [ws,token] of this.sockets())this.send(ws,{type:'state',state:this.publicState(token),isHost:token===this.room.hostToken})}
   matchOver(g=this.room?.game){return !g||g.result==='Match complete'}
   humansAway(g){return g.players.filter(p=>!p.bot&&!p.left).every(p=>p.away)}
+  ratedSeats(){return Object.values(this.room.members).filter(m=>m.accountId)}
   async save(){
     const room=this.room;room.lastActive=Date.now();
     const g=room.game;
-    if(this.matchOver(g))await this.state.storage.setAlarm(room.lastActive+IDLE_MS);
-    else if(g.phase==='showdown'){g.nextHandAt||=Date.now()+NEXT_HAND_MS;await this.state.storage.setAlarm(g.nextHandAt)}
+    if(room.pendingResults){
+      // Ratings are computed by the Directory from the server's own finishing order.
+      const out=await this.dir('/results',room.pendingResults);
+      if(out&&g){g.ratingChanges=out.changes||[];if(out.rated===false)g.note='Unrated: at least two signed-in players are needed for a rated match.'}
+      room.pendingResults=null;
+    }
+    await this.syncLobby();
+    if(this.matchOver(g))await this.armAlarm(room.lastActive+IDLE_MS);
+    else if(g.phase==='showdown'){g.nextHandAt||=Date.now()+NEXT_HAND_MS;this.alarmAt=0;await this.armAlarm(g.nextHandAt)}
     await this.state.storage.put('room',room);this.broadcast();
   }
-  async destroy(){for(const ws of this.state.getWebSockets())try{ws.close(1000,'Room closed')}catch{}this.room=null;await this.state.storage.deleteAlarm();await this.state.storage.deleteAll()}
+  // Public rooms with open seats that have not started are listed in the lobby.
+  async syncLobby(){
+    const room=this.room;if(!room.code)return;
+    const humans=Object.keys(room.members).length,players=room.seats.filter(Boolean).length;
+    const listed=room.visibility==='public'&&this.matchOver(room.game)&&players<9&&humans>0;
+    const sig=listed?[humans,players,room.seats.find(s=>s?.isHost)?.name].join('|'):'';
+    const stale=Date.now()-(room.lobbyAt||0)>5*60*1000;
+    if(sig===(room.lobbySig||'')&&!(listed&&stale))return;
+    room.lobbySig=sig;room.lobbyAt=Date.now();
+    if(listed)await this.dir('/lobby/upsert',{code:room.code,host:room.seats.find(s=>s?.isHost)?.name,humans,players});
+    else await this.dir('/lobby/remove',{code:room.code});
+  }
+  // Finishing order: players still holding chips by stack, then everyone else in reverse order of elimination.
+  eliminate(seats){
+    const m=this.room.match;if(!m)return;
+    const fresh=seats.filter(s=>!m.out.flat().includes(s));
+    if(fresh.length)m.out.push(fresh);
+  }
+  finishMatch(standing){
+    const m=this.room.match;if(!m)return;
+    const order=[...standing.sort((a,b)=>b.stack-a.stack).map(p=>[p.seat]),...[...m.out].reverse()];
+    const place={};let next=1;for(const group of order){for(const s of group)place[s]=next;next+=group.length}
+    const players=Object.entries(m.accounts).map(([seat,id])=>({id,place:place[seat]??next}));
+    if(players.length>=2)this.room.pendingResults={matchId:m.id,players};
+    else if(this.room.game)this.room.game.note='Unrated: at least two signed-in players are needed for a rated match.';
+    this.room.match=null;
+  }
+  async destroy(){if(this.room?.lobbySig)await this.dir('/lobby/remove',{code:this.room.code});for(const ws of this.state.getWebSockets())try{ws.close(1000,'Room closed')}catch{}this.room=null;await this.state.storage.deleteAlarm();await this.state.storage.deleteAll()}
   next(seat,eligible){for(let n=1;n<=9;n++){const i=(seat+n)%9;if(eligible(i))return i}return -1}
   randomDeck(){
     const deck=[];for(const s of 'SHDC')for(const r of '23456789TJQKA')deck.push(r+s);
@@ -111,8 +205,9 @@ export class Room {
     const old=previous||this.room.game;
     const carried=i=>old?.players.find(p=>p.seat===i);
     const participants=this.room.seats.flatMap((s,i)=>s?[{seat:i,name:s.name,bot:s.type==='bot',stack:carried(i)?.stack??1000,bet:0,contribution:0,folded:false,allIn:false,away:!!carried(i)?.away,timeouts:carried(i)?.timeouts||0}]:[]).filter(p=>p.stack>0);
+    if(old)this.eliminate(old.players.filter(p=>!participants.some(x=>x.seat===p.seat)).map(p=>p.seat));
     if(participants.length<2||!participants.some(p=>!p.bot)){
-      if(old){old.phase='showdown';old.result='Match complete';old.turn=-1;old.deadline=0;old.nextHandAt=0}
+      if(old){old.phase='showdown';old.result='Match complete';old.turn=-1;old.deadline=0;old.nextHandAt=0;this.finishMatch(participants)}
       return;
     }
     const handNumber=(old?.handNumber||0)+1,[smallBlind,bigBlind]=BLINDS[Math.min(BLINDS.length-1,Math.floor((handNumber-1)/8))];
@@ -254,9 +349,10 @@ export class Room {
       else break;
       if(g.phase==='showdown')break;
     }
-    if(g.phase!=='showdown')this.state.storage.setAlarm(g.deadline).catch(()=>{});
+    if(g.phase!=='showdown')this.armAlarm(g.deadline).catch(()=>{});
   }
   async alarm(){
+    this.alarmAt=0;
     await this.load();const room=this.room;if(!room)return;
     const g=room.game,idleUntil=(room.lastActive||Date.now())+IDLE_MS;
     // Finished matches, lobbies and tables where every human is away wait for players; rooms idle for 6 hours are deleted.
@@ -265,10 +361,13 @@ export class Room {
       await this.state.storage.setAlarm(Math.max(idleUntil,Date.now()+60000));return;
     }
     if(g.phase==='showdown'){
-      if(Date.now()<(g.nextHandAt||0)){await this.state.storage.setAlarm(g.nextHandAt);return}
+      if(Date.now()<(g.nextHandAt||0)){await this.armAlarm(g.nextHandAt);return}
+      // Each hand is counted against the daily free-plan budget; past the hard limit the match stops unrated.
+      const usage=await this.dir('/usage/hand',{});
+      if(usage&&!usage.ok){g.result='Match complete';g.note=CLOSED_MESSAGE;g.nextHandAt=0;room.match=null;await this.save();return}
       this.startHand(g);await this.save();return;
     }
-    if(Date.now()<g.deadline-50){await this.state.storage.setAlarm(g.deadline);return}
+    if(Date.now()<g.deadline-50){await this.armAlarm(g.deadline);return}
     const p=g.players.find(x=>x.seat===g.turn),legal=p&&this.legal(p.seat);
     if(legal){
       this.applyAction(p.seat,legal.check?'check':'fold');
@@ -289,7 +388,7 @@ export class Room {
     delete room.members[token];
     const g=room.game,p=g?.players.find(x=>x.seat===m.seat);
     if(p&&!this.matchOver(g)){
-      p.left=true;
+      p.left=true;this.eliminate([p.seat]);
       if(g.phase!=='showdown'&&g.turn===p.seat){this.applyAction(p.seat,'fold');this.autoAdvance()}
     }
     room.seats[m.seat]=null;
@@ -300,21 +399,29 @@ export class Room {
   async fetch(request){
     const path=new URL(request.url).pathname;
     const room=await this.load();
+    const account=async key=>key?(await this.dir('/verify',{key}))?.account||null:null;
     if(path==='/create'&&request.method==='POST'){
       if(room)return this.reply({error:'Room code collision'},409);
-      const {name}=await request.json();const token=crypto.randomUUID(),host=cleanName(name,'Host');
-      this.room={hostToken:token,visibility:'private',seats:Array(9).fill(null),members:{[token]:{name:host,seat:0}},started:false,game:null};
-      this.room.seats[0]={type:'human',name:host,avatar:'♠',isHost:true};
+      const body=await request.json(),a=await account(body.key);
+      if(body.key&&!a)return this.reply({error:'Your sign-in code was not recognised. Sign in again.'},401);
+      const token=crypto.randomUUID(),host=a?a.name:cleanName(body.name,'Host');
+      this.room={code:String(body.code||''),hostToken:token,visibility:body.visibility==='public'?'public':'private',seats:Array(9).fill(null),members:{[token]:{name:host,seat:0,accountId:a?.id||null}},started:false,game:null};
+      this.room.seats[0]={type:'human',name:host,avatar:'♠',isHost:true,verified:!!a};
       await this.save();return this.reply({token,seat:0});
     }
     if(!room)return this.reply({error:'Room not found. Check the code.'},404);
     if(path==='/join'&&request.method==='POST'){
       if(room.started&&!this.matchOver(room.game))return this.reply({error:'Match already in progress'},409);
+      const body=await request.json(),a=await account(body.key);
+      if(body.key&&!a)return this.reply({error:'Your sign-in code was not recognised. Sign in again.'},401);
+      // Signing in from another device takes back the same seat.
+      const mine=a&&Object.entries(room.members).find(([,m])=>m.accountId===a.id);
+      if(mine)return this.reply({token:mine[0],seat:mine[1].seat});
       const seat=room.seats.findIndex(s=>s===null);
       if(seat<0)return this.reply({error:'Room is full'},409);
-      const {name}=await request.json();const token=crypto.randomUUID();
-      room.members[token]={name:cleanName(name,'Guest'),seat};
-      room.seats[seat]={type:'human',name:room.members[token].name,avatar:'♣',isHost:false};
+      const token=crypto.randomUUID(),name=a?a.name:cleanName(body.name,'Guest');
+      room.members[token]={name,seat,accountId:a?.id||null};
+      room.seats[seat]={type:'human',name,avatar:'♣',isHost:false,verified:!!a};
       await this.save();return this.reply({token,seat});
     }
     if(path==='/ws'){
@@ -329,6 +436,7 @@ export class Room {
     const room=await this.load();
     if(!room){this.send(ws,{type:'removed',reason:'This room has closed'});try{ws.close(1000,'Room closed')}catch{}return}
     try{
+      if(data==='ping'){try{ws.send('pong')}catch{}return}
       if(typeof data!=='string'||data.length>MAX_MESSAGE)throw Error('Message too large');
       const msg=JSON.parse(data);
       let token=ws.deserializeAttachment()?.token;
@@ -366,6 +474,9 @@ export class Room {
       if(!this.matchOver(room.game))throw Error('Match already started');
       if(msg.type==='startMatch'){
         if(room.seats.filter(Boolean).length<2)throw Error('At least two players required');
+        const usage=await this.dir('/usage/hand',{newMatch:true});
+        if(usage&&!usage.ok)throw Error(CLOSED_MESSAGE);
+        room.match={id:crypto.randomUUID(),out:[],accounts:Object.fromEntries(Object.values(room.members).filter(m=>m.accountId).map(m=>[m.seat,m.accountId]))};
         room.game=null;this.startHand();
       }else if(msg.type==='visibility'&&['private','public'].includes(msg.visibility))room.visibility=msg.visibility;
       else if(msg.type==='addBot'){

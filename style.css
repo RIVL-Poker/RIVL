@@ -359,3 +359,12 @@ body.rivl-modal-open{overflow:hidden}
 @media(max-width:750px){.account-name span:last-child{display:none}}
 #roomGame .rivl-shown{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}#roomGame .rivl-shown .card{width:24px;height:34px;font-size:12px;padding:2px}
 .room-seat.is-offline{opacity:.6}.room-seat .room-offline{color:#dc8f55}
+.account-forms{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.account-forms label,.room-entry label{display:flex;flex-direction:column;gap:6px}
+.account-key{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.account-key code{background:#000;padding:8px 10px;border-radius:6px;word-break:break-all;color:#efbd70}
+@media(max-width:750px){.account-forms{grid-template-columns:1fr}}
+.room-finder{margin-bottom:16px}.room-finder-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.room-finder-head h3{margin:0}
+.lobby-list{display:grid;gap:8px}.lobby-room{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid #38302b;border-radius:8px}
+.lobby-room button{min-height:40px}.capacity-note{border:1px solid #8a5a2b;background:#1c140c;color:#e7c390;padding:12px 14px;border-radius:8px}
+.room-entry .check{flex-direction:row;align-items:center;font-size:13px}.verified-badge{color:#7fd09b;margin-left:4px}
+.online-row{display:grid;grid-template-columns:40px minmax(120px,1fr) 70px 50px 70px 50px;gap:8px;padding:11px 4px;border-bottom:1px solid #38302b;font-size:14px}.online-row.head{color:var(--muted);font-size:11px;letter-spacing:.1em}.online-row.me{color:var(--gold)}
+#roomRatings{margin-top:8px;text-align:center}#roomRatings .up{color:#7fd09b}#roomRatings .down{color:#e08585}

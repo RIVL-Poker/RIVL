@@ -1,6 +1,6 @@
 # RIVL — Rated play
 
-Free Texas Hold'em, no real money. Play rated matches against bots, or open a private room and play friends online. Ratings are saved in this browser (localStorage).
+Free Texas Hold'em, no real money. Practice against bots (rated on this device), or play online: Quick Play, open tables, or a private room with friends. Signed-in players get a shared online rating and leaderboard.
 
 ## Play
 - **Online:** once deployed, open the site's address (for example `https://rivl.<your-subdomain>.workers.dev`).
@@ -33,11 +33,13 @@ Then run the workflow from the Actions tab (or push to `main`). The site appears
 - profile.js — your display name (stored in this browser)
 - rooms.js — private rooms client
 - worker/rooms.js — Cloudflare Worker: serves the site and runs rooms
+- worker/directory.js — accounts, online ratings, lobby and daily free-plan budget
+- account.js — sign up / sign in and the online leaderboard
 
 ## Tests
-`node tests-worker.mjs` plays 60 simulated room matches (chip conservation, no stuck turns, matches end) and checks reveal, reconnect, sit-out, leave/host hand-off and idle cleanup.
+`node tests-worker.mjs` plays 60 simulated room matches (chip conservation, no stuck turns, matches end) and checks reveal, reconnect, sit-out, leave/host hand-off, idle cleanup, accounts, rated results, the lobby and the free-plan budget.
 
-`node tests.js` runs the 12 engine checks plus 6 rating checks (fast evaluator vs engine on 3,000 showdowns, equity sanity, Glicko-2 against Glickman's published example, and grading of clear right and wrong plays).
+`node tests.js` runs the 12 engine checks plus 7 rating checks (fast evaluator vs engine on 3,000 showdowns, equity sanity, Glicko-2 against Glickman's published example, and grading of clear right and wrong plays).
 
 ## Known limits of the grader
-It is a fast estimate, not a solver. It models ranges from each player's betting line, values the rest of the hand at showdown equity (no future betting, position or implied odds), and treats raises with a simple fold-frequency model. Bots use the same model, so a low-noise bot scores near 100%. For solver-quality grading, swap analyze() for precomputed solver data.
+It is a fast estimate, not a solver. It models ranges from each player's betting line, values the rest of the hand at showdown equity (no future betting, position or implied odds), and treats raises with a simple fold-frequency model. Bots use the same model, so a low-noise bot scores near 100%. Sampling is seeded from the spot, so re-grading the same decision always gives the same label. For solver-quality grading, swap analyze() for precomputed solver data.

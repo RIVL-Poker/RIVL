@@ -13,6 +13,15 @@ npx wrangler dev
 ```
 Open http://localhost:8787 in two browsers, create a room in one and join with its 6-character code in the other.
 
+## Accounts, ratings and the lobby
+- **Accounts** are a name plus a private sign-in code (no email or password). The code is shown once on the Profile page and can be copied to sign in on another device. Only a SHA-256 hash of the code is stored.
+- **Online ratings** are computed on the server (`worker/directory.js`) with Glicko-2 from the room's own finishing order: players holding chips rank by stack, everyone else in reverse order of elimination, and leaving a match counts as being knocked out. A match is rated when 2+ signed-in players start it. Bot-practice ratings stay per-browser.
+- **Open Tables** lists public rooms that have not started and have open seats. **Quick Play** joins the busiest open table or opens a new public one.
+- One `Directory` Durable Object (SQLite) holds accounts, the leaderboard, the lobby and the daily budget.
+
+## Staying on Cloudflare's free plan
+The `DAILY_*` values in `wrangler.toml` cap online play per UTC day (defaults: 1,500 hands, 300 rooms, 500 new accounts). From the load test, a hand costs roughly 33 storage writes and 50 seconds of room time, so 1,500 hands stays under the free plan's daily Durable Object limits. When a cap is reached, new rooms and matches are refused with a clear message; matches already running get 25% extra before they stop unrated. Bot practice is static files and keeps working regardless. Keep-alive pings are answered by Cloudflare without waking a room.
+
 ## What works
 - Up to 9 seats, host adds bots (Beginner to Expert; stronger bots raise more and fold less)
 - Server-run hands: blinds that rise every 8 hands, 12-second turns, side pots, every hand at showdown revealed with its hand name
@@ -24,7 +33,7 @@ Open http://localhost:8787 in two browsers, create a room in one and join with i
 - Hibernating WebSockets, so idle rooms are not billed as active
 
 ## Not yet
-- Accounts and online ratings (ratings stay per-browser and vs bots)
-- Public room listing (the public/private toggle is stored but not listed)
+- Grading of online decisions (online ratings use finishing order only)
+- Account recovery if the sign-in code is lost
 - Joining a match that is already running (join between matches instead)
 - Chat, hand history download
