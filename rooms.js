@@ -36,9 +36,18 @@
     renderRoomPanel();
   }));
   const MATCH_KEY='rivlOnlineRecentMatches';
+  // Ranked Elo history for the Profile tracker: one entry per match, filled in once the server reports the rating change.
+  function recordRanked(g,id,result){
+    const acct=window.rivlAccount?.current?.(),c=acct&&g.ratingChanges?.find(x=>x.id===acct.id);if(!c)return;
+    let list=[];try{list=JSON.parse(localStorage.getItem('rivlRankedHistory')||'[]')}catch{}if(!Array.isArray(list))list=[];
+    if(list.some(m=>m.id===id))return;
+    list.push({id,account:acct.id,date:Date.now(),before:c.before,after:c.after,acc:c.accuracy??null,result,players:g.players.length});
+    try{localStorage.setItem('rivlRankedHistory',JSON.stringify(list.slice(-100)))}catch{}
+  }
   function recordMatch(g){
     if(!g?.matchOver||!roomCode)return;
     const id=roomCode+':'+(g.matchId||g.handNumber)+':'+(g.players?.map(p=>p.name).join('|')||'');
+    if(snapshot.ranked){const me=g.players?.find(p=>p.seat===snapshot.mySeat),best=g.players?.filter(p=>!p.left).sort((a,b)=>b.stack-a.stack)[0];if(me)recordRanked(g,id,best?.seat===me.seat?'Win':'Loss')}
     let records=[];try{records=JSON.parse(localStorage.getItem(MATCH_KEY)||'[]')}catch{}
     if(!Array.isArray(records))records=[];
     if(records.some(m=>m.id===id))return;
@@ -278,6 +287,7 @@
   $('quickPlay').onclick=()=>enter('quick');
   $('createRoom').onclick=()=>enter('create');
   $('findRanked').onclick=()=>enter('ranked');
+  $('rtPlay').onclick=()=>{if(window.rivlAccount?.key())$('openRanked').click();else $('accountName')?.focus()};
   $('openRanked').onclick=()=>{show('rooms');startFinder();if(window.rivlAccount?.key())enter('ranked');else{$('rankedPanel').scrollIntoView({block:'center'});status('Sign in or create an account on your Profile to play Ranked.')}};
   $('joinRoom').onclick=()=>enter('join');
   $('leaveRoom').onclick=()=>{if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return;send({type:'leave'});resetView('Left room.')};
