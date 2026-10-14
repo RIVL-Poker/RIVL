@@ -252,11 +252,11 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const skill=await results({matchId:'m2',players:[{id:ids[2],place:1,acc:40,decisions:10},{id:ids[3],place:2,acc:98,decisions:10}]});
   const gain=r=>r.changes[0].after-r.changes[0].before;
   assert.ok(gain(skill)<gain(plain),'a winner with poor decisions gains less');
-  const loss=r=>r.changes[1].before-r.changes[1].after;
-  assert.ok(loss(skill)<loss(plain),'a loser with much better decisions loses less');
+  const internal=id=>env.DIRECTORY.instances.get('global').sql.exec('SELECT rr FROM accounts WHERE id=?',id).toArray()[0].rr;
+  assert.ok(internal(ids[3])>internal(ids[1]),'a loser with much better decisions loses less internally, even when both display zero');
   assert.equal(skill.changes[1].accuracy,98);
   const few=await results({matchId:'m3',players:[{id:ids[0],place:2,acc:99,decisions:2},{id:ids[1],place:1,acc:10,decisions:10}]});
-  assert.equal(few.changes[0].accuracy,null,'fewer than 3 decisions: place only');assert.ok(few.changes[0].after<few.changes[0].before);
+  assert.equal(few.changes[0].accuracy,null,'fewer than 3 decisions: place only');assert.ok(internal(ids[0])<plain.changes[0].after+1500,'the place-only loss is recorded internally');
   checks++;
 }
 
