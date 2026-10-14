@@ -93,7 +93,7 @@ function sparkline(points,w=560,h=120){
 }
 function renderRankedTracker(acct,elo,games,set){
   const rt=RivlRating.tier(elo);
-  set('rtTier',rt.name);const gem=$('rtHeroGem');if(gem){gem.replaceChildren();const svg=window.rivlLeagueIcons?.icon(rt.key);if(svg)gem.append(svg);gem.setAttribute('aria-label',rt.name+' league emblem')}const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;
+  set('rtTier',rt.name);window.rivlLeagueIcons?.decorate($('rtTier'),rt.key,{prepend:true});const gem=$('rtHeroGem');if(gem){gem.replaceChildren();const svg=window.rivlLeagueIcons?.icon(rt.key);if(svg)gem.append(svg);gem.setAttribute('aria-label',rt.name+' league emblem')}const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;
   
   const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
   set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
@@ -164,6 +164,22 @@ function refreshRatingUI(){
   }
 }
 
+function renderLeagueRankStrip(){
+  const strip=$('leagueRankStrip');
+  if(!strip||!window.RivlRating?.LEAGUES)return;
+  strip.replaceChildren();
+  for(const [name,lo,hi,key] of RivlRating.LEAGUES){
+    const cell=document.createElement('div');cell.className='league-rank-item';
+    const pill=document.createElement('span');pill.className='rt-tier league-'+key+' league-rank-pill';
+    const gem=window.rivlLeagueIcons?.icon(key);if(gem)pill.append(gem);
+    const title=document.createElement('span');title.textContent=name;pill.append(title);
+    const range=document.createElement('span');range.className='league-rank-range';
+    range.textContent=hi===Infinity?lo.toLocaleString()+'+ Elo':lo.toLocaleString()+'–'+(hi-1).toLocaleString()+' Elo';
+    cell.append(pill,range);strip.append(cell);
+  }
+}
+document.addEventListener('DOMContentLoaded',renderLeagueRankStrip);
+if(document.readyState!=='loading')renderLeagueRankStrip();
 document.addEventListener('DOMContentLoaded',refreshRatingUI);
 if(document.readyState!=='loading')refreshRatingUI();
 (function wireReset(){
