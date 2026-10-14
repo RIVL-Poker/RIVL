@@ -424,3 +424,34 @@ body.rivl-modal-open{overflow:hidden}
 .online-profile-score{display:block;font-size:38px;line-height:1.2;color:#f4d197;font-weight:800}
 .online-profile-summary p{margin:7px 0}
 .profile-section-heading{color:var(--gold);font-size:15px;letter-spacing:.12em;margin:28px 0 12px}
+/* Showdown: revealed opponent cards hang off the seat pill toward the felt, fully drawn, without hiding the name or stack. */
+#roomGame .rivl-pvp-seat.has-shown{z-index:4}
+#roomGame .rivl-pvp-seat>span:not(.rivl-shown){flex-shrink:0}
+#roomGame .rivl-pvp-seat .rivl-shown{position:absolute;left:50%;transform:translateX(-50%);margin:0;gap:4px;z-index:1}
+#roomGame .rivl-pvp-seat.shown-below .rivl-shown{top:calc(100% + 4px)}
+#roomGame .rivl-pvp-seat.shown-above .rivl-shown{bottom:calc(100% + 4px)}
+@media(min-width:601px) and (orientation:landscape),(min-width:1025px){
+ #roomGame .rivl-pvp-seat.shown-right .rivl-shown,#roomGame .rivl-pvp-seat.shown-left .rivl-shown{top:50%;bottom:auto;transform:translateY(-50%)}
+ #roomGame .rivl-pvp-seat.shown-right .rivl-shown{left:calc(100% + 4px)}
+ #roomGame .rivl-pvp-seat.shown-left .rivl-shown{left:auto;right:calc(100% + 4px)}
+}
+/* Leave room above the felt so top seats never sit on the rim label. */
+#roomGame .rivl-pvp-scene .skyline{margin-bottom:30px}
+/* Phones and portrait tablets: tall oval so every revealed hand has its own space. */
+@media(max-width:600px),(max-width:1024px) and (orientation:portrait){
+ #roomGame .rivl-pvp-scene{padding:8px 6px 12px}
+ #roomGame .rivl-pvp-table{width:min(84%,440px,calc((100dvh - 310px)*.72));aspect-ratio:.72/1;border-radius:50%/42%;margin:22px auto 26px}
+ #roomGame .rivl-pvp-scene .skyline{margin-bottom:10px}
+ /* Lower side seats sit beside the hero pill, so their cards drop below rather than into the seat above. */
+ #roomGame .rivl-pvp-seat.shown-above .rivl-shown{top:calc(100% + 3px);bottom:auto}
+}
+/* Small screens and short landscape tables: compact revealed cards so neighbouring hands stay apart. */
+@media(max-width:600px),(max-height:760px) and (orientation:landscape){
+ #roomGame .rivl-shown{gap:2px}
+ #roomGame .rivl-shown .card{width:24px;height:34px;flex-basis:24px;padding:2px}
+ #roomGame .rivl-shown .card>strong{font-size:10px}
+ #roomGame .rivl-shown .card>.rivl-card-center{font-size:15px}
+}
+#roomGame .rivl-shown .card:not(.back){position:relative;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;color:#171717;border:1px solid #c9b896}
+#roomGame .rivl-shown .card.red{color:#bd1e35}
+#roomGame .rivl-shown .card>.rivl-card-center{color:inherit}

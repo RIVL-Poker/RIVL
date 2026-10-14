@@ -154,6 +154,13 @@
         item.style.top=(50+59*Math.sin(angle))+'%';
         item.style.right='auto';item.style.bottom='auto';
         item.style.transform='translate(-50%,-50%)';
+        // Revealed cards sit off the pill, toward the felt, so they never cover the name, stack or rim label.
+        // Side seats tuck them in beside the pill on wide tables; phones stack them above or below.
+        if(cards){
+          const cos=Math.cos(angle);
+          item.classList.add('has-shown',Math.sin(angle)>0.3?'shown-above':'shown-below');
+          if(Math.abs(cos)>0.45)item.classList.add(cos<0?'shown-right':'shown-left');
+        }
         seats.append(item);
       });
       if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
