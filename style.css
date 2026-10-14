@@ -637,3 +637,15 @@ body.rivl-modal-open{overflow:hidden}
 .bot-skill-decisions{flex:1 0 100%;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:13px 20px;border-top:1px solid #49382a}
 .bot-skill-decisions strong{font-size:13px;font-weight:600;line-height:1.6}
 @media(max-width:700px){.bot-skill-name,.bot-skill-stat{flex:1 1 45%;padding:15px 13px}.bot-skill-name strong{font-size:20px}.bot-skill-stat strong{font-size:23px}.bot-skill-decisions{padding:13px}}
+
+/* Ranked league reference strip directly below the Leaderboards title. */
+#leaderboard.content-view{padding-top:23px}
+#leaderboard>h1{margin:0 0 17px}
+.league-rank-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:0 0 23px}
+.league-rank-item{display:flex;flex-direction:column;align-items:center;gap:9px;min-width:0}
+.league-rank-pill{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:38px;margin:0;padding:7px 9px;white-space:nowrap;letter-spacing:.045em;font-size:11px}
+.league-rank-pill .rivl-league-icon{width:19px;height:19px;flex-shrink:0}
+.league-rank-range{color:#d5c1a5;font-size:12px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:center}
+#rtTier .rivl-league-icon{width:18px;height:18px;flex-shrink:0}
+@media(max-width:980px){.league-rank-strip{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:17px}}
+@media(max-width:540px){.league-rank-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 8px}.league-rank-pill{font-size:10px;padding:6px 5px}.league-rank-range{font-size:11px}}
