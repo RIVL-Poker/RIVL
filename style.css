@@ -455,3 +455,10 @@ body.rivl-modal-open{overflow:hidden}
 #roomGame .rivl-shown .card:not(.back){position:relative;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;color:#171717;border:1px solid #c9b896}
 #roomGame .rivl-shown .card.red{color:#bd1e35}
 #roomGame .rivl-shown .card>.rivl-card-center{color:inherit}
+
+/* RIVL gold-on-dark public-room checkbox */
+.room-public-check{display:flex;align-items:center;gap:10px;color:#e8d2b3!important;background:transparent!important}
+.room-public-check input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:0 0 20px;width:20px;height:20px;min-height:20px;margin:0;border:1px solid #ba8b4e;border-radius:5px;background:#151110!important;cursor:pointer;position:relative}
+.room-public-check input[type=checkbox]:checked{background:#d9a657!important;border-color:#f0c987}
+.room-public-check input[type=checkbox]:checked::after{content:'✓';position:absolute;inset:0;text-align:center;line-height:18px;color:#15100a;font-weight:900}
+.room-public-check input[type=checkbox]:focus-visible{outline:2px solid #f0c987;outline-offset:3px}
