@@ -12,7 +12,7 @@ function gradeAction(i,type,amount){
   try{
     let A=g.pendingAnalysis&&g.pendingAnalysis.i===i?g.pendingAnalysis:null;
     g.pendingAnalysis=null;
-    if(!A)A=RivlRating.analyze(g,i,i===0?450:140);
+    if(!A)A=RivlRating.analyze(g,i,i===0?RivlRating.GRADE_ITERS:140);
     const r=RivlRating.grade(A,type,type==='raise'?Math.round(Number(amount)):0);
     (p.grades||(p.grades=[])).push(r);
     if(i===0){lastGrade=r;if(g.coach)showGradeFx(r)}
@@ -120,7 +120,7 @@ function refreshRatingUI(){
   if(pm){const ms=st.matches.slice(-8).reverse();pm.innerHTML=ms.length?`<div class="mr-row head"><span>PLACE</span><span>TABLE</span><span>ACCURACY</span><span>RATING</span></div>`+ms.map(m=>`<div class="mr-row"><span>${ord(m.place)}</span><span>${m.size}-max</span><span>${m.acc==null?'–':m.acc.toFixed(1)+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)} · ${Math.round(m.after)}</span></div>`).join(''):'<p class="muted">No rated matches yet.</p>'}
   // leaderboard
   const lt=$('ladderRows');
-  if(lt)lt.innerHTML=rows.map((x,k)=>`<div class="ladder-row${x.name==='You'?' me':''}"><span>${k+1}</span><span>${x.name==='You'?'KadenR (you)':esc(x.name)}${x.name==='You'?'':' <small>BOT</small>'}</span><span>${RivlRating.tier(x.r).name}</span><span>${Math.round(x.r).toLocaleString()}</span><span>±${Math.round(x.rd)}</span><span>${x.games||0}</span><span>${x.avg==null?'–':x.avg.toFixed(1)+'%'}</span></div>`).join('');
+  if(lt)lt.innerHTML=rows.map((x,k)=>`<div class="ladder-row${x.name==='You'?' me':''}"><span>${k+1}</span><span>${x.name==='You'?esc((window.rivlPlayerName?.()||'You')+' (you)'):esc(x.name)}${x.name==='You'?'':' <small>BOT</small>'}</span><span>${RivlRating.tier(x.r).name}</span><span>${Math.round(x.r).toLocaleString()}</span><span>±${Math.round(x.rd)}</span><span>${x.games||0}</span><span>${x.avg==null?'–':x.avg.toFixed(1)+'%'}</span></div>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded',refreshRatingUI);
