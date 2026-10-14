@@ -34,7 +34,7 @@
     try{const {account}=await call('/api/me',{key:state.key});setAccount(account,state.key)}
     catch(e){if(e.status===401){setAccount(null);status('That sign-in code no longer works. Sign in again.')}}
   }
-  window.rivlAccount={current:()=>state,key:()=>state?.key||null,refresh,call};
+  window.rivlAccount={current:()=>state,key:()=>state?.key||null,refresh,call,updateAvatar:async avatar=>{if(!state)throw Error('Sign in to save a profile picture.');const {account}=await call('/api/avatar',{key:state.key,avatar});setAccount(account,state.key);return account}};
 
   // Ranked leaderboard: "My league" (signed in) or the global top 50.
   let board=null;
