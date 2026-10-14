@@ -24,6 +24,7 @@ export class Directory {
       if(!cols.has(name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
     // Ranked tables waiting for players sit in the same lobby table, flagged so Open Tables and Quick Play never show them.
     if(!this.rows('PRAGMA table_info(lobby)').some(c=>c.name==='ranked'))this.sql.exec('ALTER TABLE lobby ADD COLUMN ranked INTEGER NOT NULL DEFAULT 0');
+    if(!this.rows('PRAGMA table_info(lobby)').some(c=>c.name==='size'))this.sql.exec('ALTER TABLE lobby ADD COLUMN size INTEGER NOT NULL DEFAULT 6');
   }
   rows(q,...b){return this.sql.exec(q,...b).toArray()}
   one(q,...b){return this.rows(q,...b)[0]||null}
@@ -78,10 +79,10 @@ export class Directory {
       if(path==='/results')return this.reply(this.recordResults(body));
       if(path==='/lobby'||path==='/lobby/ranked'){
         this.sql.exec('DELETE FROM lobby WHERE updated<?',Date.now()-LOBBY_TTL);
-        return this.reply({rooms:this.rows('SELECT code,host,humans,players FROM lobby WHERE ranked=? ORDER BY humans DESC,updated DESC LIMIT 30',path==='/lobby/ranked'?1:0)});
+        return this.reply({rooms:path==='/lobby/ranked'?this.rows('SELECT code,host,humans,players FROM lobby WHERE ranked=1 AND size=? ORDER BY humans DESC,updated DESC LIMIT 30',Number(url.searchParams.get('size'))||6):this.rows('SELECT code,host,humans,players FROM lobby WHERE ranked=0 ORDER BY humans DESC,updated DESC LIMIT 30')});
       }
       if(path==='/lobby/upsert'){
-        this.sql.exec('INSERT OR REPLACE INTO lobby(code,host,humans,players,updated,ranked) VALUES (?,?,?,?,?,?)',String(body.code),String(body.host||'').slice(0,20),Number(body.humans)||0,Number(body.players)||0,Date.now(),body.ranked?1:0);
+        this.sql.exec('INSERT OR REPLACE INTO lobby(code,host,humans,players,updated,ranked,size) VALUES (?,?,?,?,?,?,?)',String(body.code),String(body.host||'').slice(0,20),Number(body.humans)||0,Number(body.players)||0,Date.now(),body.ranked?1:0,[3,6,9].includes(Number(body.size))?Number(body.size):6);
         return this.reply({ok:true});
       }
       if(path==='/lobby/remove'){this.sql.exec('DELETE FROM lobby WHERE code=?',String(body.code));return this.reply({ok:true})}

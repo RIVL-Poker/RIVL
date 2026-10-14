@@ -45,8 +45,18 @@
                     <div class="rivl-mode-grid">
                         <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>RANKED</h3><p>Play against real people and climb the ladder.</p><button class="gold" id="openRanked">PLAY RANKED →</button></article>
                         <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>BOT PRACTICE</h3><p>Sharpen your game against AI opponents.</p><button class="gold" id="selectBotPractice">CHOOSE PLAYERS →</button></article>
-                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>PRIVATE ROOM</h3><p>Invite friends to a private nine-seat table.</p><button class="gold" id="openRooms">OPEN ROOMS →</button></article>
+                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>CASUAL</h3><p>Quick Play, public tables, or private rooms with friends. No Elo changes.</p><button class="gold" id="openRooms">PLAY CASUAL →</button></article>
                     </div>
+                </div>
+                <div id="rankedSelect" class="rivl-menu-step" hidden>
+                    <div class="section-title"><h2>CHOOSE YOUR RANKED TABLE</h2><span>ONLINE PLAYERS ONLY · EVERY MATCH COUNTS TOWARD ELO</span></div>
+                    <button class="rivl-back outline" id="backFromRanked" type="button">← BACK TO GAME MODES</button>
+                    <div class="modes rivl-card-modes">
+                        <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">A<span>♠</span></span><span class="rivl-playing-card">K<span>♠</span></span></div><h3>3 PLAYERS</h3><p>Fast · Heads-up action</p><button class="gold ranked-join" type="button" data-ranked-count="3">FIND 3-PLAYER MATCH</button></article>
+                        <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">Q<span>♥</span></span><span class="rivl-playing-card">Q<span>♠</span></span></div><h3>6 PLAYERS</h3><p>Balanced · Strategic</p><button class="gold ranked-join" type="button" data-ranked-count="6">FIND 6-PLAYER MATCH</button></article>
+                        <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">J<span>♣</span></span><span class="rivl-playing-card">J<span>♦</span></span></div><h3>9 PLAYERS</h3><p>Full table · Competitive</p><button class="gold ranked-join" type="button" data-ranked-count="9">FIND 9-PLAYER MATCH</button></article>
+                    </div>
+                    <p id="rankedSelectStatus" class="muted" role="status">Sign in to play ranked against real players. Matchmaking is separated by table size.</p>
                 </div>
                 <div id="playerSelect" class="rivl-menu-step" hidden>
                     <div class="section-title"><h2>CHOOSE YOUR TABLE</h2><span>BOT PRACTICE · 15-MINUTE MATCHES</span></div>
@@ -75,7 +85,7 @@
                 </div>
             </section>
             <section id="rooms" class="view content-view">
-              <div class="section-title"><h2>RIVL ROOMS</h2><span>LIVE LOBBY · ONLY RANKED ROOMS CHANGE ELO</span></div>
+              <div class="section-title"><h2>CASUAL ROOMS</h2><span>QUICK PLAY · PUBLIC TABLES · PRIVATE INVITES · NO ELO</span></div>
               <p id="roomStatus" role="status">Create a room and share its code, or join a friend's room.</p>
               <p id="capacityNote" class="capacity-note" hidden></p>
               <div id="roomFinder" class="panel room-finder">
@@ -85,7 +95,7 @@
               </div>
               <div id="roomEntry" class="room-entry">
                 <div class="panel"><h3>CREATE A ROOM</h3><label>Your display name <input id="roomName" maxlength="20" value="Player"></label><label class="check room-public-check"><input type="checkbox" id="roomListPublic"> List it in Open Tables so anyone can join</label><button class="gold" id="createRoom">CREATE ROOM</button></div>
-                <div class="panel ranked-panel" id="rankedPanel"><h3>RANKED</h3><p class="muted">Matchmade against other signed-in players: no room codes, no private games, no bots. The match starts 15 seconds after a second player joins, or straight away with 6. Your Elo comes 60% from finishing place and 40% from how well you played each decision. Leave before the match ends and you place last, though your decisions still count.</p><button class="gold" id="findRanked">FIND RANKED MATCH</button></div>
+                
                 <div class="panel"><h3>JOIN A ROOM</h3><label>Room code <input id="roomCodeInput" maxlength="8" placeholder="AB12CD" autocapitalize="characters" autocomplete="off"></label><label>Your display name <input id="joinName" maxlength="20" value="Guest"></label><button class="gold" id="joinRoom">JOIN ROOM</button></div>
               </div>
               <div id="roomLobby" hidden>
