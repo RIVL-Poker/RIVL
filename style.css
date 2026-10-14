@@ -398,3 +398,22 @@ body.rivl-modal-open{overflow:hidden}
 #table .rivl-clean-card{position:relative;display:flex;flex-direction:column;justify-content:flex-start}
 #table .rivl-clean-card>strong{position:relative;z-index:1;align-self:flex-start;font-size:.65em;line-height:1}
 #table .rivl-clean-card>span{position:absolute;inset:0;display:grid;place-items:center;font-size:1.1em;line-height:1}
+
+/* RIVL player identity, showdown cards, and account inputs */
+.rivl-dialog{border:1px solid #98703b;border-radius:18px;background:linear-gradient(145deg,#211810,#0c0b0c 65%);color:#f7ebd7;width:min(440px,calc(100vw - 30px));padding:28px;box-shadow:0 24px 90px #000b}
+.rivl-dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}
+.rivl-dialog-brand{color:var(--gold);font-size:12px;letter-spacing:3px;font-weight:800}
+.rivl-dialog h2{font-size:25px;margin:18px 0 8px}.rivl-dialog p{color:#bcb0a1;font-size:14px;line-height:1.5}
+.rivl-dialog label{display:block;color:var(--gold);font-size:11px;letter-spacing:2px;margin:20px 0 8px}
+.rivl-dialog input,.account-panel input{width:100%;min-height:46px;min-width:0;border-radius:9px;border:1px solid #665037;background:#131113!important;color:#fff4e2!important;padding:10px 13px;font:inherit;outline:none}
+.rivl-dialog input:focus,.account-panel input:focus{border-color:#e9ba72;box-shadow:0 0 0 3px #e9ba7225}
+.rivl-dialog-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}.rivl-dialog-actions button{padding:12px 18px}
+.account-panel{border:1px solid #6d4c2b;background:linear-gradient(135deg,#1c1712,#100e0e)}
+.account-panel h3{color:var(--gold);letter-spacing:2px}.account-panel .account-forms{gap:16px}.account-panel .account-forms label{color:#e7c99b;font-size:13px}
+#roomGame .rivl-pvp-seat .avatar,#roomGame .rivl-pvp-myseat .avatar{display:grid;place-items:center;border-radius:50%;font-size:20px;line-height:1;background:#241b13;border:2px solid #e9b86a;color:#f1c983;flex-shrink:0}
+#roomGame .rivl-shown{display:inline-flex;gap:5px;align-items:center;flex-shrink:0;vertical-align:middle;margin-left:8px}
+#roomGame .rivl-shown .card{width:34px;height:48px;padding:4px;flex:0 0 34px;border-radius:5px;box-shadow:0 2px 5px #0008}
+#roomGame .rivl-shown .card>strong{font-size:12px;line-height:1}
+#roomGame .rivl-shown .card>.rivl-card-center{font-size:23px;position:absolute;inset:0;display:grid;place-items:center}
+#roomGame .rivl-pvp-seat{max-width:none;gap:5px;flex-wrap:nowrap}
+@media(max-width:650px){#roomGame .rivl-shown .card{width:27px;height:39px;flex-basis:27px}#roomGame .rivl-shown .card>.rivl-card-center{font-size:18px}}

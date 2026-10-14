@@ -10,6 +10,7 @@
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
   const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');if(back){el.textContent='♠';return el}if(!code)return el;const rank=document.createElement('strong');rank.textContent=code[0]==='T'?'10':code[0];const center=document.createElement('span');center.className='rivl-card-center';center.textContent=suit[code[1]];el.append(rank,center);return el};
+  const avatarFor=p=>p?.avatar||'♠';
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
@@ -34,6 +35,20 @@
     document.querySelectorAll('[data-room-tab]').forEach(b=>b.classList.toggle('selected',b===button));
     renderRoomPanel();
   }));
+  const MATCH_KEY='rivlOnlineRecentMatches';
+  function recordMatch(g){
+    if(!g?.matchOver||!roomCode)return;
+    const id=roomCode+':'+(g.matchId||g.handNumber)+':'+(g.players?.map(p=>p.name).join('|')||'');
+    let records=[];try{records=JSON.parse(localStorage.getItem(MATCH_KEY)||'[]')}catch{}
+    if(!Array.isArray(records))records=[];
+    if(records.some(m=>m.id===id))return;
+    const me=g.players?.find(p=>p.seat===snapshot.mySeat);
+    if(!me)return;
+    const winner=[...g.players].sort((a,b)=>b.stack-a.stack)[0];
+    records.push({id,date:Date.now(),mode:snapshot.rated?'Rated PvP':'Unrated PvP',players:g.players.length,result:winner?.seat===me.seat?'Win':'Loss',stack:me.stack});
+    try{localStorage.setItem(MATCH_KEY,JSON.stringify(records.slice(-50)))}catch{}
+    window.refreshRatingUI?.();
+  }
   let lastRecordedResult='';
   let wasPlaying=false;
   const status=message=>{$('roomStatus').textContent=message};
@@ -59,7 +74,7 @@
     snapshot.seats.forEach((seat,i)=>{
       const el=document.createElement('div');el.className='room-seat';
       if(seat){
-        const avatar=document.createElement('div');avatar.className='room-avatar';avatar.textContent=seat.avatar||'♠';el.append(avatar);
+        const avatar=document.createElement('div');avatar.className='room-avatar';avatar.textContent=avatarFor(seat);el.append(avatar);
         const name=document.createElement('strong');name.textContent=seat.name;if(seat.verified){const v=document.createElement('span');v.className='verified-badge';v.title='Signed-in player';v.textContent='✓';name.append(v)}el.append(name);
         const info=document.createElement('small');info.textContent=(seat.type==='bot'?seat.level+' · Bot':seat.isHost?'Host · Human':'Human')+(i===snapshot.mySeat?' · You':'');el.append(info);
         if(!seat.online){el.classList.add('is-offline');const off=document.createElement('small');off.className='room-offline';off.textContent='Reconnecting…';el.append(off)}
@@ -86,7 +101,7 @@
       const me=g.players.find(p=>p.seat===snapshot.mySeat);
       const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat));
       $('roomMyName').textContent=me?.name||'Spectator';
-      $('roomMyAvatar').textContent=(me?.name||'P').slice(0,1).toUpperCase();
+      $('roomMyAvatar').textContent=avatarFor(me);
       $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
       $('roomTimer').hidden=g.turn!==me?.seat||g.phase==='showdown';
       const newHand=g.handNumber!==previousHand;
@@ -125,7 +140,7 @@
       opponents.forEach((p,i)=>{
         const item=document.createElement('div');
         item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'');
-        const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=(p.name||'P').slice(0,1).toUpperCase();
+        const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=avatarFor(p);
         const label=document.createElement('span');label.textContent=p.name+' · '+p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');
         item.append(avatar,label);
         const cards=g.shown?.[p.seat];
@@ -144,6 +159,7 @@
       renderRoomPanel();
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=!(g.matchOver&&host);
+      if(g.matchOver)recordMatch(g);
       if(g.matchOver){const best=[...g.players].sort((a,b)=>b.stack-a.stack)[0];$('roomWinner').textContent='Match complete · '+best.name+' wins the table'}
       const ratings=$('roomRatings');ratings.replaceChildren();
       if(g.matchOver&&(g.ratingChanges?.length||g.note)){
