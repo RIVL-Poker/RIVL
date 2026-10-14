@@ -462,3 +462,11 @@ body.rivl-modal-open{overflow:hidden}
 .room-public-check input[type=checkbox]:checked{background:#d9a657!important;border-color:#f0c987}
 .room-public-check input[type=checkbox]:checked::after{content:'✓';position:absolute;inset:0;text-align:center;line-height:18px;color:#15100a;font-weight:900}
 .room-public-check input[type=checkbox]:focus-visible{outline:2px solid #f0c987;outline-offset:3px}
+
+/* Decorative Cairo anime dealer; keeps pot, community cards and player actions unobstructed. */
+.table-scene{position:relative;isolation:isolate}
+.rivl-dealer{position:absolute;right:clamp(8px,2.5%,36px);top:34px;width:clamp(80px,12vw,150px);pointer-events:none;z-index:1;display:flex;align-items:center;flex-direction:column;filter:drop-shadow(0 6px 12px #000a)}
+.rivl-dealer img{width:100%;height:auto;display:block}
+.rivl-dealer span{display:block;text-align:center;font-size:9px;letter-spacing:.1em;color:#eac583;background:#0c0b0dd9;border:1px solid #906a37;border-radius:12px;padding:3px 7px;white-space:nowrap}
+#roomGame .rivl-dealer{top:20px;right:12px;width:clamp(66px,10vw,122px)}
+@media(max-width:740px){.rivl-dealer{right:2px;top:35px;width:74px}.rivl-dealer span{font-size:7px;padding:2px 4px}#roomGame .rivl-dealer{width:62px;top:18px;right:2px}}
