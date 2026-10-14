@@ -132,6 +132,16 @@
                     <h3 id="roomWinner" aria-live="polite"></h3>
                     <div id="roomRatings" aria-live="polite"></div>
                     <button id="roomNext" class="gold" hidden>BACK TO LOBBY</button>
+                    <div class="bottom-toggle rivl-room-panel-toggle"><button id="roomTogglePanel" type="button" aria-expanded="false">⌃ &nbsp; OPEN GAME PANEL</button></div>
+                    <div id="roomGamePanel" class="game-panel collapsed">
+                      <div class="tabs">
+                        <button class="tab selected" data-room-tab="chat">CHAT</button>
+                        <button class="tab" data-room-tab="history">HAND HISTORY</button>
+                        <button class="tab" data-room-tab="stats">PLAYER STATS</button>
+                        <button class="tab" data-room-tab="settings">TABLE SETTINGS</button>
+                      </div>
+                      <div id="roomTabContent" aria-live="polite"></div>
+                    </div>
                   </div>
                 </div>
                 <p class="room-disclaimer">Unranked multiplayer beta · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.</p>

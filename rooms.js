@@ -9,11 +9,32 @@
   const clearSession=()=>{try{localStorage.removeItem(SESSION)}catch{}};
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
-  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');el.textContent=back?'♠':pretty(code);return el};
+  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');if(back){el.textContent='♠';return el}if(!code)return el;const rank=document.createElement('strong');rank.textContent=code[0]==='T'?'10':code[0];const center=document.createElement('span');center.className='rivl-card-center';center.textContent=suit[code[1]];el.append(rank,center);return el};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
   function animatedCard(code,back,delay=0){const el=cardNode(code,back);if(delay){el.classList.add('rivl-deal-in');el.style.animationDelay=delay+'ms'}return el}
+  let roomTab='chat',roomHistory=[];
+  function renderRoomPanel(){
+    const target=$('roomTabContent');if(!target)return;
+    const g=snapshot?.game;
+    if(roomTab==='chat'){target.textContent='Room chat is not connected yet. Messages cannot be sent until server-backed chat is implemented.';return}
+    if(roomTab==='history'){target.textContent=roomHistory.length?roomHistory.slice(-12).reverse().join(' • '):'No completed hands yet.';return}
+    if(roomTab==='stats'){target.textContent=g?.players?.map(p=>p.name+': '+p.stack.toLocaleString()+' chips'+(p.folded?' (folded)':'')).join(' • ')||'Waiting for match.';return}
+    target.textContent='Cairo table · Unranked private-room PvP · 12-second turns · Sound effects enabled.';
+  }
+  $('roomTogglePanel')?.addEventListener('click',()=>{
+    const collapsed=$('roomGamePanel').classList.toggle('collapsed');
+    $('roomTogglePanel').textContent=collapsed?'⌃   OPEN GAME PANEL':'⌄   HIDE GAME PANEL';
+    $('roomTogglePanel').setAttribute('aria-expanded',String(!collapsed));
+    renderRoomPanel();
+  });
+  document.querySelectorAll('[data-room-tab]').forEach(button=>button.addEventListener('click',()=>{
+    roomTab=button.dataset.roomTab;
+    document.querySelectorAll('[data-room-tab]').forEach(b=>b.classList.toggle('selected',b===button));
+    renderRoomPanel();
+  }));
+  let lastRecordedResult='';
   let wasPlaying=false;
   const status=message=>{$('roomStatus').textContent=message};
   const safeName=value=>(value||'Player').trim().slice(0,20)||'Player';
@@ -105,8 +126,18 @@
         item.append(avatar,label);
         const cards=g.shown?.[p.seat];
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
+        // Evenly distribute opponents along a mirrored arc around the Cairo table.
+        const total=opponents.length;
+        const span=total===1?0:total===2?70:Math.min(220,100+Math.max(0,total-3)*24);
+        const angle=(270-span/2+(total===1?0:span*i/(total-1)))*Math.PI/180;
+        item.style.left=(50+51*Math.cos(angle))+'%';
+        item.style.top=(50+59*Math.sin(angle))+'%';
+        item.style.right='auto';item.style.bottom='auto';
+        item.style.transform='translate(-50%,-50%)';
         seats.append(item);
       });
+      if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);lastRecordedResult=g.handNumber+':'+g.result}
+      renderRoomPanel();
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=!(g.matchOver&&host);
       if(g.matchOver){const best=[...g.players].sort((a,b)=>b.stack-a.stack)[0];$('roomWinner').textContent='Match complete · '+best.name+' wins the table'}

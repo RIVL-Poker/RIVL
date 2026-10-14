@@ -368,3 +368,33 @@ body.rivl-modal-open{overflow:hidden}
 .room-entry .check{flex-direction:row;align-items:center;font-size:13px}.verified-badge{color:#7fd09b;margin-left:4px}
 .online-row{display:grid;grid-template-columns:40px minmax(120px,1fr) 70px 50px 70px 50px;gap:8px;padding:11px 4px;border-bottom:1px solid #38302b;font-size:14px}.online-row.head{color:var(--muted);font-size:11px;letter-spacing:.1em}.online-row.me{color:var(--gold)}
 #roomRatings{margin-top:8px;text-align:center}#roomRatings .up{color:#7fd09b}#roomRatings .down{color:#e08585}
+
+/* Private-room PvP polish: clear header and original centered-suit cards. */
+#rooms.rivl-match-mode .room-topline{top:0;right:0;position:relative;flex:0 0 auto;display:flex;justify-content:flex-end;padding:4px 20px;background:#0b0b0c;border-bottom:1px solid #49351e;z-index:5}
+#rooms.rivl-match-mode .room-topline #leaveRoom{position:static;min-height:34px;padding:6px 12px;font-size:12px}
+#rooms.rivl-match-mode #roomGame{flex:1;height:auto;min-height:0}
+#roomGame .rivl-pvp-gamebar{padding-right:22px}
+#roomGame .rivl-pvp-seat{width:max-content;max-width:175px;justify-content:center}
+#roomGame .rivl-pvp-board .card:not(.back),#roomGame .rivl-pvp-myseat .card:not(.back){position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;line-height:1}
+#roomGame .card:not(.back)>strong{font-size:15px;font-weight:900;align-self:flex-start}
+#roomGame .card:not(.back)>.rivl-card-center{position:absolute;inset:0;display:grid;place-items:center;font-size:29px;font-weight:400;pointer-events:none}
+#roomGame .rivl-pvp-myseat .card:not(.back)>.rivl-card-center{font-size:22px}
+
+/* Private room bottom game panel follows original bot-table controls. */
+#roomGame .rivl-room-panel-toggle{display:flex;justify-content:center;margin-top:4px}
+#roomGame .rivl-room-panel-toggle button{font-size:12px}
+#roomGame #roomGamePanel{width:min(980px,100%);margin:5px auto 0;max-height:180px;overflow:auto}
+#roomGame #roomGamePanel.collapsed{display:none}
+#roomGame #roomGamePanel .tabs{display:flex;flex-wrap:wrap}
+#roomGame #roomGamePanel .tab{flex:1;min-width:100px}
+#roomGame #roomTabContent{padding:12px 16px;font-size:13px;color:#d7c4a8}
+#roomGame .rivl-pvp-myseat .card{width:37px;height:49px;padding:4px}
+#roomGame .rivl-pvp-myseat .card:not(.back)>strong{font-size:12px}
+#roomGame .rivl-pvp-myseat .card:not(.back)>.rivl-card-center{font-size:20px}
+
+/* One rank in top-left and one centered suit in both poker modes. */
+#roomGame .card:not(.back)>strong{position:relative;z-index:1;align-self:flex-start;font-size:12px;line-height:1}
+#roomGame .card:not(.back)>.rivl-card-center{position:absolute;inset:0;display:grid;place-items:center;line-height:1}
+#table .rivl-clean-card{position:relative;display:flex;flex-direction:column;justify-content:flex-start}
+#table .rivl-clean-card>strong{position:relative;z-index:1;align-self:flex-start;font-size:.65em;line-height:1}
+#table .rivl-clean-card>span{position:absolute;inset:0;display:grid;place-items:center;font-size:1.1em;line-height:1}
