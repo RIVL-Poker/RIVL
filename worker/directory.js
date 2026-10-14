@@ -98,8 +98,7 @@ export class Directory {
     this.sql.exec('INSERT INTO matches(id,t) VALUES (?,?)',String(matchId),Date.now());
     const w=1/Math.sqrt(unique.length-1);
     const updates=unique.map(({p,a})=>({a,place:Number(p.place),next:glicko({r:a.r,rd:a.rd,vol:a.vol},unique.filter(o=>o.a.id!==a.id).map(o=>({r:o.a.r,rd:o.a.rd,w,s:p.place<o.p.place?1:p.place>o.p.place?0:.5})))}));
-    const best=Math.min(...updates.map(u=>u.place));
-    for(const u of updates)this.sql.exec('UPDATE accounts SET r=?,rd=?,vol=?,games=games+1,wins=wins+?,last_played=? WHERE id=?',u.next.r,u.next.rd,u.next.vol,u.place===best?1:0,Date.now(),u.a.id);
+    for(const u of updates)this.sql.exec('UPDATE accounts SET r=?,rd=?,vol=?,games=games+1,wins=wins+?,last_played=? WHERE id=?',u.next.r,u.next.rd,u.next.vol,u.place===1?1:0,Date.now(),u.a.id);
     return {rated:true,changes:updates.map(u=>({id:u.a.id,name:u.a.name,before:Math.round(u.a.r),after:Math.round(u.next.r)}))};
   }
 }

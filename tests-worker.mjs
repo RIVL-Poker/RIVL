@@ -177,9 +177,11 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   assert.ok(sockets[0].last('state').state.rated);
   await say(room,sockets[0],{type:'startMatch'});
   await say(room,sockets[2],{type:'leave'});   // Cat abandons: counts as last
+  const busted=new Set();
   for(let i=0;i<20000&&!room.matchOver();i++){
     const g=room.room.game;
-    if(g.phase==='showdown'){g.nextHandAt=0;await room.alarm();continue}
+    for(const p of g.players)assert.ok(!busted.has(p.seat),'a busted player is not dealt back in');
+    if(g.phase==='showdown'){for(const p of g.players)if(p.stack===0)busted.add(p.seat);g.nextHandAt=0;await room.alarm();continue}
     const seat=g.turn,idx=[0,1].find(k=>room.room.members[tokens[k]]?.seat===seat);
     if(idx===undefined){g.deadline=0;await room.alarm();continue}
     const l=room.legal(seat);await say(room,sockets[idx],{type:'action',...(Math.random()<.3&&l.canRaise?{action:'allin'}:{action:l.check?'check':'call'})});
@@ -190,7 +192,10 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const cat=changes.find(c=>c.name==='Cat');assert.ok(cat.after<cat.before,'the leaver loses rating');
   const board=(await api(env,'/api/leaderboard')).data.players;
   assert.equal(board.length,3);assert.ok(board.every(p=>p.games===1));
-  assert.equal(board.reduce((n,p)=>n+p.wins,0),1,'exactly one winner');
+  // Only the table's winner gets a win; when the bot wins the match, no account does.
+  const champ=room.room.game.players.filter(p=>p.stack>0&&room.room.seats[p.seat]).sort((a,b)=>b.stack-a.stack)[0].name;
+  assert.equal(board.reduce((n,p)=>n+p.wins,0),['Ann','Bob','Cat'].includes(champ)?1:0,'only the match winner is credited a win');
+  assert.ok(board.every(p=>p.wins===(p.name===champ?1:0)));
   checks++;
 }
 

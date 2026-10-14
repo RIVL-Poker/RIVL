@@ -203,8 +203,9 @@ export class Room {
   }
   startHand(previous){
     const old=previous||this.room.game;
+    // A seat missing from the previous hand busted out earlier in this match; only a fresh match starts at 1,000.
     const carried=i=>old?.players.find(p=>p.seat===i);
-    const participants=this.room.seats.flatMap((s,i)=>s?[{seat:i,name:s.name,bot:s.type==='bot',stack:carried(i)?.stack??1000,bet:0,contribution:0,folded:false,allIn:false,away:!!carried(i)?.away,timeouts:carried(i)?.timeouts||0}]:[]).filter(p=>p.stack>0);
+    const participants=this.room.seats.flatMap((s,i)=>s?[{seat:i,name:s.name,bot:s.type==='bot',stack:old?carried(i)?.stack??0:1000,bet:0,contribution:0,folded:false,allIn:false,away:!!carried(i)?.away,timeouts:carried(i)?.timeouts||0}]:[]).filter(p=>p.stack>0);
     if(old)this.eliminate(old.players.filter(p=>!participants.some(x=>x.seat===p.seat)).map(p=>p.seat));
     if(participants.length<2||!participants.some(p=>!p.bot)){
       if(old){old.phase='showdown';old.result='Match complete';old.turn=-1;old.deadline=0;old.nextHandAt=0;this.finishMatch(participants)}
