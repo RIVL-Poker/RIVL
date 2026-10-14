@@ -470,3 +470,8 @@ body.rivl-modal-open{overflow:hidden}
 .rivl-dealer span{display:block;text-align:center;font-size:9px;letter-spacing:.1em;color:#eac583;background:#0c0b0dd9;border:1px solid #906a37;border-radius:12px;padding:3px 7px;white-space:nowrap}
 #roomGame .rivl-dealer{top:20px;right:12px;width:clamp(66px,10vw,122px)}
 @media(max-width:740px){.rivl-dealer{right:2px;top:35px;width:74px}.rivl-dealer span{font-size:7px;padding:2px 4px}#roomGame .rivl-dealer{width:62px;top:18px;right:2px}}
+
+/* Make the Cairo dealer clearly visible above the table without obscuring game actions. */
+.table-scene .rivl-dealer{top:42px;right:clamp(10px,4%,58px);width:clamp(120px,17vw,210px);z-index:2}
+#roomGame .rivl-dealer{top:30px;right:clamp(8px,3%,32px);width:clamp(95px,13vw,160px)}
+@media(max-width:740px){.table-scene .rivl-dealer{top:30px;right:3px;width:90px}#roomGame .rivl-dealer{top:20px;right:2px;width:75px}}
