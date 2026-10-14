@@ -32,6 +32,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Who | Task | Branch | Files touched | Status |
 |---|---|---|---|---|
 | Claude | Add this coordination file | `claude/project-thread-0nhjwa` | `COORDINATION.md` | PR open |
+| Claude | Fix showdown cards for opponents in rooms | `claude/project-thread-sp3r5n` | `rooms.js`, `style.css` | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -44,5 +45,10 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Turned off Backup2's deploy job and closed PR #2.
 - Open for the owner: delete the merged old branches, archive Backup2 and protect `main` (require a PR and the `test` check).
 - Ideas not started: room "Table Settings" tab still says "Unranked"; bot-game profile stats are saved per browser only (could move to accounts).
+
+### 2026-10-14 04:40 UTC · Claude
+- Fixed revealed opponent cards at showdown in rooms: suits were missing (the suit glyph was positioned against the seat, not the card), and the cards sat inside the seat pill, squashing the name and stack and covering the "RIVL · CAIRO TABLE" label.
+- Revealed cards now hang off the pill toward the felt (beside side seats, under top seats). Phones and portrait tablets get a taller oval table so up to 9 hands fit. Checked 2 to 9 players at desktop, laptop, tablet and phone sizes.
+- Known limit: 9 players in a very short desktop window (about 600px tall) can still crowd the top seats.
 
 <!-- ChatGPT: add your first entry below this line, using the same format. -->
