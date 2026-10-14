@@ -3,6 +3,7 @@
 export {Directory} from './directory.js';
 import {gradeDecision} from './grading.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=5000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4;
 // Blinds rise every 8 hands so a match reaches a finish.
 const BLINDS=[[10,20],[15,30],[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000]];
@@ -163,7 +164,7 @@ export class Room {
     const shown=g?.phase==='showdown'&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
-      ranked:!!this.room.ranked,rated:this.rated(),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
+      chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,
         winners:g.winners||[],result:g.result||'',note:g.note||'',ratingChanges:g.ratingChanges||null,matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
@@ -520,6 +521,19 @@ export class Room {
       if(!member){ws.close(1008,'Unauthorized');return}
       const host=token===room.hostToken;
       if(msg.type==='ping')return this.send(ws,{type:'pong'});
+      if(msg.type==='chat'){
+        // Only authenticated seated humans can chat; never trust a client-supplied name or seat.
+        const text=typeof msg.text==='string'?msg.text.trim():'';
+        if(!text||text.length>CHAT_MAX_CHARS||/[\u0000-\u001f\u007f]/.test(text))throw Error('Chat must be 1–180 characters with no control characters');
+        const now=Date.now();if(now-(member.lastChatAt||0)<CHAT_COOLDOWN_MS)throw Error('Please wait a moment before chatting');
+        member.lastChatAt=now;
+        const entry={id:crypto.randomUUID(),seat:member.seat,name:member.name,text,at:now};
+        room.chat=[...(room.chat||[]),entry].slice(-CHAT_HISTORY_LIMIT);
+        room.lastActive=now;
+        await this.state.storage.put('room',room);
+        for(const [client] of this.sockets())this.send(client,{type:'chat',message:entry});
+        return;
+      }
       if(msg.type==='leave')return this.removeMember(token,'You left the room');
       if(msg.type==='action'){
         if(this.matchOver(room.game))throw Error('Match not started');
