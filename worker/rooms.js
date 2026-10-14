@@ -78,6 +78,11 @@ export default {
         if(url.pathname==='/api/status')return send(await cached(env,'/status',10000));
         if(url.pathname==='/api/lobby')return send(await cached(env,'/lobby',5000));
         if(url.pathname==='/api/leaderboard')return send(await cached(env,'/leaderboard',10000));
+        if(url.pathname==='/api/leaderboard/league'){
+          const r=Math.round(Number(url.searchParams.get('r'))/10)*10;
+          if(!Number.isFinite(r)||r<0||r>5000)return json({error:'Missing rating.'},400);
+          return send(await cached(env,'/leaderboard/league?r='+r,10000));
+        }
       }
       if(request.method!=='POST')return json({error:'Not found'},404);
       if(url.pathname==='/api/accounts'){

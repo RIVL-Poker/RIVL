@@ -237,10 +237,10 @@
                 <article class="panel ranked-tracker" aria-labelledby="rtTitle">
                     <div class="rt-head">
                         <div class="avatar large" data-player-initial>P</div>
-                        <div class="rt-id"><small class="rt-eyebrow">✦ RANKED · ELO</small><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier" id="rtTier">Silver</span><span class="rt-flag" id="rtFlag" hidden>Provisional</span></div>
+                        <div class="rt-id"><small class="rt-eyebrow">✦ RANKED · ELO</small><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier league-challenger" id="rtTier">Challenger</span><span class="rt-flag" id="rtFlag" hidden>Provisional</span></div>
                         <div class="rt-score"><strong id="onlineProfileRating">1,500</strong><small id="rtRd">±350</small></div>
                     </div>
-                    <div class="rt-progress"><div class="rt-bar"><span id="rtBar"></span></div><div class="rt-bar-labels"><span id="rtBarFrom">Silver 1,400</span><span id="rtBarTo">Gold 1,600</span></div></div>
+                    <div class="rt-progress"><div class="rt-bar"><span id="rtBar"></span></div><div class="rt-bar-labels"><span id="rtBarFrom">Challenger 1,400</span><span id="rtBarTo">Elite 1,750</span></div></div>
                     <div class="rt-tiles">
                         <div><small>RANKED MATCHES</small><b id="rtGames">0</b></div>
                         <div><small>WINS</small><b id="rtWins">0</b></div>
@@ -255,7 +255,7 @@
                     <p id="onlineProfileRecord" hidden></p>
                 </article>
                 <h2 class="profile-section-heading">BOT PRACTICE · UNRANKED · THIS DEVICE</h2>
-                <div class="panel profile-card"><div><p id="profTier">Silver · Bot practice</p><strong id="profRating">1,500 practice rating</strong></div></div>
+                <div class="panel profile-card"><div><p id="profTier">Challenger · Bot practice</p><strong id="profRating">1,500 practice rating</strong></div></div>
                 <div class="stat-grid">
                     <article class="panel"><h3>BOT PRACTICE MATCHES</h3><h2 id="profGames">0</h2></article>
                     <article class="panel"><h3>WINS</h3><h2 id="profWins">0</h2></article>
@@ -289,13 +289,13 @@
             <section id="leaderboard" class="view content-view">
                 <h1>LEADERBOARDS</h1>
                 <div class="panel ladder">
-                    <h3>RANKED · ELO</h3>
-                    <div class="online-row head"><span>#</span><span>PLAYER</span><span>ELO</span><span>RD</span><span>MATCHES</span><span>WINS</span></div>
+                    <div class="ladder-top"><h3>RANKED · ELO</h3><div class="league-tabs" role="group" aria-label="Ranked leaderboard view"><button type="button" class="outline" id="lbMine" aria-pressed="false" hidden>MY LEAGUE</button><button type="button" class="outline" id="lbTop" aria-pressed="true">TOP 50</button></div></div>
+                    <div class="online-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>ELO</span><span>RD</span><span>MATCHES</span><span>WINS</span></div>
                     <div id="onlineRows"><p class="muted">Loading…</p></div>
                 </div>
                 <div class="panel ladder">
                     <h3>BOT PRACTICE · UNRANKED · THIS DEVICE</h3>
-                    <div class="ladder-row head"><span>#</span><span>PLAYER</span><span>TIER</span><span>RATING</span><span>RD</span><span>MATCHES</span><span>ACCURACY</span></div>
+                    <div class="ladder-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>RATING</span><span>RD</span><span>MATCHES</span><span>ACCURACY</span></div>
                     <div id="ladderRows"></div>
                 </div>
                 <div class="panel how">

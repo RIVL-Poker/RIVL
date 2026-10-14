@@ -36,19 +36,30 @@
   }
   window.rivlAccount={current:()=>state,key:()=>state?.key||null,refresh,call};
 
+  // Ranked leaderboard: "My league" (signed in) or the global top 50.
+  let board=null;
   async function loadLeaderboard(){
     const rows=$('onlineRows');if(!rows)return;
+    const mine=$('lbMine'),top=$('lbTop');
+    if(mine)mine.hidden=!state;
+    if(!state||!board)board=state?'mine':'top';
+    mine?.setAttribute('aria-pressed',String(board==='mine'));top?.setAttribute('aria-pressed',String(board==='top'));
+    const note=text=>{const p=document.createElement('p');p.className='muted';p.textContent=text;rows.append(p)};
     try{
-      const {players,total}=await call('/api/leaderboard');
+      const data=board==='mine'?await call('/api/leaderboard/league?r='+(state.rating||1500)):await call('/api/leaderboard');
+      const {players,total}=data;
       rows.replaceChildren();
-      if(!players.length){rows.innerHTML='<p class="muted">No ranked matches yet.</p>';return}
+      if(board==='mine'&&data.near&&players.length)note(`${data.league} has ${total} ${total===1?'player':'players'} so far. Showing the ${players.length} players nearest your Elo.`);
+      if(!players.length){note('No ranked matches yet.');return}
       players.forEach((p,i)=>{
         const row=document.createElement('div');row.className='online-row'+(state&&p.id===state.id?' me':'');
-        for(const v of [i+1,p.name+(p.provisional?' ?':''),p.rating.toLocaleString(),'±'+p.rd,p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
+        for(const v of [board==='mine'?p.rank:i+1,p.name+(p.provisional?' ?':''),p.league,p.rating.toLocaleString(),'±'+p.rd,p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
+        row.children[2].className='league-'+p.leagueKey;
         rows.append(row);
       });
-      if(total>players.length){const more=document.createElement('p');more.className='muted';more.textContent=`Top ${players.length} of ${total} ranked players. "?" marks a provisional rating.`;rows.append(more)}
-    }catch(e){rows.innerHTML='';const p=document.createElement('p');p.className='muted';p.textContent=e.message;rows.append(p)}
+      if(board==='mine'&&!data.near&&total>players.length)note(`The ${players.length} of ${total} ${data.league} players nearest your Elo. "?" marks a provisional rating.`);
+      if(board==='top'&&total>players.length)note(`Top ${players.length} of ${total} ranked players. "?" marks a provisional rating.`);
+    }catch(e){rows.replaceChildren();note(e.message)}
   }
 
   function init(){
@@ -67,6 +78,8 @@
     $('accountCopyKey')?.addEventListener('click',()=>navigator.clipboard?.writeText(state?.key||'').then(()=>status('Sign-in code copied.'),()=>{$('accountKey').hidden=false;status('Select the code to copy it.')}));
     $('accountSignOut')?.addEventListener('click',()=>{if(confirm('Sign out on this device? You will need your sign-in code to sign back in.')){setAccount(null);status('Signed out.')}});
     document.querySelectorAll('.nav[data-view="leaderboard"]').forEach(b=>b.addEventListener('click',loadLeaderboard));
+    $('lbMine')?.addEventListener('click',()=>{board='mine';loadLeaderboard()});
+    $('lbTop')?.addEventListener('click',()=>{board='top';loadLeaderboard()});
     document.querySelectorAll('.nav[data-view="profile"]').forEach(b=>b.addEventListener('click',refresh));
     loadLeaderboard();
   }
