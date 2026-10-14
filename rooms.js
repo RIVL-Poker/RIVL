@@ -43,6 +43,8 @@
     if(!snapshot)return;
     $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=roomCode;
     const playing=!!snapshot.started&&!!snapshot.game;
+    const heading=document.querySelector('.crumb');
+    if(heading)heading.textContent=playing?'TEXAS HOLD’EM · '+(snapshot.rated?'RATED':'UNRANKED')+' MULTIPLAYER':'TEXAS HOLD’EM · ONLINE ROOMS';
     $('rooms').classList.toggle('rivl-match-mode',playing);
     if(playing&&!wasPlaying){window.scrollTo({top:0,behavior:'instant'});}
     wasPlaying=playing;
@@ -174,6 +176,7 @@
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
     socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;clearSession();
+    const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM · RATED BOT PLAY';
     $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
   }
   function connect(){
