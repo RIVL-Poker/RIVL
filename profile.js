@@ -19,12 +19,14 @@
     el.replaceChildren();
     if(validPhoto(photo)){const img=document.createElement('img');img.src=photo;img.alt='Your profile picture';img.className='rivl-avatar-photo';el.append(img)}
     else{const initial=document.createElement('span');initial.className='profile-initial';initial.textContent=(window.rivlPlayerName?.()||'P')[0].toUpperCase();el.append(initial)}
-    const remove=document.getElementById('removeProfilePhoto');if(remove)remove.hidden=!photo;
+    if(!el.querySelector('.rivl-avatar-plus')){const plus=document.createElement('span');plus.className='rivl-avatar-plus';plus.setAttribute('aria-hidden','true');plus.textContent='+';el.append(plus)}
     const upload=document.getElementById('profilePhotoInput');if(upload)upload.disabled=!account;
-    const status=document.getElementById('profilePhotoStatus');if(status)status.textContent=account?'Optional photo is visible to everyone at your tables. Use your own image.':'Sign in to upload a profile picture visible at tables.';
+    el.title=account?'Change profile picture':'Sign in to change your profile picture';
   };
   function setupPhoto(){
-    const input=document.getElementById('profilePhotoInput'),remove=document.getElementById('removeProfilePhoto');
+    const input=document.getElementById('profilePhotoInput'),avatar=document.getElementById('rtHeroGem'),notice=document.getElementById('rivlPhotoNotice');
+    avatar?.addEventListener('click',()=>{if(!window.rivlAccount?.current()){const status=document.getElementById('profilePhotoStatus');if(status){status.hidden=false;status.textContent='Sign in to change your profile picture.'}return}input?.click()});
+    document.getElementById('rivlPhotoNoticeClose')?.addEventListener('click',()=>notice?.close());
     if(!input)return;
     input.addEventListener('change',async()=>{
       const file=input.files?.[0],status=document.getElementById('profilePhotoStatus');input.value='';
@@ -39,10 +41,9 @@
         const data=canvas.toDataURL('image/jpeg',0.72);
         if(data.length>45000)throw Error('Image too large after resizing.');
         if(status)status.textContent='Saving photo…';
-        await window.rivlAccount.updateAvatar(data);window.rivlPaintAvatar();
-      }catch(e){if(status)status.textContent=e.message||'Photo could not be saved.'}
+        await window.rivlAccount.updateAvatar(data);window.rivlPaintAvatar();if(status){status.hidden=true;status.textContent=''}notice?.showModal();
+      }catch(e){if(status){status.hidden=false;status.textContent=e.message||'Photo could not be saved.'}}
     });
-    remove?.addEventListener('click',async()=>{try{await window.rivlAccount.updateAvatar(null);window.rivlPaintAvatar()}catch(e){const status=document.getElementById('profilePhotoStatus');if(status)status.textContent=e.message}});
   }
   document.addEventListener('DOMContentLoaded',setupPhoto);
   window.rivlPaintName=paint;
