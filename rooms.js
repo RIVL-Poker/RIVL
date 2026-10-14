@@ -19,10 +19,10 @@
   function renderRoomPanel(){
     const target=$('roomTabContent');if(!target)return;
     const g=snapshot?.game;
-    if(roomTab==='chat'){target.textContent='Room chat is not connected yet. Messages cannot be sent until server-backed chat is implemented.';return}
+    if(roomTab==='chat'){target.textContent='Chat is coming soon.';return}
     if(roomTab==='history'){target.textContent=roomHistory.length?roomHistory.slice(-12).reverse().join(' • '):'No completed hands yet.';return}
     if(roomTab==='stats'){target.textContent=g?.players?.map(p=>p.name+': '+p.stack.toLocaleString()+' chips'+(p.folded?' (folded)':'')).join(' • ')||'Waiting for match.';return}
-    target.textContent='Cairo table · '+(snapshot?.ranked?'Ranked PvP · Elo from finishing place (60%) and decision accuracy (40%) · leaving early places you last':'Unranked PvP')+' · 12-second turns · Sound effects enabled.';
+    target.textContent=(snapshot?.ranked?'Ranked · leaving early places you last':'Unranked')+' · 12-second turns';
   }
   $('roomTogglePanel')?.addEventListener('click',()=>{
     const collapsed=$('roomGamePanel').classList.toggle('collapsed');
@@ -77,7 +77,7 @@
     wasPlaying=playing;
     const host=isHost;
     $('roomHostNotice').textContent=snapshot.ranked?rankedQueueText():
-      (host?'You are the host. Add bots using +, remove bots, or switch visibility. Public rooms appear in Open Tables.':'Waiting for the host to start.')+' Unranked: this match does not change Elo.';
+      (host?'You are the host. Tap + to add a bot.':'Waiting for the host to start.');
     $('roomPrivate').disabled=!host;$('roomPublic').disabled=!host;
     // Ranked tables are matchmade: no visibility switch, no room code to share and no Start button.
     const visibilityRow=document.querySelector('.room-visibility');if(visibilityRow)visibilityRow.hidden=!!snapshot.ranked;
@@ -97,7 +97,7 @@
         if(host&&!snapshot.ranked&&seat.type==='human'&&i!==snapshot.mySeat&&!lobbyLocked()){const kick=document.createElement('button');kick.className='room-remove';kick.textContent='REMOVE';kick.onclick=()=>send({type:'removePlayer',seat:i});el.append(kick)}
         if(host&&seat.type==='bot'&&!lobbyLocked()){const remove=document.createElement('button');remove.className='room-remove';remove.textContent='REMOVE';remove.onclick=()=>send({type:'removeBot',seat:i});el.append(remove)}
       }else{
-        const add=document.createElement('button');add.textContent='+';add.title=host?'Add a bot':'Waiting for player';add.disabled=!host||lobbyLocked()||!!snapshot.ranked;if(snapshot.ranked)add.title='Open seat for a signed-in player';add.onclick=()=>{selectedSeat=i;openBotPicker()};el.append(add);
+        const add=document.createElement('button');add.textContent='+';add.title=host?'Add a bot':'Waiting for player';add.disabled=!host||lobbyLocked()||!!snapshot.ranked;if(snapshot.ranked)add.title='Open seat';add.onclick=()=>{selectedSeat=i;openBotPicker()};el.append(add);
         const label=document.createElement('small');label.textContent='EMPTY · SEAT '+(i+1);el.append(label);
       }
       seats.append(el);
@@ -201,7 +201,7 @@
         if(Number(amount.value)<l.raiseToMin||Number(amount.value)>l.raiseToMax)amount.value=l.raiseToMin;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
-      }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You were sitting out. Act on your next turn to rejoin play.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
+      }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
       clearInterval(clockTimer);
       const tick=()=>{
         const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);
@@ -216,8 +216,8 @@
   function rankedQueueText(){
     const seated=snapshot.seats.filter(Boolean).length,max=snapshot.rankedMax||6;
     const wait=snapshot.startsAt?Math.max(0,Math.ceil((snapshot.startsAt-Date.now()-clockOffset)/1000)):0;
-    const head=snapshot.started?'Ranked match.':seated<2?`Finding Ranked players… ${seated} of ${max} seated. The match starts once a second player joins.`:`Ranked match starts in ${wait}s · ${seated} of ${max} seated (starts now at ${max}).`;
-    return head+' Elo comes from finishing place and your graded decisions; leaving early places you last.';
+    const head=snapshot.started?'Ranked match.':seated<2?`Finding players… ${seated} of ${max} seated.`:`Starts in ${wait}s · ${seated} of ${max} seated.`;
+    return head+' Leaving early places you last.';
   }
   function lobbyLocked(){return !!snapshot?.game&&!snapshot.game.matchOver}
   function send(message){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message));else status('Reconnecting to the room…')}
@@ -225,7 +225,7 @@
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
     clearInterval(queueTimer);socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];lastRecordedResult='';clearSession();
-    const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM · RATED BOT PLAY';
+    const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM';
     $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
   }
   function connect(){
@@ -247,7 +247,7 @@
   let rankedSize=6;
   async function enter(kind){try{
     rankedEntry=kind==='ranked';
-    if(kind==='ranked'&&!window.rivlAccount?.key())throw Error('Sign in or create an account on your Profile to play Ranked.');
+    if(kind==='ranked'&&!window.rivlAccount?.key())throw Error('Sign in on your Profile to play Ranked.');
     const name=safeName($(kind==='create'?'roomName':'joinName').value);
     window.rivlSetPlayerName?.(name);
     const code=kind==='join'?$('roomCodeInput').value.trim().toUpperCase():'';
@@ -278,7 +278,7 @@
   async function refreshCapacity(){
     if(!API)return;
     try{const s=await request('/api/status');const note=$('capacityNote');note.hidden=!s.busy;
-      note.textContent=s.busy?'Online play has used its free capacity for today, so new rooms are paused. Bot practice still works, and rooms open again after midnight UTC.':'';
+      note.textContent=s.busy?'Online rooms are full for today and reopen at midnight UTC. Bot practice still works.':'';
       for(const id of ['createRoom','quickPlay'])$(id).disabled=s.busy}catch{}
   }
   function startFinder(){clearInterval(lobbyTimer);refreshLobby();refreshCapacity();lobbyTimer=setInterval(()=>finderVisible()?refreshLobby():null,15000)}
@@ -289,7 +289,7 @@
   $('createRoom').onclick=()=>enter('create');
   document.querySelectorAll('[data-ranked-count]').forEach(btn=>btn.addEventListener('click',()=>{rankedSize=Number(btn.dataset.rankedCount);enter('ranked')}));
   $('rtPlay').onclick=()=>{if(window.rivlAccount?.key())$('openRanked').click();else $('accountName')?.focus()};
-  $('openRanked').onclick=()=>{show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;$('rankedSelectStatus').textContent=window.rivlAccount?.key()?'Select 3, 6, or 9 players to join a real-player ranked queue.':'Sign in or create an account in Profile before joining ranked.'};
+  $('openRanked').onclick=()=>{show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;$('rankedSelectStatus').textContent=window.rivlAccount?.key()?'':'Sign in on your Profile to play Ranked.'};
   $('backFromRanked').onclick=()=>{show('play');$('rankedSelect').hidden=true;$('modeSelect').hidden=false};
   $('joinRoom').onclick=()=>enter('join');
   $('leaveRoom').onclick=()=>{if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return;send({type:'leave'});resetView('Left room.')};
