@@ -48,8 +48,8 @@ export class Directory {
     if(!a)return null;
     const rank=a.rgames>0?this.one('SELECT COUNT(*)+1 AS n FROM accounts WHERE rgames>0 AND rr>?',a.rr).n:null;
     const displayed=a.rr-(a.elo_offset||0);
-    const t=R.tier(displayed);
-    return {id:a.id,name:a.name,rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
+    const t=R.tier(displayed,!a.elo_offset);
+    return {id:a.id,name:a.name,rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key,legacyLeague:!a.elo_offset};
   }
   async byKey(key){
     if(typeof key!=='string'||key.length<20||key.length>64)return null;
@@ -87,7 +87,7 @@ export class Directory {
         const key=await this.byKey(url.searchParams.get('key')||'');
         const offset=key?.elo_offset||0;
         const internalR=r+offset;
-        const t=R.tier(r),[,lo,hi]=R.LEAGUES.find(l=>l[0]===t.name),top=hi===Infinity?1e9:hi;
+        const t=R.tier(r,!offset),[,lo,hi]=(offset?R.LEAGUES:R.LEGACY_LEAGUES).find(l=>l[0]===t.name),top=hi===Infinity?1e9:hi;
         const total=this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0 AND rr-elo_offset>=? AND rr-elo_offset<?',lo,top).n;
         const near=total<10;
         const rows=near?this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY ABS(rr-elo_offset-?) LIMIT 10',r)
