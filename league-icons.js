@@ -39,8 +39,18 @@
    svg.append(path('M8 30 15 28 24 45Z M40 30 33 28 24 45Z',shadow,.8));
    svg.append(path('M15 7H32L23 14Z','#ffffff',.64));
   }
-  const rim=path(t.shape==='stone'?'M11 8 25 5 39 13 43 27 34 41 18 43 5 31 6 17Z':'M14 5H34L44 17 40 30 24 45 8 30 4 17Z','none');
-  rim.setAttribute('stroke',t.light);rim.setAttribute('stroke-width','1.2');rim.setAttribute('stroke-linejoin','round');svg.append(rim);
+  // Premium dual-layer gold setting, beveled to catch the light.
+  const border=gradient(defs,id+'-gold',[['0%','#fff6d3'],['18%','#f3c66e'],['36%','#795019'],['55%','#ffe6a2'],['76%','#bf812b'],['100%','#fff2c4']]);
+  const outer=t.shape==='stone'?'M11 3 26 1 42 10 47 27 36 45 17 47 1 33 2 16Z':'M12 2H36L47 16 43 32 24 48 5 32 1 16Z';
+  const inner=t.shape==='stone'?'M11 8 25 5 39 13 43 27 34 41 18 43 5 31 6 17Z':'M14 5H34L44 17 40 30 24 45 8 30 4 17Z';
+  const goldRim=path(outer,'none');goldRim.setAttribute('stroke',border);goldRim.setAttribute('stroke-width','3.4');goldRim.setAttribute('stroke-linejoin','miter');svg.append(goldRim);
+  const darkInset=path(inner,'none');darkInset.setAttribute('stroke','#1c1010');darkInset.setAttribute('stroke-width','2.6');darkInset.setAttribute('stroke-linejoin','miter');svg.append(darkInset);
+  const innerRim=path(inner,'none');innerRim.setAttribute('stroke',border);innerRim.setAttribute('stroke-width','1.2');innerRim.setAttribute('stroke-linejoin','miter');svg.append(innerRim);
+  // Small highlights stay legible even when the badge is only 17px tall.
+  for(const [x,y,r] of [[12,5,2.7],[39,13,1.7],[8,30,1.4]]){
+   const shine=path('M'+(x-r)+' '+y+' H'+(x+r)+' M'+x+' '+(y-r)+' V'+(y+r),'none');
+   shine.setAttribute('stroke','#fff9e9');shine.setAttribute('stroke-width',r>2?1.1:.75);shine.setAttribute('stroke-linecap','round');svg.append(shine);
+  }
   return svg;
  }
  function decorate(element,key,{prepend=false}={}){
