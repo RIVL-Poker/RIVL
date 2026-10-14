@@ -705,5 +705,5 @@ body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:18
 
 /* Profile header: left-aligned identity and plus anchored at avatar bottom-left. */
 .ranked-tracker .rt-head{justify-content:flex-start;padding:8px 95px 8px 8px}
-.ranked-tracker .rivl-avatar-edit .rivl-avatar-plus{left:0;bottom:0;transform:translate(-35%,35%)}
+.ranked-tracker .rivl-avatar-edit .rivl-avatar-plus{left:auto;right:0;bottom:0;transform:translate(22%,22%)}
 @media(max-width:600px){.ranked-tracker .rt-head{justify-content:flex-start;padding:10px 0 65px}}
