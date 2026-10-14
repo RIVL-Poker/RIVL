@@ -236,8 +236,8 @@
                 <h1>YOUR PROFILE</h1>
                 <article class="panel ranked-tracker" aria-labelledby="rtTitle">
                     <div class="rt-head">
-                        <div class="rt-hero-gem" id="rtHeroGem" aria-hidden="true"></div>
-                        <div class="rt-id"><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier league-prospect" id="rtTier">Prospect</span></div>
+                        <div class="rt-hero-gem profile-avatar" id="rtHeroGem" aria-label="Your profile picture or initial"></div>
+                        <div class="rt-id"><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier league-prospect" id="rtTier">Prospect</span><div class="profile-photo-actions"><label for="profilePhotoInput" class="profile-photo-button">ADD / CHANGE PHOTO</label><button class="outline" type="button" id="removeProfilePhoto" hidden>REMOVE PHOTO</button><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" capture="user" hidden></div><small id="profilePhotoStatus" class="muted" role="status">Sign in to add a photo visible to players at tables.</small><small class="muted">Only upload images you have permission to share. Other players can report inappropriate photos; reported photos are hidden pending review.</small></div>
                         <div class="rt-score"><strong id="onlineProfileRating">0</strong><small id="rtRd" hidden></small></div>
                     </div>
                     <div class="rt-progress"><div class="rt-bar"><span id="rtBar"></span></div><div class="rt-bar-labels"><span id="rtBarFrom">Prospect 0</span><span id="rtBarTo">Challenger 350</span></div></div>
@@ -254,19 +254,25 @@
                     <div class="rt-foot"><p id="onlineProfileDetails" class="muted">Sign in or create an account to play Ranked.</p></div>
                     <p id="onlineProfileRecord" hidden></p>
                 </article>
-                <h2 class="profile-section-heading">BOT PRACTICE · UNRANKED · THIS DEVICE</h2>
-                <div class="panel profile-card"><div><p id="profTier">Challenger · Bot practice</p><strong id="profRating">1,500 practice rating</strong></div></div>
-                <div class="stat-grid">
-                    <article class="panel"><h3>BOT PRACTICE MATCHES</h3><h2 id="profGames">0</h2></article>
-                    <article class="panel"><h3>WINS</h3><h2 id="profWins">0</h2></article>
-                    <article class="panel"><h3>WIN RATE</h3><h2 id="profWinRate">–</h2></article>
-                    <article class="panel"><h3>AVG ACCURACY</h3><h2 id="profAcc">–</h2></article>
+                <h2 class="profile-section-heading">BOT PRACTICE MODE RATING</h2>
+                <div class="panel ladder">
+                    <h3>BOT PRACTICE MODE RATING</h3>
+                    <div id="ladderRows" class="bot-skill-summary" aria-live="polite"></div>
                 </div>
-                <div class="profile-grid">
-                    <article class="panel"><h3>BOT PRACTICE RATING HISTORY</h3><div id="profChart"></div></article>
-                    <article class="panel"><h3>DECISION QUALITY · ALL BOT MATCHES</h3><div id="profLabels"></div></article>
+                <div class="panel how">
+                    <h3>HOW BOT SKILL RATING WORKS</h3>
+                    <p><b>Every decision is graded.</b> Your choice is compared with the best option, given the hands
+                        your opponents likely hold, and labelled like a chess move: Brilliant, Best, Excellent, Good,
+                        Inaccuracy, Mistake or Blunder.</p>
+                    <p><b>Each match scores you against every bot:</b> 60% finishing place, 40% decision accuracy.</p>
+                    <p><b>Glicko-2 updates the ratings.</b> Beating higher-rated bots is worth more. <b>RD</b> is the
+                        rating uncertainty, calculated behind the scenes.</p>
+                    <p>Bot games never change Ranked Elo. Leaving a match early leaves it unrated.</p>
+                    <div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET
+                            BOT LADDER</button><span id="resetConfirm" hidden>Erase all bot practice ratings and match history on this
+                            device? <button class="outline" id="resetYes" type="button">ERASE</button> <button
+                                class="outline" id="resetNo" type="button">KEEP</button></span></div>
                 </div>
-                <article class="panel"><h3>RECENT BOT PRACTICE MATCHES</h3><div id="profMatches" class="mr-table"></div></article>
                 <article class="panel account-panel" id="accountPanel">
                     <h3>ONLINE ACCOUNT</h3>
                     <div id="accountSignedOut">
@@ -293,24 +299,6 @@
                     <div class="ladder-top"><h3>RANKED · ELO</h3><div class="league-tabs" role="group" aria-label="Ranked leaderboard view"><button type="button" class="outline" id="lbMine" aria-pressed="false" hidden>MY LEAGUE</button><button type="button" class="outline" id="lbTop" aria-pressed="true">TOP 50</button></div></div>
                     <div class="online-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>ELO</span><span class="rating-deviation-cell">RD</span><span>MATCHES</span><span>WINS</span></div>
                     <div id="onlineRows"><p class="muted">Loading…</p></div>
-                </div>
-                <div class="panel ladder">
-                    <h3>BOT PRACTICE MODE RATING</h3>
-                    <div id="ladderRows" class="bot-skill-summary" aria-live="polite"></div>
-                </div>
-                <div class="panel how">
-                    <h3>HOW BOT SKILL RATING WORKS</h3>
-                    <p><b>Every decision is graded.</b> Your choice is compared with the best option, given the hands
-                        your opponents likely hold, and labelled like a chess move: Brilliant, Best, Excellent, Good,
-                        Inaccuracy, Mistake or Blunder.</p>
-                    <p><b>Each match scores you against every bot:</b> 60% finishing place, 40% decision accuracy.</p>
-                    <p><b>Glicko-2 updates the ratings.</b> Beating higher-rated bots is worth more. <b>RD</b> is the
-                        rating uncertainty, calculated behind the scenes.</p>
-                    <p>Bot games never change Ranked Elo. Leaving a match early leaves it unrated.</p>
-                    <div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET
-                            BOT LADDER</button><span id="resetConfirm" hidden>Erase all bot practice ratings and match history on this
-                            device? <button class="outline" id="resetYes" type="button">ERASE</button> <button
-                                class="outline" id="resetNo" type="button">KEEP</button></span></div>
                 </div>
             </section>
             <section id="themes" class="view content-view">

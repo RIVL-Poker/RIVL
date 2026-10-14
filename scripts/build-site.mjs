@@ -8,6 +8,6 @@ writeFileSync(new URL('_headers',out),`/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Permissions-Policy: camera=(self), microphone=(), geolocation=()
 `);
 console.log('Built dist/ with',files.length,'entries');

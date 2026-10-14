@@ -16,9 +16,9 @@ function allowedOrigin(request,env){
   const extra=String(env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
   return {ok:origin===self||extra.includes(origin),origin};
 }
-async function readBody(request){
+async function readBody(request,maxLength=MAX_BODY){
   const text=await request.text();
-  if(text.length>MAX_BODY)throw Object.assign(Error('Request too large'),{status:413});
+  if(text.length>maxLength)throw Object.assign(Error('Request too large'),{status:413});
   try{return text?JSON.parse(text):{}}catch{throw Object.assign(Error('Invalid JSON'),{status:400})}
 }
 const dirStub=env=>env.DIRECTORY.get(env.DIRECTORY.idFromName('global'));
@@ -89,6 +89,17 @@ export default {
       if(url.pathname==='/api/accounts'){
         if(await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/create',await readBody(request)));
+      }
+      if(url.pathname==='/api/report-avatar'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many reports. Please try later.'},429);
+        return send(await dir(env,'/accounts/report-avatar',await readBody(request)));
+      }
+      if(url.pathname==='/api/avatar-reports'||url.pathname==='/api/moderate-avatar'){
+        return send(await dir(env,url.pathname==='/api/avatar-reports'?'/accounts/avatar-reports':'/accounts/moderate-avatar',await readBody(request)));
+      }
+      if(url.pathname==='/api/avatar'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Please wait before changing your photo again.'},429);
+        return send(await dir(env,'/accounts/avatar',await readBody(request,50000)));
       }
       if(url.pathname==='/api/me'){
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
@@ -163,7 +174,7 @@ export class Room {
     const onlineSeats=new Set(this.sockets().map(([,t])=>this.room.members[t]?.seat));
     const shown=g?.phase==='showdown'&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
-      seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
+      seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,
@@ -470,7 +481,7 @@ export class Room {
       const token=crypto.randomUUID(),host=a?a.name:cleanName(body.name,'Host');
       // Ranked tables are listed only in the Ranked queue, so Open Tables and Quick Play never seat anyone in one.
       this.room={code:String(body.code||''),hostToken:token,ranked:!!body.ranked,rankedMax:body.ranked&&RANKED_SIZES.includes(Number(body.size))?Number(body.size):6,visibility:!body.ranked&&body.visibility==='public'?'public':'private',seats:Array(9).fill(null),members:{[token]:{name:host,seat:0,accountId:a?.id||null}},started:false,game:null};
-      this.room.seats[0]={type:'human',name:host,avatar:'♠',isHost:true,verified:!!a};
+      this.room.seats[0]={type:'human',name:host,avatar:a?.avatar||host[0].toUpperCase(),isHost:true,verified:!!a};
       await this.save();return this.reply({token,seat:0});
     }
     if(!room)return this.reply({error:'Room not found. Check the code.'},404);
@@ -480,7 +491,7 @@ export class Room {
       if(body.key&&!a)return this.reply({error:'Your sign-in code was not recognised. Sign in again.'},401);
       // Signing in from another device takes back the same seat.
       const mine=a&&Object.entries(room.members).find(([,m])=>m.accountId===a.id);
-      if(mine)return this.reply({token:mine[0],seat:mine[1].seat});
+      if(mine){room.seats[mine[1].seat].avatar=a.avatar||a.name[0].toUpperCase();await this.save();return this.reply({token:mine[0],seat:mine[1].seat})}
       if(room.ranked&&!a)return this.reply({error:RANKED_SIGN_IN},401);
       if(room.ranked&&!body.ranked)return this.reply({error:'Ranked tables are matchmade. Use Find Ranked Match.'},403);
       if(room.ranked&&Number(body.size)!==rankedSize(room))return this.reply({error:'Wrong ranked table size.'},409);
@@ -489,7 +500,7 @@ export class Room {
       if(seat<0)return this.reply({error:'Room is full'},409);
       const token=crypto.randomUUID(),name=a?a.name:cleanName(body.name,'Guest');
       room.members[token]={name,seat,accountId:a?.id||null};
-      room.seats[seat]={type:'human',name,avatar:'♣',isHost:false,verified:!!a};
+      room.seats[seat]={type:'human',name,avatar:a?.avatar||name[0].toUpperCase(),isHost:false,verified:!!a};
       await this.rankedCountdown();
       await this.save();return this.reply({token,seat});
     }

@@ -8,9 +8,43 @@
     const name=window.rivlPlayerName();
     document.querySelectorAll('[data-player-name]').forEach(el=>{el.textContent=name;if(el.id!=='rtTitle')window.rivlLeagueIcons?.decorate(el,window.rivlAccount?.current()?.leagueKey||window.RivlRating?.tier(window.rivlAccount?.current()?.rating??0).key,{prepend:true})});
     document.querySelectorAll('[data-player-initial]').forEach(el=>el.textContent=name[0].toUpperCase());
+    window.rivlPaintAvatar?.();
     const signedIn=!!window.rivlAccount?.current();
     for(const id of ['roomName','joinName']){const input=document.getElementById(id);if(!input)continue;if(read()||signedIn)input.value=name;input.disabled=signedIn;input.title=signedIn?'Signed in: your account name is used':''}
   }
+  const validPhoto=a=>typeof a==='string'&&a.length<=45000&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a);
+  window.rivlPaintAvatar=()=>{
+    const el=document.getElementById('rtHeroGem');if(!el)return;
+    const account=window.rivlAccount?.current?.(),photo=account?.avatar||'';
+    el.replaceChildren();
+    if(validPhoto(photo)){const img=document.createElement('img');img.src=photo;img.alt='Your profile picture';img.className='rivl-avatar-photo';el.append(img)}
+    else{const initial=document.createElement('span');initial.className='profile-initial';initial.textContent=(window.rivlPlayerName?.()||'P')[0].toUpperCase();el.append(initial)}
+    const remove=document.getElementById('removeProfilePhoto');if(remove)remove.hidden=!photo;
+    const upload=document.getElementById('profilePhotoInput');if(upload)upload.disabled=!account;
+    const status=document.getElementById('profilePhotoStatus');if(status)status.textContent=account?'Optional photo is visible to everyone at your tables. Use your own image.':'Sign in to upload a profile picture visible at tables.';
+  };
+  function setupPhoto(){
+    const input=document.getElementById('profilePhotoInput'),remove=document.getElementById('removeProfilePhoto');
+    if(!input)return;
+    input.addEventListener('change',async()=>{
+      const file=input.files?.[0],status=document.getElementById('profilePhotoStatus');input.value='';
+      if(!file)return;
+      if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>5*1024*1024){if(status)status.textContent='Choose a JPEG, PNG or WebP photo under 5 MB.';return}
+      try{
+        const bitmap=await createImageBitmap(file);
+        const canvas=document.createElement('canvas');canvas.width=112;canvas.height=112;
+        const ctx=canvas.getContext('2d');const size=Math.min(bitmap.width,bitmap.height);
+        ctx.drawImage(bitmap,(bitmap.width-size)/2,(bitmap.height-size)/2,size,size,0,0,112,112);
+        bitmap.close?.();
+        const data=canvas.toDataURL('image/jpeg',0.72);
+        if(data.length>45000)throw Error('Image too large after resizing.');
+        if(status)status.textContent='Saving photo…';
+        await window.rivlAccount.updateAvatar(data);window.rivlPaintAvatar();
+      }catch(e){if(status)status.textContent=e.message||'Photo could not be saved.'}
+    });
+    remove?.addEventListener('click',async()=>{try{await window.rivlAccount.updateAvatar(null);window.rivlPaintAvatar()}catch(e){const status=document.getElementById('profilePhotoStatus');if(status)status.textContent=e.message}});
+  }
+  document.addEventListener('DOMContentLoaded',setupPhoto);
   window.rivlPaintName=paint;
   window.rivlSetPlayerName=value=>{const name=clean(value);if(!name)return;try{localStorage.setItem(KEY,name)}catch{}paint();window.refreshRatingUI?.()};
   function openNameDialog(){
