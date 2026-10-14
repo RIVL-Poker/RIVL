@@ -702,3 +702,8 @@ body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:18
 .rivl-photo-notice p{line-height:1.55;margin:0 0 15px}
 .rivl-photo-notice button{margin-top:8px;min-width:120px}
 @media(max-width:600px){.ranked-tracker .rt-head{padding:10px 0 65px;justify-content:center;gap:14px}.ranked-tracker .rt-score{top:auto;bottom:0;right:0;transform:none}.ranked-tracker .rt-id{min-width:0}.rivl-avatar-plus{width:30px;height:30px;font-size:23px}}
+
+/* Profile header: left-aligned identity and plus anchored at avatar bottom-left. */
+.ranked-tracker .rt-head{justify-content:flex-start;padding:8px 95px 8px 8px}
+.ranked-tracker .rivl-avatar-edit .rivl-avatar-plus{left:0;bottom:0;transform:translate(-35%,35%)}
+@media(max-width:600px){.ranked-tracker .rt-head{justify-content:flex-start;padding:10px 0 65px}}
