@@ -335,3 +335,26 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
 }
 
 console.log('PASS: '+checks+' room server checks');
+
+// Chat: private and ranked players can exchange authenticated messages; reconnect sees history.
+{
+  const {room,state,players}=await setup(0,2);
+  const [host,guest]=players;
+  await say(room,host.ws,{type:'chat',text:'Good luck at the table!'});
+  const event=guest.ws.last('chat');
+  assert.equal(event.message.name,'Host');assert.equal(event.message.text,'Good luck at the table!');
+  assert.equal(host.ws.last('chat').message.seat,0);
+  await say(room,host.ws,{type:'chat',text:'spam'});
+  assert.match(host.ws.last('error').error,/wait/i,'chat is rate limited');
+  await say(room,guest.ws,{type:'chat',text:'<script>alert(1)</script>'});
+  assert.equal(host.ws.last('chat').message.text,'<script>alert(1)</script>','chat is plain text');
+  await say(room,guest.ws,{type:'chat',text:'x'.repeat(181)});
+  assert.match(guest.ws.last('error').error,/180/,'message length checked');
+  const stranger=fakeSocket();state.acceptWebSocket(stranger);
+  await say(room,stranger,{type:'chat',text:'intrusion'});
+  assert.equal(stranger.last('removed').type,'removed','unauthenticated socket is rejected');
+  const reconnect=await connect(room,state,guest.token);
+  assert.equal(reconnect.last('state').state.chat.length,2,'history persists for reconnect');
+  assert.equal(reconnect.last('state').state.chat[0].name,'Host');
+  checks++;
+}

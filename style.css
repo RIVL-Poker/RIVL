@@ -655,3 +655,18 @@ body.rivl-modal-open{overflow:hidden}
 .ranked-tracker #rtTier{gap:9px;padding:7px 16px 7px 12px;min-height:36px;line-height:1.2;white-space:nowrap}
 .ranked-tracker #rtTier .rivl-league-icon{width:19px;height:19px;flex:0 0 19px;margin:0;display:block}
 @media(max-width:600px){.ranked-tracker #rtTier{gap:7px;padding:5px 11px 5px 9px;min-height:30px}.ranked-tracker #rtTier .rivl-league-icon{width:16px;height:16px;flex-basis:16px}}
+
+/* Real-time room chat in private and ranked online tables. */
+#roomGame #roomTabContent:has(.room-chat){padding:4px 10px 8px}
+.room-chat{display:flex;flex-direction:column;gap:7px;min-width:0}
+.room-chat-feed{height:86px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:3px;padding:4px 6px;font-size:12px}
+.room-chat-line{overflow-wrap:anywhere;line-height:1.35}
+.room-chat-line b{color:#f0be77;font-size:12px;float:none}
+.room-chat-line.mine b{color:#91c9ee}
+.room-chat-empty{color:#a89b8b;font-style:italic}
+.room-chat-form{display:flex;gap:8px;min-width:0}
+.room-chat-form input{min-width:0;flex:1;background:#181719;color:#fff;border:1px solid #7d603d;border-radius:6px;padding:8px 11px;font:inherit;font-size:13px}
+.room-chat-form .gold{padding:7px 16px;font-size:12px;flex:0 0 auto}
+#roomGame .game-panel:not(.collapsed):has(.room-chat){max-height:280px}
+body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:185px;min-height:185px;overflow:hidden}
+@media(max-width:600px){body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:170px;min-height:170px}.room-chat-feed{height:68px}.room-chat-form input{font-size:12px}}

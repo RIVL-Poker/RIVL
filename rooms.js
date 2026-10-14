@@ -15,11 +15,43 @@
   let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
   function animatedCard(code,back,delay=0){const el=cardNode(code,back);if(delay){el.classList.add('rivl-deal-in');el.style.animationDelay=delay+'ms'}return el}
-  let roomTab='chat',roomHistory=[];
+  let roomTab='chat',roomHistory=[],roomChat=[];
+  const CHAT_LIMIT=180;
+  function addChatMessage(entry){
+    if(!entry||typeof entry.text!=='string')return;
+    if(roomChat.some(m=>m.id===entry.id))return;
+    roomChat=[...roomChat,entry].slice(-40);
+    if(roomTab==='chat')renderRoomPanel();
+  }
+  function sendChat(event){
+    event.preventDefault();
+    const input=$('roomChatInput'),text=input?.value.trim();
+    if(!text||!snapshot||socket?.readyState!==WebSocket.OPEN)return;
+    if(text.length>CHAT_LIMIT)return;
+    send({type:'chat',text});input.value='';input.focus();
+  }
+  document.addEventListener('submit',event=>{if(event.target?.id==='roomChatForm')sendChat(event)});
   function renderRoomPanel(){
     const target=$('roomTabContent');if(!target)return;
     const g=snapshot?.game;
-    if(roomTab==='chat'){target.textContent='Chat is coming soon.';return}
+    if(roomTab==='chat'){
+      // Preserve the input and focus while live chat messages arrive.
+      let feed=$('roomChatFeed');
+      if(!feed||!target.contains(feed)){
+        target.replaceChildren();
+        const shell=document.createElement('div');shell.className='room-chat';
+        feed=document.createElement('div');feed.id='roomChatFeed';feed.className='room-chat-feed';feed.setAttribute('role','log');feed.setAttribute('aria-label','Table chat');
+        const form=document.createElement('form');form.id='roomChatForm';form.className='room-chat-form';
+        const input=document.createElement('input');input.id='roomChatInput';input.name='message';input.maxLength=CHAT_LIMIT;input.autocomplete='off';input.placeholder='Message the table…';input.setAttribute('aria-label','Table chat message');
+        const button=document.createElement('button');button.type='submit';button.textContent='SEND';button.className='gold';
+        form.append(input,button);shell.append(feed,form);target.append(shell);
+      }
+      feed.replaceChildren();
+      if(!roomChat.length){const empty=document.createElement('div');empty.className='room-chat-empty';empty.textContent='No messages yet. Say hello!';feed.append(empty)}
+      for(const m of roomChat){const row=document.createElement('div');row.className='room-chat-line'+(m.seat===snapshot?.mySeat?' mine':'');const name=document.createElement('b');name.textContent=m.name+': ';const content=document.createElement('span');content.textContent=m.text;row.append(name,content);feed.append(row)}
+      feed.scrollTop=feed.scrollHeight;
+      return;
+    }
     if(roomTab==='history'){target.textContent=roomHistory.length?roomHistory.slice(-12).reverse().join(' • '):'No completed hands yet.';return}
     if(roomTab==='stats'){target.textContent=g?.players?.map(p=>p.name+': '+p.stack.toLocaleString()+' chips'+(p.folded?' (folded)':'')).join(' • ')||'Waiting for match.';return}
     target.textContent=(snapshot?.ranked?'Ranked · leaving early places you last':'Unranked')+' · 12-second turns';
@@ -226,7 +258,7 @@
   function resetView(message){
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
-    clearInterval(queueTimer);socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];lastRecordedResult='';clearSession();
+    clearInterval(queueTimer);socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
     const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM';
     $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
   }
@@ -239,7 +271,8 @@
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
-      if(message.type==='state'){snapshot=message.state;isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
+      if(message.type==='state'){snapshot=message.state;roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
+      else if(message.type==='chat')addChatMessage(message.message);
       else if(message.type==='removed')resetView(message.reason||'You are no longer in that room.');
       else if(message.error)status(message.error);
     };
