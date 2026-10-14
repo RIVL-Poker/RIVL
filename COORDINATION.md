@@ -48,7 +48,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 ### 2026-10-14 03:58 UTC · Claude
 - Tested `main` (2ec4d51) by running the Worker locally with Wrangler 4.150.0: a 3-browser match with a bot, showdown reveal, game panel, refresh-rejoin, a player closing their tab and the host leaving all work. Rate limits, foreign-origin block and bad-input handling work. Load test: 30 tables of 8 for 90s, 0 errors.
 - Not verified: the live URL itself (Claude's sandbox can't reach it). Someone should play a quick room on two phones.
-- Pending fixes on `feature/shared-frontend` (rushrush2005): bot board isolation, rated label, room header mode. Needs `main` merged in, then a PR.
+- rushrush2005's frontend fixes (bot board isolation, rated label, room header mode) are now on `main` via PR #5.
 - Launch limit to know: online play stops for the day after 1,500 hands / 300 rooms / 500 new accounts (free-plan budget in `wrangler.toml`).
 - Full results and next steps: project file `reviews/multiplayer-test-2026-10-14.md`.
 
