@@ -22,7 +22,7 @@ export class Directory {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS matches(id TEXT PRIMARY KEY,t INTEGER NOT NULL)`);
     // Ranked Elo is a fresh ladder kept apart from the older all-rooms rating (r, rd, vol, games, wins).
     const cols=new Set(this.rows('PRAGMA table_info(accounts)').map(c=>c.name));
-    for(const [name,def] of [['rr','REAL NOT NULL DEFAULT 1500'],['rrd','REAL NOT NULL DEFAULT 350'],['rvol','REAL NOT NULL DEFAULT 0.06'],['rgames','INTEGER NOT NULL DEFAULT 0'],['rwins','INTEGER NOT NULL DEFAULT 0'],['elo_offset','INTEGER NOT NULL DEFAULT 0'],['avatar','TEXT NOT NULL DEFAULT \'\'']])
+    for(const [name,def] of [['rr','REAL NOT NULL DEFAULT 1500'],['rrd','REAL NOT NULL DEFAULT 350'],['rvol','REAL NOT NULL DEFAULT 0.06'],['rgames','INTEGER NOT NULL DEFAULT 0'],['rwins','INTEGER NOT NULL DEFAULT 0'],['elo_offset','INTEGER NOT NULL DEFAULT 0'],['avatar','TEXT NOT NULL DEFAULT \'\''],['avatar_blocked','INTEGER NOT NULL DEFAULT 0']])
       if(!cols.has(name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
     // One-time season reset: preserve account identities and sign-in keys, reset ranked progress.
     this.sql.exec('CREATE TABLE IF NOT EXISTS migrations(name TEXT PRIMARY KEY, applied INTEGER NOT NULL)');
@@ -55,7 +55,7 @@ export class Directory {
     const rank=a.rgames>0?this.one('SELECT COUNT(*)+1 AS n FROM accounts WHERE rgames>0 AND rr>?',a.rr).n:null;
     const displayed=Math.max(0,a.rr-(a.elo_offset||0));
     const t=R.tier(displayed);
-    return {id:a.id,name:a.name,avatar:a.avatar||'',rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
+    return {id:a.id,name:a.name,avatar:a.avatar_blocked?'':(a.avatar||''),rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
   }
   async byKey(key){
     if(typeof key!=='string'||key.length<20||key.length>64)return null;
@@ -82,8 +82,35 @@ export class Directory {
         if(!a)return this.reply({error:'Sign in to update your photo.'},401);
         const avatar=body.avatar===null?'':body.avatar;
         if(typeof avatar!=='string'||(avatar!==''&&(!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar)||avatar.length>45000)))return this.reply({error:'Invalid photo. Use a small JPEG, PNG or WebP image.'},400);
-        this.sql.exec('UPDATE accounts SET avatar=? WHERE id=?',avatar,a.id);
+        this.sql.exec('UPDATE accounts SET avatar=?,avatar_blocked=0 WHERE id=?',avatar,a.id);
         return this.reply({account:this.publicAccount(this.one('SELECT * FROM accounts WHERE id=?',a.id))});
+      }
+      if(path==='/accounts/report-avatar'){
+        const reporter=await this.byKey(body.key),target=this.one('SELECT id,avatar,avatar_blocked FROM accounts WHERE id=?',String(body.targetId||''));
+        if(!reporter)return this.reply({error:'Sign in to report a player photo.'},401);
+        if(!target||target.id===reporter.id)return this.reply({error:'Invalid player to report.'},400);
+        const reason=String(body.reason||'').trim().slice(0,160);
+        if(reason.length<8)return this.reply({error:'Please describe the problem (at least 8 characters).'},400);
+        if(!target.avatar)return this.reply({error:'That player has no uploaded photo.'},400);
+        const recent=this.one('SELECT id FROM avatar_reports WHERE reporter=? AND target=? AND created>?',reporter.id,target.id,Date.now()-86400000);
+        if(recent)return this.reply({error:'You already reported this player photo today.'},429);
+        this.sql.exec('INSERT INTO avatar_reports(id,reporter,target,reason,created) VALUES (?,?,?,?,?)',crypto.randomUUID(),reporter.id,target.id,reason,Date.now());
+        // Hide reported photos immediately. Do not expose the image while awaiting human review.
+        this.sql.exec('UPDATE accounts SET avatar_blocked=1 WHERE id=?',target.id);
+        return this.reply({ok:true,message:'Report received. The photo is hidden pending review.'});
+      }
+      if(path==='/accounts/avatar-reports'){
+        if(!this.env.AVATAR_MODERATOR_KEY||body.moderatorKey!==this.env.AVATAR_MODERATOR_KEY)return this.reply({error:'Not authorized.'},403);
+        return this.reply({reports:this.rows("SELECT r.id,r.reporter,r.target,r.reason,r.created,r.status,a.name AS player_name FROM avatar_reports r LEFT JOIN accounts a ON a.id=r.target WHERE r.status='pending' ORDER BY r.created DESC LIMIT 100")});
+      }
+      if(path==='/accounts/moderate-avatar'){
+        if(!this.env.AVATAR_MODERATOR_KEY||body.moderatorKey!==this.env.AVATAR_MODERATOR_KEY)return this.reply({error:'Not authorized.'},403);
+        const report=this.one('SELECT * FROM avatar_reports WHERE id=?',String(body.reportId||''));
+        if(!report||!['approve','remove'].includes(body.action))return this.reply({error:'Invalid report or action.'},400);
+        if(body.action==='remove')this.sql.exec("UPDATE accounts SET avatar='',avatar_blocked=0 WHERE id=?",report.target);
+        else this.sql.exec('UPDATE accounts SET avatar_blocked=0 WHERE id=?',report.target);
+        this.sql.exec("UPDATE avatar_reports SET status=? WHERE target=? AND status='pending'",body.action==='remove'?'removed':'approved',report.target);
+        return this.reply({ok:true});
       }
       if(path==='/accounts/me'||path==='/verify'){
         const a=await this.byKey(body.key);
