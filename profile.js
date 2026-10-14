@@ -13,9 +13,16 @@
   }
   window.rivlPaintName=paint;
   window.rivlSetPlayerName=value=>{const name=clean(value);if(!name)return;try{localStorage.setItem(KEY,name)}catch{}paint();window.refreshRatingUI?.()};
+  function openNameDialog(){
+    let dialog=document.getElementById('rivlNameDialog');
+    if(!dialog){dialog=document.createElement('dialog');dialog.id='rivlNameDialog';dialog.className='rivl-dialog';dialog.innerHTML='<form method="dialog"><div class="rivl-dialog-brand">♠ RIVL · PLAYER PROFILE</div><h2>YOUR DISPLAY NAME</h2><p>Choose the name other players will see at the table.</p><label for="rivlNameInput">PLAYER NAME</label><input id="rivlNameInput" maxlength="20" autocomplete="nickname" required><div class="rivl-dialog-actions"><button value="cancel" class="outline">CANCEL</button><button value="save" class="gold">SAVE NAME</button></div></form>';document.body.append(dialog);
+      dialog.addEventListener('close',()=>{if(dialog.returnValue==='save')window.rivlSetPlayerName(dialog.querySelector('input').value)});
+    }
+    dialog.querySelector('input').value=window.rivlPlayerName();dialog.showModal();dialog.querySelector('input').focus();
+  }
   function init(){
     paint();
-    document.getElementById('editName')?.addEventListener('click',()=>{if(window.rivlAccount?.current())return show('profile');const v=prompt('Your display name (up to 20 characters)',window.rivlPlayerName());if(v!=null)window.rivlSetPlayerName(v)});
+    document.getElementById('editName')?.addEventListener('click',()=>{if(window.rivlAccount?.current())return show('profile');openNameDialog()});
     for(const id of ['roomName','joinName'])document.getElementById(id)?.addEventListener('change',e=>window.rivlSetPlayerName(e.target.value));
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();

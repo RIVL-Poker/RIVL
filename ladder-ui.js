@@ -105,7 +105,10 @@ function refreshRatingUI(){
   set('homeStatsLine',`${t.name} · ${me.games||0} rated matches · ${avg}`);
   const recent=st.matches.slice(-3).reverse();
   const rl=$('recentList');
-  if(rl)rl.innerHTML=recent.length?recent.map(m=>`<p>${ord(m.place)} place · ${m.acc==null?'–':m.acc.toFixed(0)+'%'} <b class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)}</b></p>`).join(''):'<p>No rated matches yet. Pick a table to start.</p>';
+  let online=[];try{online=JSON.parse(localStorage.getItem('rivlOnlineRecentMatches')||'[]')}catch{}if(!Array.isArray(online))online=[];
+  const botRows=recent.map(m=>({date:m.date||m.t||0,html:`<p>BOT · ${ord(m.place)} place · ${m.acc==null?'–':m.acc.toFixed(0)+'%'} <b class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)}</b></p>`}));
+  const onlineRows=online.map(m=>({date:m.date||0,html:`<p>${m.mode==='Rated PvP'?'RATED':'UNRATED'} PVP · <b class="${m.result==='Win'?'positive':'negative'}">${m.result}</b> · ${m.players} players · ${Number(m.stack||0).toLocaleString()} chips</p>`}));
+  if(rl)rl.innerHTML=[...botRows,...onlineRows].sort((a,b)=>b.date-a.date).slice(0,5).map(m=>m.html).join('')||'<p>No completed matches yet.</p>';
   // profile
   set('profRating',`${r.toLocaleString()} rating · ±${Math.round(me.rd)}`);
   set('profTier',`${t.name}${prov?' · Provisional':''} · Ladder #${rank}`);
