@@ -157,13 +157,15 @@
         const item=document.createElement('div');
         item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'');
         const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=avatarFor(p);
-        const label=document.createElement('span');label.textContent=p.name+' · '+p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');
+        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
         const cards=g.shown?.[p.seat];
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
         // Evenly distribute opponents along a mirrored arc around the Cairo table.
         const total=opponents.length;
-        const span=total===1?0:total===2?70:Math.min(220,100+Math.max(0,total-3)*24);
+        // On the tall phone table, 4 opponents spread wider so the two top seats don't touch.
+        const tall=$('roomPokerTable').clientHeight>$('roomPokerTable').clientWidth;
+        const span=total===1?0:total===2?70:total===4&&tall?150:Math.min(220,100+Math.max(0,total-3)*24);
         const angle=(270-span/2+(total===1?0:span*i/(total-1)))*Math.PI/180;
         item.style.left=(50+51*Math.cos(angle))+'%';
         item.style.top=(50+59*Math.sin(angle))+'%';

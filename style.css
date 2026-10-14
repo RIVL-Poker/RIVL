@@ -503,3 +503,59 @@ body.rivl-modal-open{overflow:hidden}
 #table .win-fx{max-width:none;white-space:nowrap;padding:5px 12px}
 #table .win-fx strong{font-size:14px}
 #table .win-fx .win-hand,#table .win-fx small{margin-left:6px;font-size:11px}}
+
+/* Online seat label: name and chips on one line on wide screens, two short lines on phones. */
+#roomGame .rivl-seat-label b{font-weight:inherit}
+#roomGame .rivl-seat-label small{font-size:inherit;color:inherit}
+#roomGame .rivl-seat-label small:before{content:' · '}
+/* Phones in an online match: one compact screen, so your turn's controls never push the table under your seat. */
+@media(max-width:600px){
+ body:has(#rooms.active.rivl-match-mode){overflow:hidden}
+ body:has(#rooms.active.rivl-match-mode) main>header{height:50px}
+ #rooms.rivl-match-mode{height:calc(100dvh - 50px)}
+ #rooms.rivl-match-mode #roomLobby{position:relative}
+ #rooms.rivl-match-mode .room-topline{position:absolute;top:0;right:0;padding:7px 8px;background:none;border:0}
+ #rooms.rivl-match-mode .room-topline #leaveRoom{min-height:30px;padding:4px 9px;font-size:11px}
+ #roomGame .rivl-pvp-gamebar{flex:0 0 44px;gap:12px;justify-content:flex-start;padding:4px 10px}
+ #roomGame .rivl-pvp-gamebar>div:nth-child(n+3){display:none}
+ #roomGame .rivl-pvp-gamebar small{font-size:9px}
+ #roomGame .rivl-pvp-gamebar strong{font-size:13px;white-space:nowrap}
+ #roomGame .rivl-pvp-scene{padding:4px 6px 8px}
+ #roomGame .rivl-pvp-scene .skyline{padding:2px;margin:0;font-size:9px;letter-spacing:4px}
+ #roomGame .rivl-pvp-table{width:min(84%,420px,calc((100dvh - 380px)*.72));margin:30px auto 30px}
+ #roomGame .rivl-pvp-board{gap:2px}
+ #roomGame .rivl-pvp-board .card{width:28px;height:40px;padding:3px}
+ #roomGame .rivl-pvp-board .card:not(.back)>.rivl-card-center{font-size:20px}
+ #roomGame .pot{top:20%}
+ #roomGame .pot strong{font-size:20px}
+ #roomGame .rivl-pvp-myseat{bottom:-22px;gap:6px;padding:4px 8px;white-space:nowrap}
+ #roomGame .rivl-pvp-myseat .card{width:30px;height:42px;padding:3px}
+ #roomGame .rivl-pvp-myseat .avatar{width:28px;height:28px;font-size:14px}
+ #roomGame .rivl-pvp-myseat small{font-size:11px}
+ #roomGame .rivl-seat-clock{width:34px;height:34px;flex-basis:34px}
+ #roomGame .rivl-seat-clock span{width:26px;height:26px;font-size:10px}
+ /* Opponents: a small pill with the name over the stack. */
+ #roomGame .rivl-pvp-seat{gap:3px;padding:2px 6px 2px 2px;font-size:9px;line-height:1.1}
+ #roomGame .rivl-pvp-seat .avatar{width:20px;height:20px;font-size:10px;border-width:1px}
+ #roomGame .rivl-seat-label{display:flex;flex-direction:column;max-width:48px}
+ #roomGame .rivl-seat-label b,#roomGame .rivl-seat-label small{overflow:hidden;text-overflow:ellipsis}
+ #roomGame .rivl-seat-label small:before{content:none}
+ /* 7 to 9 players: too many seats for labels on a phone, so opponents stay avatar-only as before. */
+ #roomGame .rivl-pvp-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .rivl-seat-label{display:none}
+ #roomGame .rivl-pvp-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .rivl-pvp-seat{padding:2px;border-radius:50%}
+ /* 5 to 9 players: revealed cards sit on the seat itself, so they never land on the board or a neighbour. */
+ #roomGame .rivl-pvp-table:is([data-player-count="5"],[data-player-count="6"],[data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .rivl-pvp-seat .rivl-shown{top:50%;bottom:auto;left:50%;right:auto;transform:translate(-50%,-50%)}
+ #roomGame .rivl-pvp-controls{padding:4px 8px 6px}
+ #roomGame .rivl-timer-row{min-height:16px;margin:0 0 3px;font-size:11px}
+ #roomGame .rivl-bet-actions{grid-template-rows:42px auto;gap:5px}
+ #roomGame .rivl-bet-actions>button{min-height:0;font-size:13px;padding:0}
+ #roomGame .rivl-pvp-raise{padding:3px 8px 6px;gap:3px}
+ #roomGame .rivl-pvp-raise label{font-size:10px}
+ #roomGame .rivl-pvp-raise .amount-row{gap:4px}
+ #roomGame .rivl-pvp-raise .amount-row>*{height:30px;min-height:0;padding:0 10px;font-size:15px}
+ #roomGame .rivl-pvp-raise input[type=range]{height:14px;margin:2px 0}
+ #roomGame .rivl-pvp-raise .quick-bets{gap:4px}
+ #roomGame .rivl-pvp-raise .quick-bets button{height:26px;min-height:0;padding:0}
+ #roomGame .rivl-room-panel-toggle{margin-top:4px}
+ #roomGame .rivl-room-panel-toggle button{height:30px;padding:0 18px;font-size:11px}
+}
