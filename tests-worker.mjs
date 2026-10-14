@@ -212,7 +212,9 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   assert.ok(bustOrder.length>=1,'someone else busted after Cat left');
   const changes=room.room.game.ratingChanges;
   assert.equal(changes.length,4,'all four signed-in players rated');
-  const cat=changes.find(c=>c.name==='Cat');assert.ok(cat.after<cat.before,'the leaver loses rating');
+  const cat=changes.find(c=>c.name==='Cat');assert.equal(cat.before,0,'new ranked accounts begin at zero');assert.equal(cat.after,0,'displayed Elo cannot drop below zero');
+  const catInternal=env.DIRECTORY.instances.get('global').sql.exec('SELECT rr FROM accounts WHERE id=?',acc[2].account.id).toArray()[0].rr;
+  assert.ok(catInternal<1500,'the leaver loses internal Glicko rating even at the zero display floor');
   // Every explicit action by a Ranked player was graded on the server; long-lasting players have an accuracy.
   const graded=sent.players.filter(p=>p.decisions>0);
   assert.ok(graded.length>=1&&graded.every(p=>p.acc>=0&&p.acc<=100),'ranked decisions are graded on the server');
