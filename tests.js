@@ -39,4 +39,6 @@ const mk=(hole,board,toCall,pot)=>({bb:10,minRaise:10,currentBet:toCall?toCall+1
 let g1=mk(['A♠','A♥'],[],20,45);assert(['Blunder','Mistake'].includes(R.grade(R.analyze(g1,0,600),'fold').label),'folding aces to a raise is a big error');
 let g2=mk(['A♠','K♠'],['Q♠','J♠','T♠'],40,100);assert(R.grade(R.analyze(g2,0,400),'fold').label==='Blunder','folding a royal flush is a blunder');
 assert(['Best','Excellent','Good'].includes(R.grade(R.analyze(g2,0,400),'raise',1000).label),'shoving the nuts grades well');
-console.log('PASS: 12 poker engine checks + 6 rating checks');
+let g3=mk(['9♥','8♥'],['7♣','2♥','K♦'],30,80);const once=JSON.stringify(R.analyze(g3,0,R.GRADE_ITERS).opts.map(o=>o.ev));
+assert(once===JSON.stringify(R.analyze(g3,0,R.GRADE_ITERS).opts.map(o=>o.ev)),'the same spot always gets the same analysis (seeded)');
+console.log('PASS: 12 poker engine checks + 7 rating checks');

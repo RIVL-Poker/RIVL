@@ -75,10 +75,16 @@
                 </div>
             </section>
             <section id="rooms" class="view content-view">
-              <div class="section-title"><h2>RIVL ROOMS</h2><span>LIVE LOBBY · UNRANKED</span></div>
+              <div class="section-title"><h2>RIVL ROOMS</h2><span>LIVE LOBBY · RATED WITH 2+ SIGNED-IN PLAYERS</span></div>
               <p id="roomStatus" role="status">Create a room and share its code, or join a friend's room.</p>
+              <p id="capacityNote" class="capacity-note" hidden></p>
+              <div id="roomFinder" class="panel room-finder">
+                <div class="room-finder-head"><h3>OPEN TABLES</h3><button class="gold" id="quickPlay" type="button">QUICK PLAY</button></div>
+                <p class="muted" id="accountHint">Playing as a guest. <a href="#" id="goSignIn">Sign in</a> to play rated matches.</p>
+                <div id="lobbyList" class="lobby-list"><p class="muted">Looking for open tables…</p></div>
+              </div>
               <div id="roomEntry" class="room-entry">
-                <div class="panel"><h3>CREATE A ROOM</h3><label>Your display name <input id="roomName" maxlength="20" value="Player"></label><button class="gold" id="createRoom">CREATE ROOM</button></div>
+                <div class="panel"><h3>CREATE A ROOM</h3><label>Your display name <input id="roomName" maxlength="20" value="Player"></label><label class="check"><input type="checkbox" id="roomListPublic"> List it in Open Tables so anyone can join</label><button class="gold" id="createRoom">CREATE ROOM</button></div>
                 <div class="panel"><h3>JOIN A ROOM</h3><label>Room code <input id="roomCodeInput" maxlength="8" placeholder="AB12CD" autocapitalize="characters" autocomplete="off"></label><label>Your display name <input id="joinName" maxlength="20" value="Guest"></label><button class="gold" id="joinRoom">JOIN ROOM</button></div>
               </div>
               <div id="roomLobby" hidden>
@@ -92,7 +98,7 @@
                   <div class="gamebar rivl-pvp-gamebar">
                     <div><small>BLINDS</small><strong id="roomBlinds">10 / 20</strong></div>
                     <div><small>HAND</small><strong id="roomGamePhase">HAND 1 · PREFLOP</strong></div>
-                    <div><small>MODE</small><strong>PVP · UNRANKED</strong></div>
+                    <div><small>MODE</small><strong id="roomMode">PVP · UNRATED</strong></div>
                     <div><small>PLAYERS</small><strong id="roomPlayerCount">2</strong></div>
                   </div>
                   <div class="table-scene rivl-pvp-scene">
@@ -124,6 +130,7 @@
                       <button id="roomAllin" class="outline">ALL IN</button>
                     </div>
                     <h3 id="roomWinner" aria-live="polite"></h3>
+                    <div id="roomRatings" aria-live="polite"></div>
                     <button id="roomNext" class="gold" hidden>BACK TO LOBBY</button>
                   </div>
                 </div>
@@ -222,6 +229,24 @@
                         <p id="profTier">Silver</p><strong id="profRating">1,500 rating</strong>
                     </div>
                 </div>
+                <article class="panel account-panel" id="accountPanel">
+                    <h3>ONLINE ACCOUNT</h3>
+                    <div id="accountSignedOut">
+                        <p class="muted">Create a free account to get an online rating and a place on the shared leaderboard. No email or password: you get a private sign-in code instead.</p>
+                        <div class="account-forms">
+                            <label>Choose a name <input id="accountName" maxlength="20" autocomplete="nickname" placeholder="3 to 20 characters"></label>
+                            <button class="gold" id="accountCreate" type="button">CREATE ACCOUNT</button>
+                            <label>Already have one? Sign-in code <input id="accountKeyInput" autocomplete="off" spellcheck="false" placeholder="Paste your code"></label>
+                            <button class="outline" id="accountSignIn" type="button">SIGN IN</button>
+                        </div>
+                    </div>
+                    <div id="accountSignedIn" hidden>
+                        <p><strong id="accountTitle"></strong> · <span id="accountRating"></span></p>
+                        <p class="muted">Your sign-in code is the only way into this account on another device. Keep it private and save it somewhere safe.</p>
+                        <div class="account-key"><code id="accountKey" hidden></code><button class="outline" id="accountShowKey" type="button">SHOW CODE</button><button class="outline" id="accountCopyKey" type="button">COPY CODE</button><button class="outline" id="accountSignOut" type="button">SIGN OUT</button></div>
+                    </div>
+                    <p id="accountStatus" class="muted" role="status"></p>
+                </article>
                 <div class="stat-grid">
                     <article class="panel">
                         <h3>RATED MATCHES</h3>
@@ -254,12 +279,17 @@
                     <h3>RECENT MATCHES</h3>
                     <div id="profMatches" class="mr-table"></div>
                 </article>
-                <p class="muted">Stats are saved in this browser. Accounts that follow you across devices come with the
-                    online version.</p>
+                <p class="muted">The stats above are from bot practice and are saved in this browser. Your online rating comes from rated room matches and is shown on the leaderboard.</p>
             </section>
             <section id="leaderboard" class="view content-view">
-                <h1>SEASON 1 LADDER</h1>
+                <h1>LEADERBOARDS</h1>
                 <div class="panel ladder">
+                    <h3>ONLINE · RATED ROOM MATCHES</h3>
+                    <div class="online-row head"><span>#</span><span>PLAYER</span><span>RATING</span><span>RD</span><span>MATCHES</span><span>WINS</span></div>
+                    <div id="onlineRows"><p class="muted">Loading…</p></div>
+                </div>
+                <div class="panel ladder">
+                    <h3>BOT PRACTICE · THIS DEVICE</h3>
                     <div class="ladder-row head">
                         <span>#</span><span>PLAYER</span><span>TIER</span><span>RATING</span><span>RD</span><span>MATCHES</span><span>ACCURACY</span>
                     </div>
@@ -308,6 +338,7 @@
         </main>
     </div>
     <script src="profile.js"></script>
+    <script src="account.js"></script>
     <script src="engine.js"></script>
     <script src="rating.js"></script>
     <script src="script.js"></script>

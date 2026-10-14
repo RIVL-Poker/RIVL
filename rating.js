@@ -54,7 +54,11 @@ function pctTable(){
    Minimum starting-hand percentile we assume they hold, and how often they fold to a bet. */
 const RANGE=[0,.35,.70], RANGE_IF_CALLS=[.35,.60,.85], FOLD_RATE=[.9,.6,.35];
 
-function equity(hero,board,minPct,iters){
+/* Seeded generator so the same spot always gets the same estimate (and the same grade). */
+function mulberry32(seed){return function(){seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashSpot(parts){let h=2166136261;for(const x of parts){h^=x&0xffffffff;h=Math.imul(h,16777619)}return h>>>0}
+function equity(hero,board,minPct,iters,rand){
+  rand=rand||Math.random;
   const P=pctTable(),dead=new Uint8Array(52);
   hero.forEach(c=>dead[c]=1);board.forEach(c=>dead[c]=1);
   const rest=[];for(let c=0;c<52;c++)if(!dead[c])rest.push(c);
@@ -66,14 +70,14 @@ function equity(hero,board,minPct,iters){
     for(let j=0;j<opp;j++){
       let tries=0;
       for(;;){
-        const i1=k+Math.floor(Math.random()*(n-k));let i2=k+Math.floor(Math.random()*(n-k-1));if(i2>=i1)i2++;
+        const i1=k+Math.floor(rand()*(n-k));let i2=k+Math.floor(rand()*(n-k-1));if(i2>=i1)i2++;
         const c1=rest[i1],c2=rest[i2];
         if(minPct[j]<=0||P[c1*52+c2]>=minPct[j]||++tries>30){
           const p2=i2===k?i1:i2;swap(k,i1);swap(k+1,p2);oh.push(c1,c2);k+=2;break;
         }
       }
     }
-    for(let j=0;j<need;j++){swap(k,k+Math.floor(Math.random()*(n-k)));k++}
+    for(let j=0;j<need;j++){swap(k,k+Math.floor(rand()*(n-k)));k++}
     const b=board.concat(rest.slice(k-need,k));
     const me=rankHand(hero.concat(b));let ties=0,lost=false;
     for(let j=0;j<opp;j++){const v=rankHand([oh[2*j],oh[2*j+1]].concat(b));if(v>me){lost=true;break}if(v===me)ties++}
@@ -92,8 +96,10 @@ function analyze(g,i,iters){
   const toCall=Math.min(Math.max(0,g.currentBet-p.bet),p.stack);
   const pot=g.pot,maxTotal=p.bet+p.stack,minTotal=g.currentBet+g.minRaise;
   const hero=p.hole.map(toInt),board=g.board.map(toInt);
-  const eq=opps.length?equity(hero,board,opps.map(q=>RANGE[q.line||0]),iters):1;
-  const eqC=opps.length?equity(hero,board,opps.map(q=>RANGE_IF_CALLS[q.line||0]),iters):1;
+  // Both estimates use the same seed derived from the spot, so re-grading a decision is reproducible.
+  const seed=hashSpot([...hero,99,...board,98,...opps.map(q=>q.line||0),97,pot,toCall,g.currentBet,p.stack]);
+  const eq=opps.length?equity(hero,board,opps.map(q=>RANGE[q.line||0]),iters,mulberry32(seed)):1;
+  const eqC=opps.length?equity(hero,board,opps.map(q=>RANGE_IF_CALLS[q.line||0]),iters,mulberry32(seed)):1;
   const maxOppTotal=Math.max(0,...opps.map(q=>q.bet+q.stack));
   const raiseOpt=T=>{
     const actors=opps.filter(q=>!q.allin);
@@ -239,5 +245,5 @@ function recordMatch(players,places){
 const TIERS=[['Bronze',0,1400],['Silver',1400,1600],['Gold',1600,1800],['Platinum',1800,2000],['Diamond',2000,Infinity]];
 function tier(r){const t=TIERS.find(([,lo,hi])=>r>=lo&&r<hi)||TIERS[0];const lo=t[1]||1200,hi=t[2]===Infinity?lo+200:t[2];return{name:t[0],progress:Math.max(0,Math.min(1,(r-lo)/(hi-lo))),next:t[2]===Infinity?null:t[2]}}
 
-root.RivlRating={toInt,rankHand,handCategory,equity,analyze,grade,chooseBot,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
+root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,equity,analyze,grade,chooseBot,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
 })(typeof window!=='undefined'?window:globalThis);
