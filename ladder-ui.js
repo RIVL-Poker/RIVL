@@ -63,7 +63,7 @@ function showMatchResult(s){
     <h2 id="mrTitle">${ord(s.place)} <span>of ${s.size}</span></h2>
     <div class="mr-rating"><strong>${Math.round(s.before)} → ${Math.round(s.after)}</strong><em class="${d>=0?'positive':'negative'}">${signed(d)}</em></div>
     <div class="mr-split"><div><small>PLACEMENT · ${Math.round(RivlRating.W_PLACE*100)}%</small><b class="${s.placePart>=0?'positive':'negative'}">≈ ${signed(s.placePart)}</b></div><div><small>DECISIONS · ${Math.round(RivlRating.W_DEC*100)}%</small><b class="${s.accPart>=0?'positive':'negative'}">≈ ${signed(s.accPart)}</b></div><div><small>ACCURACY</small><b>${s.acc==null?'–':s.acc.toFixed(1)+'%'}</b></div></div>
-    <p class="mr-tier">${t.name}${t.next?` · ${Math.round(t.next-s.after)} to ${RivlRating.tier(t.next).name}`:''}${prov?` · Provisional (±${Math.round(s.rdAfter)})`:''}</p>
+    <p class="mr-tier">${t.name}${t.next?` · ${Math.round(t.next-s.after)} to ${RivlRating.tier(t.next).name}`:''}</p>
     <div class="grade-chips">${chips}</div>
     ${moment('BEST MOMENT',s.brilliant)}${moment('BIGGEST LEAK',s.worst)}
     <div class="mr-table"><div class="mr-row head"><span>#</span><span>PLAYER</span><span>ACCURACY</span><span>RATING</span></div>${rows}</div>
@@ -94,7 +94,7 @@ function sparkline(points,w=560,h=120){
 function renderRankedTracker(acct,elo,games,set){
   const rt=RivlRating.tier(elo);
   set('rtTier',rt.name);const gem=$('rtHeroGem');if(gem){gem.replaceChildren();const svg=window.rivlLeagueIcons?.icon(rt.key);if(svg)gem.append(svg);gem.setAttribute('aria-label',rt.name+' league emblem')}const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;
-  set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
+  
   const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
   set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
   set('rtBarTo',rt.next?`${RivlRating.tier(rt.next).name} ${rt.next.toLocaleString()}`:'Top league');
@@ -117,7 +117,7 @@ function refreshRatingUI(){
   const acct=window.rivlAccount?.current?.(),games=acct?.games||0,elo=acct?acct.rating:0;
   set('sideTier','ELO');
   set('sideRating',elo.toLocaleString());
-  set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${acct.provisional?'Provisional · ':''}±${acct.rd} · ${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
+  set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
   set('sideRank',acct?.rank?`Ranked #${acct.rank}`:'');
   document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=(RivlRating.tier(elo).progress*100).toFixed(0)+'%');
   set('onlineProfileRating',elo.toLocaleString());
@@ -135,8 +135,8 @@ function refreshRatingUI(){
   const onlineRows=online.map(m=>({date:m.date||0,html:`<p>${m.mode==='Ranked PvP'||m.mode==='Rated PvP'?'RANKED':'UNRANKED'} PVP · <b class="${m.result==='Win'?'positive':'negative'}">${m.result}</b> · ${m.players} players · ${Number(m.stack||0).toLocaleString()} chips</p>`}));
   if(rl)rl.innerHTML=[...botRows,...onlineRows].sort((a,b)=>b.date-a.date).slice(0,5).map(m=>m.html).join('')||'<p>No completed matches yet.</p>';
   // profile
-  set('profRating',`${r.toLocaleString()} rating · ±${Math.round(me.rd)}`);
-  set('profTier',`${t.name}${prov?' · Provisional':''} · Ladder #${rank}`);
+  set('profRating',`${r.toLocaleString()} rating`);
+  set('profTier',`${t.name} · Ladder #${rank}`);
   set('profGames',me.games||0);set('profWins',me.wins||0);
   set('profWinRate',me.games?Math.round(100*(me.wins||0)/me.games)+'%':'–');
   set('profAcc',me.accN?(me.accSum/me.accN).toFixed(1)+'%':'–');
@@ -148,7 +148,7 @@ function refreshRatingUI(){
   if(pm){const ms=st.matches.slice(-8).reverse();pm.innerHTML=ms.length?`<div class="mr-row head"><span>PLACE</span><span>TABLE</span><span>ACCURACY</span><span>RATING</span></div>`+ms.map(m=>`<div class="mr-row"><span>${ord(m.place)}</span><span>${m.size}-max</span><span>${m.acc==null?'–':m.acc.toFixed(1)+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)} · ${Math.round(m.after)}</span></div>`).join(''):'<p class="muted">No rated matches yet.</p>'}
   // leaderboard
   const lt=$('ladderRows');
-  if(lt)lt.innerHTML=rows.map((x,k)=>`<div class="ladder-row${x.name==='You'?' me':''}"><span>${k+1}</span><span>${x.name==='You'?esc((window.rivlPlayerName?.()||'You')+' (you)'):esc(x.name)}${x.name==='You'?'':' <small>BOT</small>'}</span><span class="league-${RivlRating.tier(x.r).key}">${RivlRating.tier(x.r).name}</span><span>${Math.round(x.r).toLocaleString()}</span><span>±${Math.round(x.rd)}</span><span>${x.games||0}</span><span>${x.avg==null?'–':x.avg.toFixed(1)+'%'}</span></div>`).join('');
+  if(lt)lt.innerHTML=rows.map((x,k)=>`<div class="ladder-row${x.name==='You'?' me':''}"><span>${k+1}</span><span>${x.name==='You'?esc((window.rivlPlayerName?.()||'You')+' (you)'):esc(x.name)}${x.name==='You'?'':' <small>BOT</small>'}</span><span class="league-${RivlRating.tier(x.r).key}">${RivlRating.tier(x.r).name}</span><span>${Math.round(x.r).toLocaleString()}</span><span class="rating-deviation-cell">±${Math.round(x.rd)}</span><span>${x.games||0}</span><span>${x.avg==null?'–':x.avg.toFixed(1)+'%'}</span></div>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded',refreshRatingUI);
