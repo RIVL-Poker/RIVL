@@ -19,7 +19,7 @@
     if($('accountSignedIn'))$('accountSignedIn').hidden=!a;
     if(a){
       $('accountTitle').textContent=a.name;
-      $('accountRating').textContent=a.games?`Ranked Elo ${a.rating.toLocaleString()} (±${a.rd})${a.rank?' · #'+a.rank+' on the ladder':''} · ${a.games} ranked ${a.games===1?'match':'matches'}`:'Ranked Elo '+a.rating.toLocaleString()+' · no ranked matches yet';
+      $('accountRating').textContent=a.games?`Ranked Elo ${a.rating.toLocaleString()}${a.rank?' · #'+a.rank+' on the ladder':''} · ${a.games} ranked ${a.games===1?'match':'matches'}`:'Ranked Elo '+a.rating.toLocaleString()+' · no ranked matches yet';
       $('accountKey').textContent=a.key;
     }
     if($('accountHint'))$('accountHint').innerHTML=a?`Signed in as <b></b>.`:`<a href="#" id="goSignIn">Sign in</a> to play Ranked.`;
@@ -53,7 +53,7 @@
       if(!players.length){note('No ranked matches yet.');return}
       players.forEach((p,i)=>{
         const row=document.createElement('div');row.className='online-row'+(state&&p.id===state.id?' me':'');
-        for(const v of [board==='mine'?p.rank:i+1,p.name,p.league,p.rating.toLocaleString(),'±'+p.rd,p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
+        for(const v of [board==='mine'?p.rank:i+1,p.name,p.league,p.rating.toLocaleString(),'',p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
         window.rivlLeagueIcons?.decorate(row.children[1],p.leagueKey||window.RivlRating?.tier(p.rating).key,{prepend:true});
         row.children[2].className='league-'+p.leagueKey;
         rows.append(row);

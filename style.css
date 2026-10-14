@@ -621,3 +621,8 @@ body.rivl-modal-open{overflow:hidden}
  .ranked-tracker .rt-score strong{font-size:32px}
  .ranked-tracker .rt-score small{font-size:10px}
 }
+
+/* Keep rating deviation internally; hide it from all visible screens. */
+#rtRd,.rating-deviation-cell{display:none!important}
+.online-row{grid-template-columns:42px minmax(100px,1.5fr) minmax(75px,1fr) 90px 72px 65px!important}
+.ladder-row{grid-template-columns:42px minmax(100px,1.5fr) minmax(75px,1fr) 90px 72px 90px!important}
