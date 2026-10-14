@@ -90,6 +90,10 @@ export default {
         if(await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/create',await readBody(request)));
       }
+      if(url.pathname==='/api/avatar'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Please wait before changing your photo again.'},429);
+        return send(await dir(env,'/accounts/avatar',await readBody(request)));
+      }
       if(url.pathname==='/api/me'){
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/me',await readBody(request)));
@@ -470,7 +474,7 @@ export class Room {
       const token=crypto.randomUUID(),host=a?a.name:cleanName(body.name,'Host');
       // Ranked tables are listed only in the Ranked queue, so Open Tables and Quick Play never seat anyone in one.
       this.room={code:String(body.code||''),hostToken:token,ranked:!!body.ranked,rankedMax:body.ranked&&RANKED_SIZES.includes(Number(body.size))?Number(body.size):6,visibility:!body.ranked&&body.visibility==='public'?'public':'private',seats:Array(9).fill(null),members:{[token]:{name:host,seat:0,accountId:a?.id||null}},started:false,game:null};
-      this.room.seats[0]={type:'human',name:host,avatar:'♠',isHost:true,verified:!!a};
+      this.room.seats[0]={type:'human',name:host,avatar:a?.avatar||host[0].toUpperCase(),isHost:true,verified:!!a};
       await this.save();return this.reply({token,seat:0});
     }
     if(!room)return this.reply({error:'Room not found. Check the code.'},404);
@@ -480,7 +484,7 @@ export class Room {
       if(body.key&&!a)return this.reply({error:'Your sign-in code was not recognised. Sign in again.'},401);
       // Signing in from another device takes back the same seat.
       const mine=a&&Object.entries(room.members).find(([,m])=>m.accountId===a.id);
-      if(mine)return this.reply({token:mine[0],seat:mine[1].seat});
+      if(mine){room.seats[mine[1].seat].avatar=a.avatar||a.name[0].toUpperCase();await this.save();return this.reply({token:mine[0],seat:mine[1].seat})}
       if(room.ranked&&!a)return this.reply({error:RANKED_SIGN_IN},401);
       if(room.ranked&&!body.ranked)return this.reply({error:'Ranked tables are matchmade. Use Find Ranked Match.'},403);
       if(room.ranked&&Number(body.size)!==rankedSize(room))return this.reply({error:'Wrong ranked table size.'},409);
@@ -489,7 +493,7 @@ export class Room {
       if(seat<0)return this.reply({error:'Room is full'},409);
       const token=crypto.randomUUID(),name=a?a.name:cleanName(body.name,'Guest');
       room.members[token]={name,seat,accountId:a?.id||null};
-      room.seats[seat]={type:'human',name,avatar:'♣',isHost:false,verified:!!a};
+      room.seats[seat]={type:'human',name,avatar:a?.avatar||name[0].toUpperCase(),isHost:false,verified:!!a};
       await this.rankedCountdown();
       await this.save();return this.reply({token,seat});
     }
