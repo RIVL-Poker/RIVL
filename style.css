@@ -621,3 +621,15 @@ body.rivl-modal-open{overflow:hidden}
  .ranked-tracker .rt-score strong{font-size:32px}
  .ranked-tracker .rt-score small{font-size:10px}
 }
+
+/* Personal bot practice summary: a single spacious stats bar, no bot ranking. */
+.bot-skill-summary{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;border:1px solid #63482d;border-radius:12px;overflow:hidden;background:linear-gradient(110deg,#221a14,#111010);margin-top:16px}
+.bot-skill-name,.bot-skill-stat{display:flex;flex-direction:column;justify-content:center;gap:7px;padding:22px 20px;min-width:110px;flex:1;border-right:1px solid #49382a}
+.bot-skill-name{flex:1.7;min-width:150px}
+.bot-skill-name strong{font-size:23px;color:#f7d49b;overflow-wrap:anywhere}
+.bot-skill-caption,.bot-skill-stat>span,.bot-skill-decisions>span{font-size:11px;letter-spacing:.1em;font-weight:800;color:#d4a95f}
+.bot-skill-stat strong{font-size:25px;font-variant-numeric:tabular-nums}
+.bot-skill-feature strong{font-size:32px;color:#f4c87f}
+.bot-skill-decisions{flex:1 0 100%;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:13px 20px;border-top:1px solid #49382a}
+.bot-skill-decisions strong{font-size:13px;font-weight:600;line-height:1.6}
+@media(max-width:700px){.bot-skill-name,.bot-skill-stat{flex:1 1 45%;padding:15px 13px}.bot-skill-name strong{font-size:20px}.bot-skill-stat strong{font-size:23px}.bot-skill-decisions{padding:13px}}
