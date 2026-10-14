@@ -82,6 +82,7 @@ export class Directory {
         if(!a)return this.reply({error:'Sign in to update your photo.'},401);
         const avatar=body.avatar===null?'':body.avatar;
         if(typeof avatar!=='string'||(avatar!==''&&(!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar)||avatar.length>45000)))return this.reply({error:'Invalid photo. Use a small JPEG, PNG or WebP image.'},400);
+        if(avatar&&this.one("SELECT id FROM avatar_reports WHERE target=? AND status='pending'",a.id))return this.reply({error:'Your previous photo is awaiting review. Contact support@rivlpoker.com.'},403);
         this.sql.exec('UPDATE accounts SET avatar=?,avatar_blocked=0 WHERE id=?',avatar,a.id);
         return this.reply({account:this.publicAccount(this.one('SELECT * FROM accounts WHERE id=?',a.id))});
       }
