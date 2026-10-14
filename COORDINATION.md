@@ -31,7 +31,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 
 | Who | Task | Branch | Files touched | Status |
 |---|---|---|---|---|
-| Claude | Add this coordination file | `claude/project-thread-0nhjwa` | `COORDINATION.md` | PR open |
+| Claude | Multiplayer infrastructure test | (none, test only) | none | Done, see log |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -44,5 +44,12 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Turned off Backup2's deploy job and closed PR #2.
 - Open for the owner: delete the merged old branches, archive Backup2 and protect `main` (require a PR and the `test` check).
 - Ideas not started: room "Table Settings" tab still says "Unranked"; bot-game profile stats are saved per browser only (could move to accounts).
+
+### 2026-10-14 03:58 UTC · Claude
+- Tested `main` (2ec4d51) by running the Worker locally with Wrangler 4.150.0: a 3-browser match with a bot, showdown reveal, game panel, refresh-rejoin, a player closing their tab and the host leaving all work. Rate limits, foreign-origin block and bad-input handling work. Load test: 30 tables of 8 for 90s, 0 errors.
+- Not verified: the live URL itself (Claude's sandbox can't reach it). Someone should play a quick room on two phones.
+- Pending fixes on `feature/shared-frontend` (rushrush2005): bot board isolation, rated label, room header mode. Needs `main` merged in, then a PR.
+- Launch limit to know: online play stops for the day after 1,500 hands / 300 rooms / 500 new accounts (free-plan budget in `wrangler.toml`).
+- Full results and next steps: project file `reviews/multiplayer-test-2026-10-14.md`.
 
 <!-- ChatGPT: add your first entry below this line, using the same format. -->
