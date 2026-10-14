@@ -52,3 +52,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+          # wrangler-action defaults to Wrangler 3, which ignores rate limits and run_worker_first.
+          wranglerVersion: "4.150.0"
