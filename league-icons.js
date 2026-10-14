@@ -10,21 +10,37 @@
   champion:{name:'Champion',base:'#d8223f',light:'#ff9caa',dark:'#750d26',shape:'gem'}
  };
  const path=(d,fill,opacity=1)=>{const e=document.createElementNS(NS,'path');e.setAttribute('d',d);e.setAttribute('fill',fill);e.setAttribute('opacity',opacity);return e};
+ let serial=0;
+ function gradient(defs,id,stops,x1='0%',y1='0%',x2='100%',y2='100%'){
+  const g=document.createElementNS(NS,'linearGradient');g.setAttribute('id',id);
+  for(const [attr,value] of Object.entries({x1,y1,x2,y2}))g.setAttribute(attr,value);
+  for(const [offset,color] of stops){const stop=document.createElementNS(NS,'stop');stop.setAttribute('offset',offset);stop.setAttribute('stop-color',color);g.append(stop)}
+  defs.append(g);return 'url(#'+id+')';
+ }
  function icon(key){
   const t=tiers[key];if(!t)return null;
   const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 48 48');svg.setAttribute('aria-hidden','true');svg.classList.add('rivl-league-icon');
+  const id='rivl-metal-'+(++serial),defs=document.createElementNS(NS,'defs');
+  const metal=gradient(defs,id+'-body',[['0%',t.light],['19%',t.base],['38%',t.dark],['53%',t.light],['68%',t.base],['100%',t.dark]]);
+  const bevel=gradient(defs,id+'-bevel',[['0%','#ffffff'],['24%',t.light],['55%',t.base],['100%',t.dark]],'10%','0%','85%','100%');
+  const shadow=gradient(defs,id+'-shadow',[['0%',t.base],['50%',t.dark],['100%','#160e16']]);
+  svg.append(defs);
   if(t.shape==='stone'){
-   svg.append(path('M11 8 25 5 39 13 43 27 34 41 18 43 5 31 6 17Z',t.base));
-   svg.append(path('M11 8 25 5 28 19 18 25 6 17Z',t.light,.78));
-   svg.append(path('M28 19 39 13 43 27 34 41 18 43 18 25Z',t.dark,.54));
-   svg.append(path('M18 25 28 19 34 41 18 43 5 31Z',t.base,.86));
+   svg.append(path('M11 8 25 5 39 13 43 27 34 41 18 43 5 31 6 17Z',metal));
+   svg.append(path('M11 8 25 5 28 19 18 25 6 17Z',bevel,.95));
+   svg.append(path('M28 19 39 13 43 27 34 41 18 43 18 25Z',shadow,.76));
+   svg.append(path('M18 25 28 19 34 41 18 43 5 31Z',metal,.92));
+   svg.append(path('M12 11 24 8 19 13 9 20Z','#ffffff',.65));
   }else{
-   svg.append(path('M14 5H34L44 17 40 30 24 45 8 30 4 17Z',t.base));
-   svg.append(path('M14 5 24 16 4 17Z M34 5 24 16 44 17Z',t.light,.8));
-   svg.append(path('M4 17 24 16 15 28 8 30Z M44 17 24 16 33 28 40 30Z',t.dark,.64));
-   svg.append(path('M24 16 33 28 24 45 15 28Z',t.light,.53));
-   svg.append(path('M8 30 15 28 24 45Z M40 30 33 28 24 45Z',t.dark,.75));
+   svg.append(path('M14 5H34L44 17 40 30 24 45 8 30 4 17Z',metal));
+   svg.append(path('M14 5 24 16 4 17Z M34 5 24 16 44 17Z',bevel,.94));
+   svg.append(path('M4 17 24 16 15 28 8 30Z M44 17 24 16 33 28 40 30Z',shadow,.77));
+   svg.append(path('M24 16 33 28 24 45 15 28Z',bevel,.8));
+   svg.append(path('M8 30 15 28 24 45Z M40 30 33 28 24 45Z',shadow,.8));
+   svg.append(path('M15 7H32L23 14Z','#ffffff',.64));
   }
+  const rim=path(t.shape==='stone'?'M11 8 25 5 39 13 43 27 34 41 18 43 5 31 6 17Z':'M14 5H34L44 17 40 30 24 45 8 30 4 17Z','none');
+  rim.setAttribute('stroke',t.light);rim.setAttribute('stroke-width','1.2');rim.setAttribute('stroke-linejoin','round');svg.append(rim);
   return svg;
  }
  function decorate(element,key,{prepend=false}={}){
