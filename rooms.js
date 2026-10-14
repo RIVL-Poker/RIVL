@@ -117,7 +117,7 @@
       const me=g.players.find(p=>p.seat===snapshot.mySeat);
       const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat));
       $('roomMyName').textContent=me?.name||'Spectator';
-      $('roomMyAvatar').textContent=avatarFor(me);
+      $('roomMyAvatar').textContent=avatarFor(me);$('roomMyAvatar').parentElement.classList.toggle('is-dealer',!!me&&me.seat===g.dealer);
       $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
       $('roomTimer').hidden=g.turn!==me?.seat||g.phase==='showdown';
       const newHand=g.handNumber!==previousHand;
@@ -155,7 +155,7 @@
       $('roomPokerTable').dataset.playerCount=String(count);
       opponents.forEach((p,i)=>{
         const item=document.createElement('div');
-        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'');
+        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'');
         const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=avatarFor(p);
         const label=document.createElement('span');label.textContent=p.name+' · '+p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');
         item.append(avatar,label);
@@ -279,7 +279,7 @@
     if(!API)return;
     try{const s=await request('/api/status');const note=$('capacityNote');note.hidden=!s.busy;
       note.textContent=s.busy?'Online play has used its free capacity for today, so new rooms are paused. Bot practice still works, and rooms open again after midnight UTC.':'';
-      for(const id of ['createRoom','findRanked','quickPlay'])$(id).disabled=s.busy}catch{}
+      for(const id of ['createRoom','quickPlay'])$(id).disabled=s.busy}catch{}
   }
   function startFinder(){clearInterval(lobbyTimer);refreshLobby();refreshCapacity();lobbyTimer=setInterval(()=>finderVisible()?refreshLobby():null,15000)}
   document.querySelectorAll('.nav').forEach(n=>n.addEventListener('click',()=>{if(n.dataset.view!=='rooms')clearInterval(lobbyTimer)}));
