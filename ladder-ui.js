@@ -93,7 +93,7 @@ function sparkline(points,w=560,h=120){
 }
 function renderRankedTracker(acct,elo,games,set){
   const rt=RivlRating.tier(elo);
-  set('rtTier',rt.name);const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
+  set('rtTier',rt.name);window.rivlLeagueIcons?.decorate($('rtTitle'),rt.key,{prepend:true});const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;const flag=$('rtFlag');if(flag)flag.hidden=!(acct&&acct.provisional);
   set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
   const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
   set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
@@ -125,6 +125,7 @@ function refreshRatingUI(){
   set('onlineProfileDetails',acct?`Ranked Elo is 60% finishing place and 40% graded decisions. Only Ranked matches change it.`:'Sign in below to play Ranked.');
   set('onlineProfileRecord',`${acct?.wins||0} wins · ${games?Math.round(100*(acct.wins||0)/games):0}% win rate`);
   renderRankedTracker(acct,elo,games,set);
+  window.rivlPaintName?.();
   set('homeRating',r.toLocaleString());
   const avg=me.accN?' · '+(me.accSum/me.accN).toFixed(1)+'% avg accuracy':'';
   set('homeStatsLine',`${t.name} · ${me.games||0} bot matches${avg}`);
