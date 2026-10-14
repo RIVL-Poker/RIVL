@@ -43,6 +43,10 @@
     if(!snapshot)return;
     $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=roomCode;
     const playing=!!snapshot.started&&!!snapshot.game;
+    const disclaimer=document.querySelector('.room-disclaimer');
+    if(disclaimer)disclaimer.textContent=(snapshot.rated?'Rated':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
+    const heading=document.querySelector('.crumb');
+    if(heading)heading.textContent=playing?'TEXAS HOLD’EM · '+(snapshot.rated?'RATED':'UNRANKED')+' MULTIPLAYER':'TEXAS HOLD’EM · ONLINE ROOMS';
     $('rooms').classList.toggle('rivl-match-mode',playing);
     if(playing&&!wasPlaying){window.scrollTo({top:0,behavior:'instant'});}
     wasPlaying=playing;
@@ -136,7 +140,7 @@
         item.style.transform='translate(-50%,-50%)';
         seats.append(item);
       });
-      if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);lastRecordedResult=g.handNumber+':'+g.result}
+      if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
       renderRoomPanel();
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=!(g.matchOver&&host);
@@ -173,7 +177,8 @@
   function resetView(message){
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
-    socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;clearSession();
+    socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];lastRecordedResult='';clearSession();
+    const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM · RATED BOT PLAY';
     $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
   }
   function connect(){
