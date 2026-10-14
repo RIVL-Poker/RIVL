@@ -166,36 +166,64 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
-// 9. A match with two signed-in players is rated on the server from the real finishing order; a leaver places last.
+// 9. Ranked rooms: only they are rated, on the server, from the real finishing order; a leaver places last.
 {
   const env=makeEnv();
-  const acc=[];for(const n of ['Ann','Bob','Cat'])acc.push((await api(env,'/api/accounts',{name:n})).data);
-  const {code,token}=(await api(env,'/api/rooms',{key:acc[0].key})).data;
+  const acc=[];for(const n of ['Ann','Bob','Cat','Dan'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  // Guests cannot create or join Ranked; Ranked has no bots and never goes public.
+  assert.equal((await api(env,'/api/rooms',{name:'Guest',mode:'ranked'})).status,401);
+  const {code,token}=(await api(env,'/api/rooms',{key:acc[0].key,mode:'ranked',visibility:'public'})).data;
+  const room=roomOf(env,code);
+  assert.ok(room.room.ranked);assert.equal(room.room.visibility,'private','ranked rooms stay out of Open Tables');
+  const guest=await api(env,'/api/rooms/'+code+'/join',{name:'Guest'});
+  assert.equal(guest.status,401);assert.match(guest.data.error,/Ranked/);
   const tokens=[token];for(const a of acc.slice(1))tokens.push((await api(env,'/api/rooms/'+code+'/join',{key:a.key})).data.token);
-  const room=roomOf(env,code),sockets=[];for(const t of tokens)sockets.push(await sit(env,code,t));
-  await say(room,sockets[0],{type:'addBot',seat:3,level:'Expert'});
-  assert.ok(sockets[0].last('state').state.rated);
+  const sockets=[];for(const t of tokens)sockets.push(await sit(env,code,t));
+  await say(room,sockets[0],{type:'addBot',seat:5,level:'Expert'});
+  assert.match(sockets[0].last('error').error,/no bots/);
+  await say(room,sockets[0],{type:'visibility',visibility:'public'});
+  assert.equal(room.room.visibility,'private');
+  const view=sockets[0].last('state').state;assert.ok(view.ranked&&view.rated);
   await say(room,sockets[0],{type:'startMatch'});
-  await say(room,sockets[2],{type:'leave'});   // Cat abandons: counts as last
-  const busted=new Set();
+  await say(room,sockets[2],{type:'leave'});   // Cat abandons with chips: places last, below anyone who busts later
+  const busted=new Set(),bustOrder=[];
   for(let i=0;i<20000&&!room.matchOver();i++){
     const g=room.room.game;
     for(const p of g.players)assert.ok(!busted.has(p.seat),'a busted player is not dealt back in');
-    if(g.phase==='showdown'){for(const p of g.players)if(p.stack===0)busted.add(p.seat);g.nextHandAt=0;await room.alarm();continue}
-    const seat=g.turn,idx=[0,1].find(k=>room.room.members[tokens[k]]?.seat===seat);
+    if(g.phase==='showdown'){for(const p of g.players)if(p.stack===0&&!busted.has(p.seat)){busted.add(p.seat);bustOrder.push(p.seat)}g.nextHandAt=0;await room.alarm();continue}
+    const seat=g.turn,idx=[0,1,3].find(k=>room.room.members[tokens[k]]?.seat===seat);
     if(idx===undefined){g.deadline=0;await room.alarm();continue}
     const l=room.legal(seat);await say(room,sockets[idx],{type:'action',...(Math.random()<.3&&l.canRaise?{action:'allin'}:{action:l.check?'check':'call'})});
   }
   assert.ok(room.matchOver(),'match finished');
+  assert.ok(bustOrder.length>=1,'someone else busted after Cat left');
   const changes=room.room.game.ratingChanges;
-  assert.equal(changes.length,3,'all three signed-in players rated');
+  assert.equal(changes.length,4,'all four signed-in players rated');
   const cat=changes.find(c=>c.name==='Cat');assert.ok(cat.after<cat.before,'the leaver loses rating');
+  assert.ok(changes.every(c=>c.name==='Cat'||c.after>cat.after),'the leaver finishes below everyone, busted players included');
   const board=(await api(env,'/api/leaderboard')).data.players;
-  assert.equal(board.length,3);assert.ok(board.every(p=>p.games===1));
-  // Only the table's winner gets a win; when the bot wins the match, no account does.
-  const champ=room.room.game.players.filter(p=>p.stack>0&&room.room.seats[p.seat]).sort((a,b)=>b.stack-a.stack)[0].name;
-  assert.equal(board.reduce((n,p)=>n+p.wins,0),['Ann','Bob','Cat'].includes(champ)?1:0,'only the match winner is credited a win');
-  assert.ok(board.every(p=>p.wins===(p.name===champ?1:0)));
+  assert.equal(board.length,4);assert.ok(board.every(p=>p.games===1));
+  assert.equal(board.at(-1).name,'Cat');
+  assert.equal(board.reduce((n,p)=>n+p.wins,0),1,'only the match winner is credited a win');
+  checks++;
+}
+
+// 9b. Quick Play and private rooms are unranked even with two signed-in players.
+{
+  const env=makeEnv();
+  const a=(await api(env,'/api/accounts',{name:'Eve'})).data,b=(await api(env,'/api/accounts',{name:'Fay'})).data;
+  const {code,token}=(await api(env,'/api/rooms',{key:a.key})).data;
+  const t2=(await api(env,'/api/rooms/'+code+'/join',{key:b.key})).data.token;
+  const room=roomOf(env,code),ws=[await sit(env,code,token),await sit(env,code,t2)];
+  assert.ok(!ws[0].last('state').state.rated,'private room is unranked');
+  await say(room,ws[0],{type:'startMatch'});
+  await say(room,ws[1],{type:'leave'});
+  for(let i=0;i<20&&!room.matchOver();i++){const g=room.room.game;if(g.phase==='showdown')g.nextHandAt=0;else g.deadline=0;await room.alarm()}
+  assert.ok(room.matchOver());
+  assert.equal(room.room.game.ratingChanges,undefined);
+  // The worker caches the leaderboard for a few seconds; read the directory directly.
+  assert.equal((await (await env.DIRECTORY.get('global').fetch('https://dir/leaderboard')).json()).players.length,0,'no Elo from unranked rooms');
+  assert.equal((await api(env,'/api/me',{key:a.key})).data.account.games,0);
   checks++;
 }
 

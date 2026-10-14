@@ -30,6 +30,7 @@ async function cached(env,path,ttl){
   const hit=cache.get(path);if(hit&&Date.now()-hit.t<ttl)return hit.value;
   const value=await dir(env,path);if(value.status===200)cache.set(path,{t:Date.now(),value});return value;
 }
+const RANKED_SIGN_IN='Sign in or create an account to play Ranked.';
 const CLOSED_MESSAGE='Online play has used its free capacity for today. Bot practice still works. New rooms open again after midnight UTC.';
 async function limited(limiter,request){
   if(!limiter)return false;
@@ -86,7 +87,7 @@ export default {
       if(url.pathname==='/api/rooms'){
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
         const body=await readBody(request);
-        return send(await createRoom({name:body.name,key:body.key,visibility:body.visibility==='public'?'public':'private'}));
+        return send(await createRoom({name:body.name,key:body.key,visibility:body.visibility==='public'?'public':'private',ranked:body.mode==='ranked'}));
       }
       if(url.pathname==='/api/quickplay'){
         // Join the busiest open public table, or open a new public one.
@@ -138,7 +139,7 @@ export class Room {
     const shown=g?.phase==='showdown'&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
-      rated:this.ratedSeats().length>=2,
+      ranked:!!this.room.ranked,rated:this.rated(),
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,
         winners:g.winners||[],result:g.result||'',note:g.note||'',ratingChanges:g.ratingChanges||null,matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
@@ -148,6 +149,8 @@ export class Room {
   matchOver(g=this.room?.game){return !g||g.result==='Match complete'}
   humansAway(g){return g.players.filter(p=>!p.bot&&!p.left).every(p=>p.away)}
   ratedSeats(){return Object.values(this.room.members).filter(m=>m.accountId)}
+  // Only Ranked rooms change Elo; Quick Play and private rooms are unranked.
+  rated(){return !!this.room.ranked&&(this.ratedSeats().length>=2||Object.keys(this.room.match?.accounts||{}).length>=2||!!this.room.game?.ratingChanges?.length)}
   async save(){
     const room=this.room;room.lastActive=Date.now();
     const g=room.game;
@@ -175,14 +178,16 @@ export class Room {
     else await this.dir('/lobby/remove',{code:room.code});
   }
   // Finishing order: players still holding chips by stack, then everyone else in reverse order of elimination.
+  // In Ranked, anyone who leaves while still holding chips places below every busted player.
   eliminate(seats){
     const m=this.room.match;if(!m)return;
-    const fresh=seats.filter(s=>!m.out.flat().includes(s));
+    const fresh=seats.filter(s=>!m.out.flat().includes(s)&&!m.left?.includes(s));
     if(fresh.length)m.out.push(fresh);
   }
   finishMatch(standing){
     const m=this.room.match;if(!m)return;
-    const order=[...standing.sort((a,b)=>b.stack-a.stack).map(p=>[p.seat]),...[...m.out].reverse()];
+    if(!m.ranked){this.room.match=null;return}
+    const order=[...standing.sort((a,b)=>b.stack-a.stack).map(p=>[p.seat]),...[...m.out].reverse(),...[...(m.left||[])].reverse().map(s=>[s])];
     const place={};let next=1;for(const group of order){for(const s of group)place[s]=next;next+=group.length}
     const players=Object.entries(m.accounts).map(([seat,id])=>({id,place:place[seat]??next}));
     if(players.length>=2)this.room.pendingResults={matchId:m.id,players};
@@ -389,7 +394,9 @@ export class Room {
     delete room.members[token];
     const g=room.game,p=g?.players.find(x=>x.seat===m.seat);
     if(p&&!this.matchOver(g)){
-      p.left=true;this.eliminate([p.seat]);
+      p.left=true;
+      const match=room.match,busted=match?.out.flat().includes(p.seat);
+      if(match?.ranked&&!busted)match.left=[...(match.left||[]),p.seat];else this.eliminate([p.seat]);
       if(g.phase!=='showdown'&&g.turn===p.seat){this.applyAction(p.seat,'fold');this.autoAdvance()}
     }
     room.seats[m.seat]=null;
@@ -405,8 +412,10 @@ export class Room {
       if(room)return this.reply({error:'Room code collision'},409);
       const body=await request.json(),a=await account(body.key);
       if(body.key&&!a)return this.reply({error:'Your sign-in code was not recognised. Sign in again.'},401);
+      if(body.ranked&&!a)return this.reply({error:RANKED_SIGN_IN},401);
       const token=crypto.randomUUID(),host=a?a.name:cleanName(body.name,'Host');
-      this.room={code:String(body.code||''),hostToken:token,visibility:body.visibility==='public'?'public':'private',seats:Array(9).fill(null),members:{[token]:{name:host,seat:0,accountId:a?.id||null}},started:false,game:null};
+      // Ranked rooms are invite-only: they stay out of Open Tables so Quick Play never seats anyone in one.
+      this.room={code:String(body.code||''),hostToken:token,ranked:!!body.ranked,visibility:!body.ranked&&body.visibility==='public'?'public':'private',seats:Array(9).fill(null),members:{[token]:{name:host,seat:0,accountId:a?.id||null}},started:false,game:null};
       this.room.seats[0]={type:'human',name:host,avatar:'♠',isHost:true,verified:!!a};
       await this.save();return this.reply({token,seat:0});
     }
@@ -418,6 +427,7 @@ export class Room {
       // Signing in from another device takes back the same seat.
       const mine=a&&Object.entries(room.members).find(([,m])=>m.accountId===a.id);
       if(mine)return this.reply({token:mine[0],seat:mine[1].seat});
+      if(room.ranked&&!a)return this.reply({error:RANKED_SIGN_IN},401);
       const seat=room.seats.findIndex(s=>s===null);
       if(seat<0)return this.reply({error:'Room is full'},409);
       const token=crypto.randomUUID(),name=a?a.name:cleanName(body.name,'Guest');
@@ -477,10 +487,13 @@ export class Room {
         if(room.seats.filter(Boolean).length<2)throw Error('At least two players required');
         const usage=await this.dir('/usage/hand',{newMatch:true});
         if(usage&&!usage.ok)throw Error(CLOSED_MESSAGE);
-        room.match={id:crypto.randomUUID(),out:[],accounts:Object.fromEntries(Object.values(room.members).filter(m=>m.accountId).map(m=>[m.seat,m.accountId]))};
+        room.match={id:crypto.randomUUID(),ranked:!!room.ranked,out:[],left:[],accounts:Object.fromEntries(Object.values(room.members).filter(m=>m.accountId).map(m=>[m.seat,m.accountId]))};
         room.game=null;this.startHand();
-      }else if(msg.type==='visibility'&&['private','public'].includes(msg.visibility))room.visibility=msg.visibility;
-      else if(msg.type==='addBot'){
+      }else if(msg.type==='visibility'&&['private','public'].includes(msg.visibility)){
+        if(room.ranked)throw Error('Ranked rooms are invite-only');
+        room.visibility=msg.visibility;
+      }else if(msg.type==='addBot'){
+        if(room.ranked)throw Error('Ranked rooms are for signed-in players only, no bots');
         const seat=Number(msg.seat),level=String(msg.level);
         if(!Number.isInteger(seat)||seat<0||seat>8||room.seats[seat]||!LEVELS[level])throw Error('Invalid seat or skill level');
         const taken=new Set(room.seats.filter(Boolean).map(s=>s.name));

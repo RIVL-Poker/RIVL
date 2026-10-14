@@ -18,9 +18,9 @@
                     data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp;
                     Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button></nav>
             <div class="season"><small id="sideTier">✦ RANKED · ELO</small>
-                <h2 id="sideRating">0</h2>
-                <p id="sideRatingLabel">Ranked coming soon · 0 matches</p>
-                <div class="progress"><span class="tier-progress"></span></div><small id="sideRank">Unranked rooms do not affect Elo</small>
+                <h2 id="sideRating">1,500</h2>
+                <p id="sideRatingLabel">Sign in to play Ranked</p>
+                <div class="progress"><span class="tier-progress"></span></div><small id="sideRank">Quick Play and private rooms are unranked</small>
             </div>
             <div class="sidefoot">DEMO BUILD · v1.4.1</div>
         </aside>
@@ -43,7 +43,7 @@
                 <div id="modeSelect" class="rivl-menu-step">
                     <div class="section-title"><h2>CHOOSE YOUR GAME</h2><span>SELECT A MODE TO BEGIN</span></div>
                     <div class="rivl-mode-grid">
-                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>RANKED</h3><p>Play against real people and climb the ladder.</p><button class="outline" disabled aria-label="Ranked coming soon">COMING SOON</button></article>
+                        <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>RANKED</h3><p>Play against real people and climb the ladder.</p><button class="gold" id="openRanked">PLAY RANKED →</button></article>
                         <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>BOT PRACTICE</h3><p>Sharpen your game against AI opponents.</p><button class="gold" id="selectBotPractice">CHOOSE PLAYERS →</button></article>
                         <article class="rivl-mode-option"><div class="rivl-mode-chip"><span>♠</span></div><h3>PRIVATE ROOM</h3><p>Invite friends to a private nine-seat table.</p><button class="gold" id="openRooms">OPEN ROOMS →</button></article>
                     </div>
@@ -75,7 +75,7 @@
                 </div>
             </section>
             <section id="rooms" class="view content-view">
-              <div class="section-title"><h2>RIVL ROOMS</h2><span>LIVE LOBBY · RATED WITH 2+ SIGNED-IN PLAYERS</span></div>
+              <div class="section-title"><h2>RIVL ROOMS</h2><span>LIVE LOBBY · ONLY RANKED ROOMS CHANGE ELO</span></div>
               <p id="roomStatus" role="status">Create a room and share its code, or join a friend's room.</p>
               <p id="capacityNote" class="capacity-note" hidden></p>
               <div id="roomFinder" class="panel room-finder">
@@ -85,6 +85,7 @@
               </div>
               <div id="roomEntry" class="room-entry">
                 <div class="panel"><h3>CREATE A ROOM</h3><label>Your display name <input id="roomName" maxlength="20" value="Player"></label><label class="check room-public-check"><input type="checkbox" id="roomListPublic"> List it in Open Tables so anyone can join</label><button class="gold" id="createRoom">CREATE ROOM</button></div>
+                <div class="panel ranked-panel" id="rankedPanel"><h3>RANKED ROOM</h3><p class="muted">Signed-in players only, no bots. Your Elo moves by finishing place. Leave before the match ends and you place last.</p><button class="gold" id="createRanked">CREATE RANKED ROOM</button><p class="muted">Share the code; friends join with JOIN A ROOM while signed in.</p></div>
                 <div class="panel"><h3>JOIN A ROOM</h3><label>Room code <input id="roomCodeInput" maxlength="8" placeholder="AB12CD" autocapitalize="characters" autocomplete="off"></label><label>Your display name <input id="joinName" maxlength="20" value="Guest"></label><button class="gold" id="joinRoom">JOIN ROOM</button></div>
               </div>
               <div id="roomLobby" hidden>
@@ -234,8 +235,8 @@
             </section>
             <section id="profile" class="view content-view">
                 <h1>YOUR PROFILE</h1>
-                <div class="panel profile-card"><div class="avatar large" data-player-initial>P</div><div><h2 data-player-name>Player</h2><p>RANKED ELO</p><strong id="onlineProfileRating" class="online-profile-score">0</strong></div></div>
-                <article class="panel online-profile-summary"><h3>RANKED LEADERBOARD · ELO</h3><p id="onlineProfileDetails">Ranked Elo · 0 ranked matches</p><p id="onlineProfileRecord">0 wins · 0% win rate · Ranked coming soon</p><p class="muted">Quick Play and private rooms are unranked and do not change Elo.</p></article>
+                <div class="panel profile-card"><div class="avatar large" data-player-initial>P</div><div><h2 data-player-name>Player</h2><p>RANKED ELO</p><strong id="onlineProfileRating" class="online-profile-score">1,500</strong></div></div>
+                <article class="panel online-profile-summary"><h3>RANKED LEADERBOARD · ELO</h3><p id="onlineProfileDetails">Ranked Elo · 0 ranked matches</p><p id="onlineProfileRecord">0 wins · 0% win rate</p><p class="muted">Quick Play and private rooms are unranked and do not change Elo.</p></article>
                 <article class="panel account-panel" id="accountPanel">
                     <h3>ONLINE ACCOUNT</h3>
                     <div id="accountSignedOut">
@@ -258,9 +259,9 @@
             <section id="leaderboard" class="view content-view">
                 <h1>LEADERBOARDS</h1>
                 <div class="panel ladder">
-                    <h3>RANKED · ELO (COMING SOON)</h3>
+                    <h3>RANKED · ELO</h3>
                     <div class="online-row head"><span>#</span><span>PLAYER</span><span>ELO</span><span>RD</span><span>MATCHES</span><span>WINS</span></div>
-                    <div id="onlineRows"><p class="muted">Ranked is coming soon. No Elo standings yet.</p></div>
+                    <div id="onlineRows"><p class="muted">Loading…</p></div>
                 </div>
             </section>
             <section id="themes" class="view content-view">
