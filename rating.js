@@ -242,8 +242,10 @@ function recordMatch(players,places){
   return summary;
 }
 
-const TIERS=[['Bronze',0,1400],['Silver',1400,1600],['Gold',1600,1800],['Platinum',1800,2000],['Diamond',2000,Infinity]];
-function tier(r){const t=TIERS.find(([,lo,hi])=>r>=lo&&r<hi)||TIERS[0];const lo=t[1]||1200,hi=t[2]===Infinity?lo+200:t[2];return{name:t[0],progress:Math.max(0,Math.min(1,(r-lo)/(hi-lo))),next:t[2]===Infinity?null:t[2]}}
+// Ranked leagues: fixed 350-point bands. Everyone starts at 1,500, in Challenger.
+const LEAGUES=[['Prospect',0,1400,'prospect'],['Challenger',1400,1750,'challenger'],['Elite',1750,2100,'elite'],['Master',2100,2450,'master'],['Grandmaster',2450,2800,'grandmaster'],['Champion',2800,Infinity,'champion']];
+const BAND=350;
+function tier(r){const t=LEAGUES.find(([,lo,hi])=>r>=lo&&r<hi)||LEAGUES[0];const lo=t[1]||t[2]-BAND,hi=t[2]===Infinity?lo+BAND:t[2];return{name:t[0],key:t[3],lo,progress:Math.max(0,Math.min(1,(r-lo)/(hi-lo))),next:t[2]===Infinity?null:t[2]}}
 
-root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,equity,analyze,grade,chooseBot,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
+root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,equity,analyze,grade,chooseBot,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LEAGUES,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
 })(typeof window!=='undefined'?window:globalThis);

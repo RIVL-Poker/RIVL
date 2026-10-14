@@ -3,6 +3,8 @@
 import {glicko} from './glicko.js';
 import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 
+// rating.js (loaded by grading.js) defines the Ranked leagues shared with the site.
+const R=globalThis.RivlRating;
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
 const LOBBY_TTL=15*60*1000;
 const day=()=>new Date().toISOString().slice(0,10);
@@ -45,7 +47,8 @@ export class Directory {
   publicAccount(a){
     if(!a)return null;
     const rank=a.rgames>0?this.one('SELECT COUNT(*)+1 AS n FROM accounts WHERE rgames>0 AND rr>?',a.rr).n:null;
-    return {id:a.id,name:a.name,rating:Math.round(a.rr),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110};
+    const t=R.tier(a.rr);
+    return {id:a.id,name:a.name,rating:Math.round(a.rr),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
   }
   async byKey(key){
     if(typeof key!=='string'||key.length<20||key.length>64)return null;
@@ -75,6 +78,17 @@ export class Directory {
       if(path==='/leaderboard'){
         const top=this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY rr DESC LIMIT 50').map(a=>this.publicAccount(a));
         return this.reply({players:top,total:this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0').n});
+      }
+      if(path==='/leaderboard/league'){
+        // Everyone in the league of rating r, nearest to r first (50 at most). A league with under 10 players
+        // falls back to the 10 players nearest r on the whole ladder.
+        const r=Number(url.searchParams.get('r'));if(!Number.isFinite(r))return this.reply({error:'Missing rating.'},400);
+        const t=R.tier(r),[,lo,hi]=R.LEAGUES.find(l=>l[0]===t.name),top=hi===Infinity?1e9:hi;
+        const total=this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0 AND rr>=? AND rr<?',lo,top).n;
+        const near=total<10;
+        const rows=near?this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY ABS(rr-?) LIMIT 10',r)
+          :this.rows('SELECT * FROM accounts WHERE rgames>0 AND rr>=? AND rr<? ORDER BY ABS(rr-?) LIMIT 50',lo,top,r);
+        return this.reply({league:t.name,leagueKey:t.key,near,total,players:rows.sort((x,y)=>y.rr-x.rr).map(a=>this.publicAccount(a))});
       }
       if(path==='/results')return this.reply(this.recordResults(body));
       if(path==='/lobby'||path==='/lobby/ranked'){
