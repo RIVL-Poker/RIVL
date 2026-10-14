@@ -683,3 +683,7 @@ body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:18
 .room-avatar,.rivl-pvp-seat .avatar,#roomMyAvatar{overflow:hidden}
 .room-avatar .rivl-avatar-photo,.rivl-pvp-seat .avatar .rivl-avatar-photo,#roomMyAvatar .rivl-avatar-photo{width:100%;height:100%;object-fit:cover}
 @media(max-width:600px){.ranked-tracker .profile-avatar .profile-initial{font-size:40px}}
+
+.rivl-report-photo{display:block;cursor:pointer;background:transparent;border:0;color:#d6a975;font-size:9px;letter-spacing:.04em;padding:3px 0;text-decoration:underline}
+.rivl-report-photo:hover{color:#fff}
+.rivl-pvp-seat .rivl-report-photo{font-size:8px;margin:2px auto 0}
