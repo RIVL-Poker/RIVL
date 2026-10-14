@@ -26,6 +26,7 @@
     if(a&&$('accountHint'))$('accountHint').querySelector('b').textContent=a.name;
     $('goSignIn')?.addEventListener('click',e=>{e.preventDefault();show('profile');$('accountName')?.focus()});
     window.rivlPaintName?.();
+    window.refreshRatingUI?.();
   }
   function setAccount(account,key){state=account?{...account,key}:null;persist();render()}
   async function refresh(){
