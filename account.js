@@ -19,10 +19,10 @@
     if($('accountSignedIn'))$('accountSignedIn').hidden=!a;
     if(a){
       $('accountTitle').textContent=a.name;
-      $('accountRating').textContent='Ranked Elo: 0 · Ranked coming soon';
+      $('accountRating').textContent=a.games?`Ranked Elo ${a.rating.toLocaleString()} (±${a.rd})${a.rank?' · #'+a.rank+' on the ladder':''} · ${a.games} ranked ${a.games===1?'match':'matches'}`:'Ranked Elo 1,500 · no ranked matches yet';
       $('accountKey').textContent=a.key;
     }
-    if($('accountHint'))$('accountHint').innerHTML=a?`Signed in as <b></b>. Quick Play and private rooms are unranked; ranked Elo is coming soon.`:`Playing as a guest. <a href="#" id="goSignIn">Sign in or create an account</a> to save your identity. Ranked Elo is coming soon.`;
+    if($('accountHint'))$('accountHint').innerHTML=a?`Signed in as <b></b>. Ranked rooms change your Elo; Quick Play and private rooms are unranked.`:`Playing as a guest. <a href="#" id="goSignIn">Sign in or create an account</a> to play Ranked. Quick Play and private rooms are unranked.`;
     if(a&&$('accountHint'))$('accountHint').querySelector('b').textContent=a.name;
     $('goSignIn')?.addEventListener('click',e=>{e.preventDefault();show('profile');$('accountName')?.focus()});
     window.rivlPaintName?.();
@@ -37,7 +37,18 @@
   window.rivlAccount={current:()=>state,key:()=>state?.key||null,refresh,call};
 
   async function loadLeaderboard(){
-    const rows=$('onlineRows');if(rows)rows.innerHTML='<p class="muted">Ranked is coming soon. Elo starts at 0; Quick Play and private rooms are unranked.</p>';
+    const rows=$('onlineRows');if(!rows)return;
+    try{
+      const {players,total}=await call('/api/leaderboard');
+      rows.replaceChildren();
+      if(!players.length){rows.innerHTML='<p class="muted">No ranked matches yet. Create a Ranked room with another signed-in player to get on the ladder.</p>';return}
+      players.forEach((p,i)=>{
+        const row=document.createElement('div');row.className='online-row'+(state&&p.id===state.id?' me':'');
+        for(const v of [i+1,p.name+(p.provisional?' ?':''),p.rating.toLocaleString(),'±'+p.rd,p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
+        rows.append(row);
+      });
+      if(total>players.length){const more=document.createElement('p');more.className='muted';more.textContent=`Top ${players.length} of ${total} ranked players. "?" marks a provisional rating.`;rows.append(more)}
+    }catch(e){rows.innerHTML='';const p=document.createElement('p');p.className='muted';p.textContent=e.message;rows.append(p)}
   }
 
   function init(){

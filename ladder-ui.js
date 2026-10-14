@@ -96,15 +96,16 @@ function refreshRatingUI(){
   const st=RivlRating.store(),me=st.players.You,rows=ladderRows(),rank=rows.findIndex(r=>r.name==='You')+1;
   const t=RivlRating.tier(me.r),prov=me.rd>110,r=Math.round(me.r);
   const set=(id,v)=>{const el=$(id);if(el)el.textContent=v};
-  // Ranked Elo is not launched. Keep the ranked tracker at zero until the ranked system is enabled.
+  // Ranked Elo comes from the signed-in account; only Ranked rooms change it.
+  const acct=window.rivlAccount?.current?.(),games=acct?.games||0,elo=acct?acct.rating:1500;
   set('sideTier','✦ RANKED · ELO');
-  set('sideRating','0');
-  set('sideRatingLabel','Ranked coming soon · 0 matches');
-  set('sideRank','Unranked rooms do not affect Elo');
-  document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width='0%');
-  set('onlineProfileRating','0');
-  set('onlineProfileDetails','Ranked Elo · 0 ranked matches');
-  set('onlineProfileRecord','0 wins · 0% win rate · Ranked coming soon');
+  set('sideRating',elo.toLocaleString());
+  set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${acct.provisional?'Provisional · ':''}±${acct.rd} · ${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
+  set('sideRank',acct?.rank?`Ranked #${acct.rank}`:'Quick Play and private rooms are unranked');
+  document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=Math.max(0,Math.min(100,(elo-1000)/10)).toFixed(0)+'%');
+  set('onlineProfileRating',elo.toLocaleString());
+  set('onlineProfileDetails',acct?`Ranked Elo · ${games} ranked ${games===1?'match':'matches'}${acct.rank?' · #'+acct.rank+' on the ladder':''}`:'Sign in or create an account to play Ranked');
+  set('onlineProfileRecord',`${acct?.wins||0} wins · ${games?Math.round(100*(acct.wins||0)/games):0}% win rate`);
   set('homeRating',r.toLocaleString());
   const avg=me.accN?(me.accSum/me.accN).toFixed(1)+'% avg accuracy':'no matches yet';
   set('homeStatsLine',`${t.name} · ${me.games||0} rated matches · ${avg}`);
@@ -112,7 +113,7 @@ function refreshRatingUI(){
   const rl=$('recentList');
   let online=[];try{online=JSON.parse(localStorage.getItem('rivlOnlineRecentMatches')||'[]')}catch{}if(!Array.isArray(online))online=[];
   const botRows=recent.map(m=>({date:m.date||m.t||0,html:`<p>BOT · ${ord(m.place)} place · ${m.acc==null?'–':m.acc.toFixed(0)+'%'} <b class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)}</b></p>`}));
-  const onlineRows=online.map(m=>({date:m.date||0,html:`<p>${m.mode==='Rated PvP'?'RATED':'UNRATED'} PVP · <b class="${m.result==='Win'?'positive':'negative'}">${m.result}</b> · ${m.players} players · ${Number(m.stack||0).toLocaleString()} chips</p>`}));
+  const onlineRows=online.map(m=>({date:m.date||0,html:`<p>${m.mode==='Ranked PvP'||m.mode==='Rated PvP'?'RANKED':'UNRANKED'} PVP · <b class="${m.result==='Win'?'positive':'negative'}">${m.result}</b> · ${m.players} players · ${Number(m.stack||0).toLocaleString()} chips</p>`}));
   if(rl)rl.innerHTML=[...botRows,...onlineRows].sort((a,b)=>b.date-a.date).slice(0,5).map(m=>m.html).join('')||'<p>No completed matches yet.</p>';
   // profile
   set('profRating',`${r.toLocaleString()} rating · ±${Math.round(me.rd)}`);
