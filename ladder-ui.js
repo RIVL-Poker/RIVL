@@ -12,7 +12,7 @@ function gradeAction(i,type,amount){
   try{
     let A=g.pendingAnalysis&&g.pendingAnalysis.i===i?g.pendingAnalysis:null;
     g.pendingAnalysis=null;
-    if(!A)A=RivlRating.analyze(g,i,i===0?450:140);
+    if(!A)A=RivlRating.analyze(g,i,i===0?RivlRating.GRADE_ITERS:140);
     const r=RivlRating.grade(A,type,type==='raise'?Math.round(Number(amount)):0);
     (p.grades||(p.grades=[])).push(r);
     if(i===0){lastGrade=r;if(g.coach)showGradeFx(r)}
