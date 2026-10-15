@@ -1338,3 +1338,18 @@ body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .mu
  body.in-game #table .rivl-hud-clock{align-self:end}
  body.in-game #table .rivl-player-hand{align-self:end}
 }
+
+/* Clock ring represents actual remaining seconds, not a decorative timer. */
+@media(min-width:901px){
+ body.in-game #table .rivl-hud-clock{position:relative;border:0!important;background:conic-gradient(#d6aa56 var(--clock-progress,100%),#392820 0)!important;padding:8px;isolation:isolate}
+ body.in-game #table .rivl-hud-clock::before{content:"";position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle,#241a11,#080808);z-index:-1}
+ body.in-game #table .rivl-hud-clock:has(span:first-child){font-variant-numeric:tabular-nums}
+}
+/* Compact laptop widths: avoid the balance and timer intruding on the central hand. */
+@media(min-width:901px) and (max-width:1120px){
+ body.in-game #table .rivl-player-hud{width:calc(100% - 28px);grid-template-columns:1fr 1.5fr 1fr;gap:6px}
+ body.in-game #table .rivl-player-balance{padding:8px 12px}
+ body.in-game #table .rivl-hud-value{font-size:19px;gap:7px}
+ body.in-game #table .rivl-player-hand .card{width:64px!important;height:92px!important;font-size:24px!important}
+ body.in-game #table .rivl-hud-clock{width:72px;height:72px;font-size:29px}
+}
