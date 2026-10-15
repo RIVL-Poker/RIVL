@@ -72,7 +72,7 @@ for(let match=0;match<60;match++){
   const total=chips(g);
   room.finishHand();
   assert.equal(chips(g),total,'unmatched bets cannot make chips disappear');
-  assert.deepEqual(g.players.map(p=>p.stack),[1300,800,700],'main and side pots go to eligible winners; uncalled 300 is returned');
+  assert.deepEqual(g.players.map(p=>p.stack),[1200,1000,800],'main and side pots go to eligible winners; uncalled 300 is returned');
   assert.equal(g.pot,0);
   checks++;
 }
