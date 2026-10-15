@@ -1560,3 +1560,41 @@ body.in-game #table .actions .rivl-pov-balance-stat .rivl-pov-chip-icon,
   #roomGame .rivl-pvp-table[data-player-count="9"] .s1,
   #roomGame .rivl-pvp-table[data-player-count="9"] .s2{top:-31%!important}
 }
+
+/* Full-width game-panel toggle: the entire footer strip is the real button.
+   Applies to bot tables and online/private rooms at all viewport sizes. */
+body.in-game .bottom-toggle,
+body.in-game #roomGame .rivl-room-panel-toggle{
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  padding:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+body.in-game .bottom-toggle > button,
+body.in-game #roomGame .rivl-room-panel-toggle > button{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  height:100%!important;
+  min-height:34px!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  cursor:pointer!important;
+  border-radius:7px!important;
+  background:#16120e!important;
+  border:1px solid #725331!important;
+  color:#e3bb7b!important;
+}
+body.in-game .bottom-toggle > button:hover,
+body.in-game #roomGame .rivl-room-panel-toggle > button:hover{
+  background:#261b10!important;
+  border-color:#c49a5a!important;
+}
