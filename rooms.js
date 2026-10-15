@@ -250,8 +250,10 @@
         winnerOverlay.replaceChildren();
         const heading=document.createElement('strong');heading.textContent=winner?winner.name+' WINS':g.winners?.length>1?'SPLIT POT':'HAND COMPLETE';
         const hand=document.createElement('div');hand.className='rivl-win-hand';hand.textContent=winner?.hand||'UNCONTESTED';
-        winnerOverlay.append(heading,hand);
+        winnerOverlay.append(heading);
         if(Array.isArray(winnerCards)&&winnerCards.length===2){const cards=document.createElement('div');cards.className='rivl-winner-cards';winnerCards.forEach(code=>cards.append(cardNode(code)));winnerOverlay.append(cards)}
+        winnerOverlay.append(hand);
+        if(winner&&Number.isFinite(Number(winner.amount))){const gain=document.createElement('small');gain.className='rivl-victory-gain';gain.textContent=winner.name+' +'+Number(winner.amount).toLocaleString();winnerOverlay.append(gain)}
         winnerOverlay.classList.add('visible');
       }else winnerOverlay.classList.remove('visible');
       $('roomWinner').textContent=g.result||'';
