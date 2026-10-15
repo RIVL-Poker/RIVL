@@ -277,7 +277,8 @@
                 <article class="panel account-panel" id="accountPanel">
                     <h3>ONLINE ACCOUNT</h3>
                     <div id="accountSignedOut">
-                        <p class="muted">Free. No email or password: you get a private sign-in code.</p>
+                        <div class="account-google" data-google-slot hidden><p class="muted">Sign in with Google to stay signed in here and on any device.</p><div class="google-button"></div><p class="muted account-or">Or play without Google: you get a private sign-in code.</p></div>
+                        <p class="muted" data-google-fallback>Free. No email or password: you get a private sign-in code.</p>
                         <div class="account-forms">
                             <label>Choose a name <input id="accountName" maxlength="20" autocomplete="nickname" placeholder="3 to 20 characters"></label>
                             <button class="gold" id="accountCreate" type="button">CREATE ACCOUNT</button>
@@ -287,8 +288,9 @@
                     </div>
                     <div id="accountSignedIn" hidden>
                         <p><strong id="accountTitle"></strong> · <span id="accountRating"></span></p>
-                        <p class="muted">Save your sign-in code. It is the only way into this account on another device.</p>
+                        <p class="muted" id="accountKeyNote">Save your sign-in code. It is the only way into this account on another device.</p>
                         <div class="account-key"><code id="accountKey" hidden></code><button class="outline" id="accountShowKey" type="button">SHOW CODE</button><button class="outline" id="accountCopyKey" type="button">COPY CODE</button><button class="outline" id="accountSignOut" type="button">SIGN OUT</button></div>
+                        <div id="accountGoogleLink" class="account-google" hidden><div data-google-slot hidden><p class="muted">Connect Google to sign in to this account on any device without the code.</p><div class="google-button"></div></div></div>
                     </div>
                     <p id="accountStatus" class="muted" role="status"></p>
                 </article>
@@ -348,7 +350,7 @@
                 <p class="muted">Draft for review before public launch · Updated October 14, 2026</p>
                 <div class="panel rivl-privacy-panel">
                     <h3>What RIVL collects</h3>
-                    <p>When you create an account, RIVL stores your chosen display name and a securely hashed version of your private sign-in code to recognize your account. We also store ranked match results, ratings, and information needed to run multiplayer rooms. Your browser may store your sign-in code, game preferences, and bot-practice statistics locally on your device.</p>
+                    <p>When you create an account, RIVL stores your chosen display name and a securely hashed version of your private sign-in code to recognize your account. If you sign in with Google, Google tells RIVL a stable account ID that RIVL keeps to recognize you next time; RIVL does not store your email address, and Google may show your name and email to you during sign-in. We also store ranked match results, ratings, and information needed to run multiplayer rooms. Your browser may store your sign-in code, game preferences, and bot-practice statistics locally on your device.</p>
                     <h3>How we use information</h3>
                     <p>We use this information to provide accounts, multiplayer games, rankings, and the leaderboard, prevent abuse, troubleshoot problems, and maintain the service. Your display name, Elo rating, and certain match statistics may be visible to other players.</p>
                     <h3>Hosting and technical information</h3>
@@ -369,14 +371,31 @@
         <div class="rivl-welcome-dialog" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" aria-describedby="welcomeDescription" tabindex="-1">
             <div class="rivl-welcome-mark">♠</div>
             <h2 id="welcomeTitle">WELCOME TO RIVL</h2>
-            <p id="welcomeDescription">Play free Texas Hold'em, challenge real players, and climb the Elo rankings. Every ranked match is another step toward the top. <strong>Compete. Improve. Become RIVL Champion.</strong></p>
-            <button type="button" class="gold" id="welcomeOk">GET STARTED</button>
+            <p id="welcomeDescription">Play free Texas Hold'em, challenge real players, and climb the Elo rankings. Sign in once and RIVL remembers you on this device. <strong>Compete. Improve. Become RIVL Champion.</strong></p>
+            <div id="loginStart" class="login-step">
+                <div data-google-slot hidden><div class="google-button login-google"></div></div>
+                <button type="button" class="outline login-alt" id="loginUseCode">USE A SIGN-IN CODE</button>
+                <button type="button" class="rivl-welcome-skip" id="welcomeOk">Play bots without signing in</button>
+            </div>
+            <form id="loginName" class="login-step" hidden>
+                <label>Pick your table name <input id="loginNameInput" maxlength="20" autocomplete="nickname" placeholder="3 to 20 characters" required></label>
+                <button type="submit" class="gold">CREATE ACCOUNT</button>
+                <button type="button" class="rivl-welcome-skip" data-login-back>Back</button>
+            </form>
+            <form id="loginCode" class="login-step" hidden>
+                <label>Sign-in code <input id="loginCodeInput" autocomplete="off" spellcheck="false" placeholder="Paste your code" required></label>
+                <button type="submit" class="gold">SIGN IN</button>
+                <button type="button" class="outline login-alt" id="loginCreate">NEW HERE? CREATE AN ACCOUNT</button>
+                <button type="button" class="rivl-welcome-skip" data-login-back>Back</button>
+            </form>
+            <p id="loginStatus" class="login-status" role="status"></p>
         </div>
     </div>
     <script src="welcome-support.js"></script>
     <script src="league-icons.js"></script>
     <script src="profile.js"></script>
     <script src="account.js"></script>
+    <script src="login.js"></script>
     <script src="engine.js"></script>
     <script src="rating.js"></script>
     <script src="script.js"></script>

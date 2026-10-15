@@ -2,6 +2,7 @@
    and talks to the Directory (accounts, online ratings, lobby, free-plan budget). */
 export {Directory} from './directory.js';
 import {gradeDecision} from './grading.js';
+import {verifyGoogleToken} from './google.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=5000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
@@ -80,6 +81,8 @@ export default {
       }
       if(request.method==='GET'){
         if(url.pathname==='/api/status')return send(await cached(env,'/status',10000));
+        // The Google OAuth client ID is public; the page reads it here so it lives in one place (wrangler.toml).
+        if(url.pathname==='/api/config')return json({googleClientId:env.GOOGLE_CLIENT_ID||''});
         if(url.pathname==='/api/lobby')return send(await cached(env,'/lobby',5000));
         if(url.pathname==='/api/leaderboard')return send(await cached(env,'/leaderboard',10000));
         if(url.pathname==='/api/leaderboard/league'){
@@ -108,6 +111,14 @@ export default {
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/me',await readBody(request)));
       }
+      if(url.pathname==='/api/google'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        const body=await readBody(request,6000);
+        const claims=await verifyGoogleToken(body.credential,env.GOOGLE_CLIENT_ID);
+        if(body.name!=null&&!body.key&&await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
+        return send(await dir(env,'/accounts/google',{sub:claims.sub,name:body.name,key:body.key}));
+      }
+      if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
       if(url.pathname==='/api/rooms'){
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
         const body=await readBody(request);

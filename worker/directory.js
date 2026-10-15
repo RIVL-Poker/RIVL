@@ -33,6 +33,11 @@ export class Directory {
     // Ranked tables waiting for players sit in the same lobby table, flagged so Open Tables and Quick Play never show them.
     if(!this.rows('PRAGMA table_info(lobby)').some(c=>c.name==='ranked'))this.sql.exec('ALTER TABLE lobby ADD COLUMN ranked INTEGER NOT NULL DEFAULT 0');
     if(!this.rows('PRAGMA table_info(lobby)').some(c=>c.name==='size'))this.sql.exec('ALTER TABLE lobby ADD COLUMN size INTEGER NOT NULL DEFAULT 6');
+    // Google sign-in: an account can be tied to one Google account (its stable "sub" id, no email is kept).
+    // Each Google sign-in gets its own device key in sessions, so signing in on a phone never signs out the laptop.
+    if(!cols.has('google_sub'))this.sql.exec('ALTER TABLE accounts ADD COLUMN google_sub TEXT');
+    this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_google ON accounts(google_sub)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS sessions(key_hash TEXT PRIMARY KEY,account TEXT NOT NULL,created INTEGER NOT NULL)');
   }
   rows(q,...b){return this.sql.exec(q,...b).toArray()}
   one(q,...b){return this.rows(q,...b)[0]||null}
@@ -57,9 +62,41 @@ export class Directory {
     const t=R.tier(displayed);
     return {id:a.id,name:a.name,avatar:a.avatar_blocked?'':(a.avatar||''),rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
   }
+  // What the signed-in player sees about their own account (others only ever get publicAccount).
+  selfAccount(a){return {...this.publicAccount(a),google:!!a.google_sub}}
   async byKey(key){
     if(typeof key!=='string'||key.length<20||key.length>64)return null;
-    return this.one('SELECT * FROM accounts WHERE key_hash=?',await sha256(key));
+    const h=await sha256(key);
+    return this.one('SELECT * FROM accounts WHERE key_hash=?',h)||this.one('SELECT a.* FROM sessions s JOIN accounts a ON a.id=s.account WHERE s.key_hash=?',h);
+  }
+  async newSession(id){
+    const key=randomKey();
+    this.sql.exec('INSERT INTO sessions(key_hash,account,created) VALUES (?,?,?)',await sha256(key),id,Date.now());
+    return key;
+  }
+  // Google sign-in, called by the Worker only after it has verified the ID token. Signs in the account tied to
+  // that Google id, ties it to the account the browser is already signed in to, or creates a new account.
+  async google({sub,name,key}){
+    if(typeof sub!=='string'||!sub)return this.reply({error:'Google sign-in failed.'},400);
+    const linked=this.one('SELECT * FROM accounts WHERE google_sub=?',sub);
+    if(key){
+      const a=await this.byKey(key);
+      if(!a)return this.reply({error:'Sign in again, then connect Google.'},401);
+      if(linked&&linked.id!==a.id)return this.reply({error:'That Google account is already used by another RIVL account ('+linked.name+').'},409);
+      this.sql.exec('UPDATE accounts SET google_sub=? WHERE id=?',sub,a.id);
+      return this.reply({account:this.selfAccount(this.one('SELECT * FROM accounts WHERE id=?',a.id)),key});
+    }
+    if(linked)return this.reply({account:this.selfAccount(linked),key:await this.newSession(linked.id)});
+    // First Google sign-in: the browser asks for a table name, then sends the same token back with it.
+    if(name==null)return this.reply({needsName:true});
+    const clean=String(name).trim().replace(/\s+/g,' ');
+    if(!NAME_RE.test(clean))return this.reply({error:'Names are 3 to 20 letters, numbers, spaces, - or _.'},400);
+    const s=this.status();if(s.usage.accounts>=s.limits.accounts)return this.reply({error:'New accounts are paused for today. Try again tomorrow.'},503);
+    if(this.one('SELECT id FROM accounts WHERE name=?',clean))return this.reply({error:'That name is taken.'},409);
+    const id=crypto.randomUUID();
+    this.sql.exec('INSERT INTO accounts(id,name,key_hash,created,elo_offset,google_sub) VALUES (?,?,?,?,1500,?)',id,clean,await sha256(randomKey()),Date.now(),sub);
+    this.sql.exec('UPDATE usage SET accounts=accounts+1 WHERE day=?',day());
+    return this.reply({account:this.selfAccount(this.one('SELECT * FROM accounts WHERE id=?',id)),key:await this.newSession(id),created:true});
   }
   reply(body,status=200){return Response.json(body,{status})}
   async fetch(request){
@@ -75,7 +112,7 @@ export class Directory {
         const id=crypto.randomUUID(),key=randomKey();
         this.sql.exec('INSERT INTO accounts(id,name,key_hash,created,elo_offset) VALUES (?,?,?,?,1500)',id,name,await sha256(key),Date.now());
         this.sql.exec('UPDATE usage SET accounts=accounts+1 WHERE day=?',day());
-        return this.reply({account:this.publicAccount(this.one('SELECT * FROM accounts WHERE id=?',id)),key});
+        return this.reply({account:this.selfAccount(this.one('SELECT * FROM accounts WHERE id=?',id)),key});
       }
       if(path==='/accounts/avatar'){
         const a=await this.byKey(body.key);
@@ -84,7 +121,7 @@ export class Directory {
         if(typeof avatar!=='string'||(avatar!==''&&(!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar)||avatar.length>45000)))return this.reply({error:'Invalid photo. Use a small JPEG, PNG or WebP image.'},400);
         if(avatar&&this.one("SELECT id FROM avatar_reports WHERE target=? AND status='pending'",a.id))return this.reply({error:'Your previous photo is awaiting review. Contact support@rivlpoker.com.'},403);
         this.sql.exec('UPDATE accounts SET avatar=?,avatar_blocked=0 WHERE id=?',avatar,a.id);
-        return this.reply({account:this.publicAccount(this.one('SELECT * FROM accounts WHERE id=?',a.id))});
+        return this.reply({account:this.selfAccount(this.one('SELECT * FROM accounts WHERE id=?',a.id))});
       }
       if(path==='/accounts/report-avatar'){
         const reporter=await this.byKey(body.key),target=this.one('SELECT id,avatar,avatar_blocked FROM accounts WHERE id=?',String(body.targetId||''));
@@ -116,7 +153,13 @@ export class Directory {
       if(path==='/accounts/me'||path==='/verify'){
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign-in code not recognised.'},401);
-        return this.reply({account:this.publicAccount(a)});
+        return this.reply({account:path==='/verify'?this.publicAccount(a):this.selfAccount(a)});
+      }
+      if(path==='/accounts/google')return await this.google(body);
+      if(path==='/accounts/signout'){
+        // Ends one Google device session. Sign-in codes are the account's backup key and keep working.
+        if(typeof body.key==='string')this.sql.exec('DELETE FROM sessions WHERE key_hash=?',await sha256(body.key));
+        return this.reply({ok:true});
       }
       if(path==='/leaderboard'){
         const top=this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY rr DESC LIMIT 50').map(a=>this.publicAccount(a));

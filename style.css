@@ -777,3 +777,15 @@ body.in-game .poker-table .community,
 @keyframes think-ring{0%,100%{box-shadow:0 0 0 2px #d4a34c,0 0 6px #d4a34c55}50%{box-shadow:0 0 0 2px #ffdc7d,0 0 18px #e5ad58bb}}
 @keyframes think-avatar{0%,100%{border-color:#d4a34c}50%{border-color:#ffe39a}}
 @media (prefers-reduced-motion:reduce){.seat.is-thinking,.seat.is-thinking .avatar,.think-dots b{animation:none!important}.seat.is-thinking{box-shadow:0 0 0 2px #ffdc7d,0 0 12px #e5ad58}.think-dots b{opacity:1}}
+
+/* Login screen (login.js) and Google sign-in in the account panel. */
+.login-step{display:grid;gap:12px;justify-items:center}
+.login-step[hidden],[data-google-slot][hidden]{display:none}
+.login-step label{display:grid;gap:8px;width:100%;text-align:left;font-weight:600;color:#e9c383}
+.login-step input{width:100%;background:#141414;border:1px solid #816338;border-radius:8px;padding:12px;color:#eee;font:inherit}
+.login-step .gold,.login-step .login-alt{width:100%;min-height:48px}
+.login-step .rivl-welcome-skip{margin-top:0}
+.login-google{min-height:44px;display:flex;justify-content:center;margin-bottom:4px}
+.login-status{min-height:1.4em;margin:14px 0 0!important;font-size:14px!important;color:#e9c383!important}
+.account-google{margin:0 0 14px}.account-google .google-button{margin:8px 0;min-height:44px}
+.account-or{margin-top:6px}
