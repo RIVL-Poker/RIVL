@@ -171,8 +171,13 @@
       $('roomTimer').hidden=g.turn!==me?.seat||g.phase==='showdown';
       const newHand=g.handNumber!==previousHand;
       if(newHand){previousHand=g.handNumber;previousBoard=[];previousTurn=-1;lastTick=-1}
-      const hole=$('roomHoleCards');
-      if(newHand||hole.children.length!==2){
+      const hole=$('roomHoleCards'),table=$('roomPokerTable'),seatOf=new Map([...$('roomGamePlayers').children].map(el=>[+el.dataset.seat,el]));
+      // Folded hands (yours face up, others face down) slide from their seat into the discard pile.
+      window.rivlTable?.muck(table,roomCode+':'+(g.matchId||'')+':'+g.handNumber,g.players.filter(p=>p&&p.folded&&!p.sittingOut).map(p=>me&&p.seat===me.seat?{key:p.seat,from:hole,cards:[...hole.children]}:{key:p.seat,from:seatOf.get(p.seat)}));
+      mySpot.classList.toggle('is-folded',!!me?.folded);
+      window.rivlTable?.bbCount(mySpot,$('roomMyAvatar'),me?.stack??0,me?g.bigBlind:0);
+      if(me?.folded)hole.replaceChildren();
+      else if(newHand||hole.children.length!==2){
         hole.replaceChildren();
         for(let i=0;i<2;i++)hole.append(animatedCard(g.holeCards?.[i],!g.holeCards?.[i],i*170+100));
         if(g.holeCards?.length){setTimeout(()=>pvpSound('card'),100);setTimeout(()=>pvpSound('card'),270)}
@@ -204,7 +209,7 @@
       $('roomPokerTable').dataset.playerCount=String(count);
       opponents.forEach((p,i)=>{
         const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
-        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
+        item.dataset.seat=p.seat;item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
         const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
@@ -229,6 +234,7 @@
           if(Math.abs(cos)>0.45)item.classList.add(cos<0?'shown-right':'shown-left');
         }
         seats.append(item);
+        window.rivlTable?.bbCount(item,avatar,p.stack,g.bigBlind);
       });
       if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
       renderRoomPanel();

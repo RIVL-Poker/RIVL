@@ -849,3 +849,20 @@ body.in-game .poker-table .community,
 .resume-banner strong{color:#f5d28b;letter-spacing:.1em;font-size:14px}
 .resume-banner span{color:#d8cfc2;font-size:13px}
 @media(max-width:600px){.gamebar-actions{gap:4px}#save{padding:8px 7px}}
+/* Folded players turn grey until the next deal. */
+.seat.is-folded,.myseat.is-folded,#roomGame .rivl-pvp-seat.is-folded{filter:grayscale(1) brightness(.75);opacity:.6}
+/* Discard pile: folded hands slide in face down beside the pot. */
+.muck-pile{position:absolute;top:24%;left:calc(50% - 96px);width:30px;height:42px;pointer-events:none;z-index:4}
+.muck-card{position:absolute;left:50%;top:50%;width:24px;height:35px;border-radius:4px;background:repeating-linear-gradient(45deg,#2c2118 0 3px,#17110c 3px 6px);border:1px solid #b88a3e;box-shadow:0 2px 5px #000b;transform:translate(-50%,-50%) translateX(calc(var(--i,0)*2px)) rotate(calc(var(--i,0)*13deg - 16deg))}
+.muck-flyer{position:absolute;left:50%;top:50%;margin:0;z-index:3}
+.muck-flyer.card{width:30px;height:44px;font-size:15px;padding:3px}
+/* Stack in big blinds, centred under each seat's avatar. */
+.bb-count{position:absolute;top:calc(100% + 1px);transform:translateX(-50%);padding:0 5px;height:14px;border-radius:7px;background:#1b140c;color:#f6d48e;border:1px solid #b8862f;font:800 9px/12px Inter,Arial,sans-serif;font-style:normal;letter-spacing:.02em;white-space:nowrap;pointer-events:none;z-index:1;box-shadow:0 1px 3px #000a}
+@media(max-width:600px){
+ body.in-game .seat{overflow:visible}
+ body.in-game .seat>span:not(.rivl-shown){min-width:0;overflow:hidden;text-overflow:ellipsis}
+ body.in-game .muck-pile{top:56%;left:calc(50% - 15px)}
+ body.in-game .poker-table[data-player-count="6"] .muck-pile{top:9%}
+ body.in-game #table .poker-table[data-player-count="9"] :is(.s1,.s8)>.bb-count{top:auto;bottom:calc(100% + 1px)}
+ .bb-count{height:12px;padding:0 4px;font-size:8px;line-height:10px}
+}

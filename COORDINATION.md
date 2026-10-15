@@ -76,3 +76,6 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 
 ### 2026-10-15 04:15 UTC · Claude
 - Bot practice has a SAVE button next to LEAVE TABLE. It pauses everything (match clock, decision timer, bots) and stores the game in this browser (`localStorage` key `rivlBotSave`). The Play screen shows a "Saved bot game" card with Resume and Discard; starting a new bot game asks before discarding a save. Resuming clears the save. Saves are per device, not on the account.
+
+### 2026-10-15 04:55 UTC · Claude
+- Folded hands now slide into a face-down discard pile by the pot and leave the seat; folded players turn grey until the next deal; every seat shows its stack in big blinds under the avatar. Applies to bot practice, rooms and Ranked. New shared file `muck.js` (added to the build list); touched script.js, rooms.js, index.html, style.css.
