@@ -966,6 +966,19 @@ body.in-game .table-scene .poker-table::after,
 body.in-game .table-scene .skyline,
 .rivl-pvp-scene .skyline { visibility:hidden; }
 
+/* Keep the photographed near-side leather rail visible in every Cairo theme.
+   Only adjust artwork framing; gameplay coordinates stay untouched. */
+body.in-game .table-scene,
+.rivl-pvp-scene {
+  background-position:center bottom!important;
+}
+@media (max-width:900px) {
+  body.in-game .table-scene,
+  .rivl-pvp-scene {
+    background-position:center bottom!important;
+  }
+}
+
 /* Table Themes: photo previews for the selectable table backgrounds (table-themes.js). */
 .theme-preview.theme-photo{background-size:cover;background-position:center 20%;border-color:#80572b}
 .table-theme button{width:100%;margin-top:6px;padding:10px}
