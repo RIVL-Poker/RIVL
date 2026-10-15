@@ -269,8 +269,7 @@
                         your opponents likely hold, and labelled like a chess move: Brilliant, Best, Excellent, Good,
                         Inaccuracy, Mistake or Blunder.</p>
                     <p><b>Each match scores you against every bot:</b> 60% finishing place, 40% decision accuracy.</p>
-                    <p><b>Glicko-2 updates the ratings.</b> Beating higher-rated bots is worth more. <b>RD</b> is the
-                        rating uncertainty, calculated behind the scenes.</p>
+                    <p><b>Glicko-2 calculates Skill Rating.</b> Your visible Skill Rating starts at 0. Rating uncertainty is tracked privately and is never shown.</p>
                     <p>Bot games never change Ranked Elo. Leaving a match early leaves it unrated.</p>
                     <div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET
                             BOT LADDER</button><span id="resetConfirm" hidden>Erase all bot practice ratings and match history on this
@@ -303,25 +302,8 @@
                 <div class="league-rank-strip" id="leagueRankStrip" aria-label="Ranked Elo league thresholds"></div>
                 <div class="panel ladder">
                     <div class="ladder-top"><h3>RANKED · ELO</h3><div class="league-tabs" role="group" aria-label="Ranked leaderboard view"><button type="button" class="outline" id="lbMine" aria-pressed="false" hidden>MY LEAGUE</button><button type="button" class="outline" id="lbTop" aria-pressed="true">TOP 50</button></div></div>
-                    <div class="online-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>ELO</span><span class="rating-deviation-cell">RD</span><span>MATCHES</span><span>WINS</span></div>
+                    <div class="online-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>ELO</span><span>MATCHES</span><span>WINS</span></div>
                     <div id="onlineRows"><p class="muted">Loading…</p></div>
-                </div>
-                <div class="panel ladder">
-                    <h3>BOT PRACTICE MODE RATING</h3>
-                    <div id="ladderRows" class="bot-skill-summary" aria-live="polite"></div>
-                </div>
-                <div class="panel how">
-                    <h3>HOW BOT SKILL RATING WORKS</h3>
-                    <p><b>Every decision is graded.</b> Your choice is compared with the best option, given the hands
-                        your opponents likely hold, and labelled like a chess move: Brilliant, Best, Excellent, Good,
-                        Inaccuracy, Mistake or Blunder.</p>
-                    <p><b>Each match scores you against every bot:</b> 60% finishing place, 40% decision accuracy.</p>
-                    <p><b>Glicko-2 calculates Skill Rating.</b> Your visible Skill Rating starts at 0. Rating uncertainty is tracked privately and is never shown.</p>
-                    <p>Bot games never change Ranked Elo. Leaving a match early leaves it unrated.</p>
-                    <div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET
-                            BOT LADDER</button><span id="resetConfirm" hidden>Erase all bot practice ratings and match history on this
-                            device? <button class="outline" id="resetYes" type="button">ERASE</button> <button
-                                class="outline" id="resetNo" type="button">KEEP</button></span></div>
                 </div>
             </section>
             <section id="themes" class="view content-view">

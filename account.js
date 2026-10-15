@@ -69,7 +69,7 @@
       if(!players.length){note('No ranked matches yet.');return}
       players.forEach((p,i)=>{
         const row=document.createElement('div');row.className='online-row'+(state&&p.id===state.id?' me':'');
-        for(const v of [board==='mine'?p.rank:i+1,p.name,p.league,p.rating.toLocaleString(),'',p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
+        for(const v of [board==='mine'?p.rank:i+1,p.name,p.league,p.rating.toLocaleString(),p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
         window.rivlLeagueIcons?.decorate(row.children[1],p.leagueKey||window.RivlRating?.tier(p.rating).key,{prepend:true});
         row.children[2].className='league-'+p.leagueKey;
         rows.append(row);
