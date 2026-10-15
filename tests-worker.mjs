@@ -337,7 +337,9 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
 
 // Ranked result delivery survives a temporary Directory outage and retries on alarm.
 {
-  const {room,state}=await setup(0,2);
+  const {room,state,hostWs}=await setup(0,2);
+  await say(room,hostWs,{type:'startMatch'});
+  room.room.game.phase='showdown';room.room.game.result='Match complete';
   room.room.pendingResults={matchId:'retry-test',players:[{id:'a',place:1},{id:'b',place:2}]};
   const original=room.dir.bind(room);
   let calls=0;
