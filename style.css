@@ -1407,3 +1407,46 @@ body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .mu
  body.in-game #table .rivl-pov-balance-stat{display:none!important}
  body.in-game #table .rivl-pov-pot-balance-row{display:contents}
 }
+
+/* QA refinement: restore the player's live BB badge beside the two POV cards,
+   and keep the balance number inside its shared pot statistics panel. */
+@media(min-width:901px){
+ body.in-game #table .poker-table>.myseat>.bb-count{
+   position:absolute!important;left:calc(50% + 116px)!important;
+   top:calc(50% + 15px)!important;bottom:auto!important;right:auto!important;
+   transform:none!important;display:inline-flex!important;align-items:center!important;
+   justify-content:center!important;width:max-content!important;min-width:42px;
+   height:20px!important;padding:0 7px!important;z-index:22!important;
+   visibility:visible!important;font-size:11px!important;line-height:18px!important;
+   border-radius:10px!important;background:#1b140c!important;
+   border:1px solid #b8862f!important;color:#f6d48e!important;
+ }
+ body.in-game #table .actions .rivl-pot-stats{
+   min-width:0!important;box-sizing:border-box!important;overflow:hidden!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row{
+   grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr)!important;
+   gap:5px!important;width:100%!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-balance-stat{
+   padding-left:7px!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   font-size:clamp(14px,1.22vw,20px)!important;gap:4px!important;
+   white-space:nowrap!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value strong{
+   font-size:inherit!important;min-width:0!important;font-variant-numeric:tabular-nums!important;
+ }
+ body.in-game #table .actions .rivl-pov-chip-icon{
+   width:17px!important;height:17px!important;flex:0 0 17px!important;font-size:10px!important;
+ }
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.bb-count{
+   left:calc(50% + 94px)!important;top:calc(50% + 12px)!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   font-size:14px!important;gap:3px!important;
+ }
+}
