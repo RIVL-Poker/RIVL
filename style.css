@@ -1628,3 +1628,26 @@ body.in-game #roomGame .rivl-room-panel-toggle > button:hover{
     height:calc(var(--board-card)*1.47)!important;
   }
 }
+
+/* Reference refinement: move only table-board group slightly toward far rail.
+   Muck/burn cards match the community cards in size, not just their container. */
+@media (min-width:901px){
+  body.in-game #table .community,
+  body.in-game #table .pot,
+  body.in-game #table .muck-pile,
+  #roomGame .rivl-pvp-board,
+  #roomGame .rivl-pvp-table .pot{top:45.5%!important}
+  body.in-game #table .muck-pile{
+    width:var(--board-card)!important;
+    height:calc(var(--board-card)*1.47)!important;
+  }
+  body.in-game #table .muck-pile .muck-card,
+  body.in-game #table .muck-pile .muck-flyer.card{
+    width:var(--board-card)!important;
+    height:calc(var(--board-card)*1.47)!important;
+    box-sizing:border-box!important;
+  }
+  body.in-game #table .muck-pile .muck-card::after{
+    font-size:clamp(18px,2.8vh,26px)!important;
+  }
+}
