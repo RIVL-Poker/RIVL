@@ -966,23 +966,6 @@ body.in-game .table-scene .poker-table::after,
 body.in-game .table-scene .skyline,
 .rivl-pvp-scene .skyline { visibility:hidden; }
 
-/* Cairo themes: show the skyline AND the near-side leather rail.
-   The scene is about 504px tall at desktop game height; source images are
-   1536x1024. Fit the image to the scene height (not width) so both ends show.
-   Never transform the interactive table, seats, cards or controls. */
-body.in-game .table-scene,
-.rivl-pvp-scene {
-  background-position:center center!important;
-  background-size:auto 100%!important;
-}
-@media (max-width:900px) {
-  body.in-game .table-scene,
-  .rivl-pvp-scene {
-    background-size:contain!important;
-    background-position:center center!important;
-  }
-}
-
 /* Table Themes: photo previews for the selectable table backgrounds (table-themes.js). */
 .theme-preview.theme-photo{background-size:cover;background-position:center 20%;border-color:#80572b}
 .table-theme button{width:100%;margin-top:6px;padding:10px}
