@@ -59,6 +59,24 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// Side pots: unmatched all-in bets must be refunded, never lost or counted as winnings.
+{
+  const {room,hostWs}=await setup(0,3);
+  await say(room,hostWs,{type:'startMatch'});
+  const g=room.room.game;
+  g.board=['2S','3H','4D','8C','9S'];
+  g.hands={0:['AS','AH'],1:['KS','KH'],2:['QS','QH']};
+  const amounts=[100,200,500];
+  for(let i=0;i<3;i++){g.players[i].stack=1000-amounts[i];g.players[i].contribution=amounts[i];g.players[i].bet=amounts[i];g.players[i].allIn=false;g.players[i].folded=false}
+  g.pot=amounts.reduce((a,b)=>a+b,0);
+  const total=chips(g);
+  room.finishHand();
+  assert.equal(chips(g),total,'unmatched bets cannot make chips disappear');
+  assert.deepEqual(g.players.map(p=>p.stack),[1300,800,700],'main and side pots go to eligible winners; uncalled 300 is returned');
+  assert.equal(g.pot,0);
+  checks++;
+}
+
 // 2. Showdown reveals every non-folded hand to everyone.
 {
   const {room,players,hostWs}=await setup(0,2);
