@@ -1657,6 +1657,7 @@ body.in-game #table .poker-table>.myseat>.turn.is-live{
 @media(min-width:601px) and (max-width:900px){
   /* Tablets: drop your cards onto the front rim, below the bottom seats. */
   body.in-game #table .poker-table>.myseat{top:calc(100% + 48px)!important}
+}
 /* Test: lower the shared board group slightly from 46% to 49% of felt height.
    Preserve card sizing, pot/muck spacing, animations, mobile layout and game logic. */
 @media (min-width:901px){
@@ -1862,3 +1863,18 @@ body.in-game #table .win-fx .rivl-winner-cards .card,
   font-family:Georgia,'Times New Roman',serif!important;
   letter-spacing:normal!important;
 }
+
+/* The winner banner's headline styles target its <strong> and <small>, which the revealed cards also use for the
+   rank and corner suit. Put those back to the table's card typography. */
+body.in-game #table .win-fx .rivl-winner-cards .card strong,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card strong{
+  display:flex!important;flex-direction:column!important;align-items:center!important;align-self:flex-start!important;
+  margin:0!important;font-family:Georgia,'Times New Roman',serif!important;font-size:clamp(15px,1.5vw,21px)!important;
+  font-weight:700!important;letter-spacing:-.04em!important;line-height:.95!important;text-transform:none!important;
+  text-shadow:none!important;color:inherit!important;white-space:nowrap!important}
+body.in-game #table .win-fx .rivl-winner-cards .card strong small,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card strong small{
+  display:block!important;margin:.05em 0 0!important;font-family:inherit!important;font-size:.72em!important;
+  font-weight:400!important;letter-spacing:0!important;color:inherit!important}
+body.in-game #table .win-fx .rivl-winner-cards .card>span,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card>.rivl-card-center{font-size:clamp(28px,2.8vw,40px)!important}
