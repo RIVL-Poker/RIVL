@@ -542,4 +542,33 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+// Anonymous bug reports: sent from support to support, nothing about the player in the email, input checked.
+{
+  const {buildEmail}=await import('./worker/bug-report.js');
+  const sent=[];
+  class EmailMessage{constructor(from,to,raw){Object.assign(this,{from,to,raw})}}
+  const env=makeEnv({BUG_REPORT_FROM:'support@rivlpoker.com',BUG_REPORT_TO:'support@rivlpoker.com',EmailMessage,BUG_REPORT_EMAIL:{send:async m=>{sent.push(m)}}});
+  assert.equal((await api(env,'/api/bug-report',{category:'Gameplay',details:'short'})).status,400,'too short');
+  assert.equal((await api(env,'/api/bug-report',{category:'Gameplay',details:'x'.repeat(3001)})).status,400,'too long');
+  const ok=await api(env,'/api/bug-report',{category:'Ranked / Elo',details:'Pot went to the wrong player ♠ after a split',browser:'TestBrowser\r\nBcc: x@evil.test',key:'secret-key'});
+  assert.equal(ok.status,200);assert.equal(sent.length,1);
+  const m=sent[0];
+  assert.equal(m.from,'support@rivlpoker.com');assert.equal(m.to,'support@rivlpoker.com');
+  const [head,body]=m.raw.split('\r\n\r\n');
+  assert.match(head,/^From: "RIVL Bug Reports" <support@rivlpoker\.com>\r\nTo: <support@rivlpoker\.com>\r\nSubject: RIVL bug: Ranked \/ Elo\r\n/);
+  assert.match(head,/Message-ID: <[0-9a-f-]+@rivlpoker\.com>/);
+  assert.ok(!/Bcc|evil/i.test(head),'typed text cannot add headers');
+  const text=new TextDecoder().decode(Uint8Array.from(atob(body.replace(/\r\n/g,'')),c=>c.charCodeAt(0)));
+  assert.ok(text.includes('Pot went to the wrong player ♠ after a split'),'unicode survives');
+  assert.ok(!text.includes('secret-key'),'nothing but the report is sent');
+  assert.equal((await api(env,'/api/bug-report',{category:'Bcc: x',details:'something broke here'})).status,200);
+  assert.match(sent[1].raw,/Subject: RIVL bug: Other\r\n/,'unknown categories become Other');
+  assert.ok(!buildEmail({from:'a@b.c',to:'a@b.c',category:'Other',details:'x'.repeat(200),browser:''}).split('\r\n').some(l=>l.length>998),'lines stay within mail limits');
+  const off=makeEnv();
+  assert.equal((await api(off,'/api/bug-report',{category:'Other',details:'something broke here'})).status,503,'no email binding');
+  const failing=makeEnv({EmailMessage,BUG_REPORT_EMAIL:{send:async()=>{throw Error('not verified')}}});
+  assert.equal((await api(failing,'/api/bug-report',{category:'Other',details:'something broke here'})).status,502);
+  checks++;
+}
+
 console.log('PASS: '+checks+' room server checks');

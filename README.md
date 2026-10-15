@@ -40,6 +40,7 @@ Then run the workflow from the Actions tab (or push to `main`). The site appears
 - account.js — sign up / sign in and the online leaderboard
 - login.js — the login screen (Google, sign-in code or guest)
 - worker/google.js — verifies Google ID tokens
+- worker/bug-report.js — emails anonymous bug reports to support (Cloudflare Email Routing)
 
 ## Tests
 `node tests-worker.mjs` plays 60 simulated room matches (chip conservation, no stuck turns, matches end) and checks reveal, reconnect, sit-out, leave/host hand-off, idle cleanup, accounts, rated results, the lobby and the free-plan budget.

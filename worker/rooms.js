@@ -3,6 +3,7 @@
 export {Directory} from './directory.js';
 import {gradeDecision} from './grading.js';
 import {verifyGoogleToken} from './google.js';
+import {cleanReport,sendBugReport,BUG_MAX_CHARS} from './bug-report.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=10000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
@@ -117,6 +118,20 @@ export default {
         const claims=await verifyGoogleToken(body.credential,env.GOOGLE_CLIENT_ID);
         if(body.name!=null&&!body.key&&await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/google',{sub:claims.sub,name:body.name,key:body.key}));
+      }
+      if(url.pathname==='/api/bug-report'){
+        if(await limited(env.BUG_LIMITER,request))return json({error:'Too many reports from your network. Try again in a minute.'},429);
+        const report=cleanReport(await readBody(request,BUG_MAX_CHARS*2+1000));
+        if(report.error)return json({error:report.error},400);
+        if(!env.BUG_REPORT_EMAIL)return json({error:'Bug reports are not set up yet. Please try again later.'},503);
+        try{
+          const {EmailMessage}=env.EmailMessage?{EmailMessage:env.EmailMessage}:await import('cloudflare:email');
+          await sendBugReport(env,report,url.origin,EmailMessage);
+        }catch(err){
+          console.error('bug report send failed',err?.message);
+          return json({error:'Your report could not be sent right now. Please try again later.'},502);
+        }
+        return json({ok:true});
       }
       if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
       if(url.pathname==='/api/rooms'){
