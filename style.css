@@ -52,8 +52,8 @@ body.in-game .s1{top:-28px}body.in-game .s2{top:-28px}
 .poker-table{position:relative;overflow:visible}
 .pot{z-index:3}
 .pot-chips{display:flex;justify-content:center;align-items:end;gap:3px;margin-top:6px;height:24px;pointer-events:none}
-.pot-chip,.flying-chip{display:block;width:22px;height:22px;border-radius:50%;border:3px dashed rgba(255,255,255,.8);box-shadow:inset 0 0 0 3px rgba(0,0,0,.28),0 3px 6px #0008;background:#bd2929}
-.pot-chip:nth-child(2),.flying-chip:nth-child(2){background:#2676c6}.pot-chip:nth-child(3),.flying-chip:nth-child(3){background:#268a60}.pot-chip:nth-child(4),.flying-chip:nth-child(4){background:#242424}.pot-chip:nth-child(5),.flying-chip:nth-child(5){background:#b78a2f}
+.flying-chip{display:block;width:22px;height:22px;border-radius:50%;border:3px dashed var(--chip-stripe);box-shadow:inset 0 0 0 3px #0000004d,0 3px 6px #0008;background:var(--chip-face);--chip-face:#efe9dc;--chip-stripe:#7a1424}
+.flying-chip:nth-child(4n+2){--chip-face:#7a1424;--chip-stripe:#f3ece0}.flying-chip:nth-child(4n+3){--chip-face:#d4a347;--chip-stripe:#1b1714}.flying-chip:nth-child(4n+4){--chip-face:#1c1a1a;--chip-stripe:#d4a347}
 .win-fx{display:none;position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);z-index:30;pointer-events:none;text-align:center;min-width:230px;padding:13px 24px;border:1px solid #dfb55d;border-radius:16px;background:linear-gradient(125deg,#1a130bf5,#090909f5);box-shadow:0 0 34px #e6ae4380,0 0 80px #b78b2438;color:#f5d28b;animation:winnerIn .35s ease-out}
 .win-fx.visible{display:block}.win-fx strong{display:block;font-size:23px;letter-spacing:.09em}.win-fx small{display:block;color:#fff4d6;margin-top:5px;font-size:13px}.win-fx .win-hand{font-size:14px;color:#fff;margin-top:3px}
 @keyframes winnerIn{from{opacity:0;transform:translate(-50%,-45%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
@@ -67,8 +67,6 @@ body.in-game .s1{top:-28px}body.in-game .s2{top:-28px}
 
 /* v0.8: chips stay clear of the community cards */
 body.in-game .pot{top:14%;z-index:3;min-width:110px}
-body.in-game .pot-chips{margin-top:2px;height:19px;align-items:center}
-body.in-game .pot-chip{width:18px;height:18px;flex:0 0 18px}
 body.in-game .community{top:45%;z-index:4}
 body.in-game .sound-setting{display:flex;align-items:center;gap:15px;margin-top:12px;color:#f0c783}
 body.in-game .sound-setting input{width:180px;accent-color:#e4b66e}
@@ -1091,16 +1089,12 @@ body.in-game #table .pot,
 #roomGame .rivl-pvp-table .pot{top:28%!important;left:50%!important;min-width:0!important;transform:translateX(-50%)!important;z-index:5;pointer-events:none}
 body.in-game #table .community,
 #roomGame .rivl-pvp-board{top:47%!important;left:50%!important;transform:translateX(-50%)!important;z-index:5}
-body.in-game #table .pot-chips,
-#roomGame .pot-chips{height:32px;max-width:190px;display:flex;flex-wrap:wrap;align-content:center;align-items:center;justify-content:center;gap:1px;margin:0}
-body.in-game #table .pot-chip,
-#roomGame .pot-chip{width:17px;height:13px;flex:0 0 17px;border-width:2px;transform:perspective(50px) rotateX(48deg);box-shadow:0 2px 2px #0009}
 body.in-game #table .community .card.back,
 #roomGame .rivl-pvp-board .card.back{background:linear-gradient(145deg,#111216,#20170f)!important;border:1px solid #c18b3c!important;box-shadow:inset 0 0 0 2px #1c1510,inset 0 0 0 3px #72532a,0 3px 8px #0009;color:#e2ae55!important;border-radius:5px}
 .rivl-pot-stats{min-width:0;background:linear-gradient(135deg,#21170e,#100f0e);border:1px solid #a77a3d;border-radius:10px;color:#f3d39d;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px;box-sizing:border-box;text-align:left}
 .rivl-pot-stats-label{font-size:10px;font-weight:800;letter-spacing:.07em;color:#e8b96b;white-space:nowrap}
 .rivl-pot-stats-value{display:flex;align-items:center;gap:8px;font-size:23px;color:#fff}
-.rivl-pot-stats-chip{width:20px;height:20px;border-radius:50%;border:3px dashed #fff;background:#c12730;box-shadow:inset 0 0 0 3px #a11c23;flex:0 0 auto}
+.rivl-pot-stats-chip{width:20px;height:20px;border-radius:50%;border:3px dashed #f3ece0;background:#7a1424;box-shadow:inset 0 0 0 3px #5a0e1a;flex:0 0 auto}
 .rivl-pot-stats-divider{height:1px;background:#6c4c27;margin:2px 0}
 .rivl-pot-stats-percent{font-size:21px;color:#fff}
 @media (min-width:1101px){
@@ -1187,14 +1181,12 @@ body.in-game #table .poker-table,#roomGame .rivl-pvp-table{--board-card:clamp(24
 body.in-game #table .community,#roomGame .rivl-pvp-board{top:46%!important;left:50%!important;transform:translate(-50%,-50%)!important;width:auto!important;right:auto!important;gap:var(--board-gap)!important}
 body.in-game #table .community .card,#roomGame .rivl-pvp-board .card{width:var(--board-card)!important;height:calc(var(--board-card)*1.47)!important}
 body.in-game #table .pot,#roomGame .rivl-pvp-table .pot{top:46%!important;left:auto!important;right:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 12px)!important;transform:translateY(-50%)!important}
-body.in-game #table .pot-chips,#roomGame .pot-chips{height:auto;max-width:92px;justify-content:flex-end}
 body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 12px)!important;transform:translateY(-50%)}
 @media(max-width:900px){
   body.in-game #table .poker-table,#roomGame .rivl-pvp-table{--board-card:28px;--board-gap:3px}
   body.in-game #table .community,#roomGame .rivl-pvp-board,
   body.in-game #table .pot,#roomGame .rivl-pvp-table .pot,body.in-game #table .muck-pile{top:calc(46% + var(--board-card)*.735)!important}
-  body.in-game #table .pot-chips,#roomGame .pot-chips{width:66px;max-width:none}
-  body.in-game #table .pot-chip,#roomGame .pot-chip{width:12px;height:9px;flex-basis:12px;border-width:1.5px}
+  body.in-game #table .pot-chips,#roomGame .pot-chips{font-size:12px}
   body.in-game #table .pot,#roomGame .rivl-pvp-table .pot{right:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
   body.in-game #table .muck-pile{left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
 }
@@ -1206,7 +1198,7 @@ body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-car
   body.in-game #table .actions .rivl-pot-stats,#roomGame .rivl-bet-actions .rivl-pot-stats{min-height:0!important;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-radius:7px}
   .rivl-pot-stats .rivl-pot-stats-label{font-size:9px}
   .rivl-pot-stats .rivl-pot-stats-value{font-size:14px;gap:5px}
-  .rivl-pot-stats .rivl-pot-stats-chip{width:13px;height:13px;border-width:2px;box-shadow:inset 0 0 0 2px #a11c23}
+  .rivl-pot-stats .rivl-pot-stats-chip{width:13px;height:13px;border-width:2px;box-shadow:inset 0 0 0 2px #5a0e1a}
   .rivl-pot-stats .rivl-pot-stats-percent{font-size:14px}
   .rivl-pot-stats .rivl-pot-stats-divider{height:14px;width:1px;margin:0 4px}
 }
@@ -1258,7 +1250,7 @@ body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-car
   body.in-game #table .poker-table{--board-card:24px;--board-gap:2px}
   body.in-game #table .community{top:50%!important}
   body.in-game #table .pot{top:calc(50% - var(--board-card)*.735 - 14px)!important;left:50%!important;right:auto!important;transform:translate(-50%,-50%)!important}
-  body.in-game #table .pot-chips{width:auto;max-width:90px;justify-content:center}
+  body.in-game #table .pot-chips{font-size:11px}
   /* The hand result and decision grade float in the sky above the top seats, clear of the ring. */
   body.in-game #table .win-fx{top:calc(-14% - 46px)!important}
   body.in-game #table .grade-fx{bottom:auto!important;top:calc(-14% - 136px)}
@@ -1279,3 +1271,15 @@ body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-car
   body.in-game #table .poker-table[data-player-count="9"] .s7{left:89%!important;top:56%!important}
   body.in-game #table .poker-table[data-player-count="9"] .s8{left:86%!important;top:86%!important}
 }
+
+/* Casino chips in the pot: white, maroon, gold and black, drawn as a loose pile of overlapping chips seen from
+   a low angle (chips.js places them). Everything is in em, so the pile scales with the pot's font-size. */
+.pot-chips{position:relative;display:block!important;width:5.4em;height:2.9em;margin:0!important;font-size:21px;pointer-events:none}
+.pile-chip{position:absolute;width:1.3em;height:.66em;margin:-.33em 0 0 -.65em;border-radius:50%;transform:rotate(var(--r,0deg));
+  --face:#efe9dc;--edge:#b5ac9b;--stripe:#7a1424;--inlay:#f8f4ec;
+  background:radial-gradient(ellipse at 50% 50%,var(--inlay) 0 30%,var(--stripe) 31% 35%,var(--face) 36% 100%);
+  border:.1em dashed var(--stripe);
+  box-shadow:0 .08em 0 var(--edge),0 .15em 0 var(--edge),0 .17em 0 #0006,0 .25em .3em #000a,inset 0 -.05em .06em #0004,inset 0 .05em .05em #fff5}
+.pile-chip.chip-maroon{--face:#7a1424;--edge:#4c0a15;--stripe:#f3ece0;--inlay:#8e1c2e}
+.pile-chip.chip-gold{--face:#d4a347;--edge:#8e6624;--stripe:#1b1714;--inlay:#e7c06b}
+.pile-chip.chip-black{--face:#1c1a1a;--edge:#050505;--stripe:#d4a347;--inlay:#2b2827}
