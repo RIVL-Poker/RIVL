@@ -1023,3 +1023,74 @@ body.table-focus #rooms.rivl-match-mode{height:100dvh}
     position:absolute;left:18.8%;top:23.6%;width:62.4%;height:54.4%;aspect-ratio:auto;margin:0;
   }
 }
+
+
+/* Desktop seat badges: symmetric exterior positions for bot and multiplayer.
+   The photo, table hit targets, community cards and action controls do not move.
+   Keep the original compact phone/tablet arrangements unchanged. */
+@media (min-width:901px) {
+  body.in-game #table .poker-table[data-player-count] .seat,
+  #roomGame .rivl-pvp-table[data-player-count] .rivl-pvp-seat {
+    right:auto!important;bottom:auto!important;
+    transform:translate(-50%,-50%)!important;
+    z-index:7;
+  }
+  /* Bot: 3 seats, paired across the far edge. */
+  body.in-game #table .poker-table[data-player-count="3"] .s1{top:-23%!important;left:28%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s2{top:-23%!important;left:72%!important}
+  /* Bot: 6 seats, one at the head and two mirrored pairs beyond the rim. */
+  body.in-game #table .poker-table[data-player-count="6"] .s1{top:77%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s2{top:25%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3{top:-23%!important;left:50%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s4{top:25%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s5{top:77%!important;left:123%!important}
+  /* Bot: 9 seats, four mirrored pairs. */
+  body.in-game #table .poker-table[data-player-count="9"] .s1{top:112%!important;left:27%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s2{top:73%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s3{top:25%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s4{top:-23%!important;left:27%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s5{top:-23%!important;left:73%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s6{top:25%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s7{top:73%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s8{top:112%!important;left:73%!important}
+  /* Online room: symmetric head, side pairs and foot positions by seat count. */
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s1{top:-23%!important;left:28%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s2{top:-23%!important;left:72%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s3{top:25%!important;left:-23%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s4{top:25%!important;left:123%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1{top:-23%!important;left:50%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s5,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s5{top:73%!important;left:123%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s5,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s5,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s6,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s6{top:73%!important;left:-23%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s6,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s7,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s7{top:111%!important;left:50%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s8{top:111%!important;left:73%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s7{left:27%!important}
+  /* Keep the local player's own tag near the front rail and above controls. */
+  body.in-game #table .myseat,
+  #roomGame .rivl-pvp-myseat{z-index:8}
+}
