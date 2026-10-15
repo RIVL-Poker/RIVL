@@ -508,4 +508,38 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+// Dealer, small blind and big blind move one live seat clockwise each hand, skip busted seats, follow the
+// heads-up rule, and reach the browser in every snapshot.
+{
+  const {room,hostWs}=await setup(8,1);
+  await say(room,hostWs,{type:'startMatch'});
+  const seen=[];
+  for(let h=0;h<9;h++){
+    const g=room.room.game,live=g.players.map(p=>p.seat);
+    const nextLive=s=>live[(live.indexOf(s)+1)%live.length];
+    assert.equal(g.sbSeat,nextLive(g.dealer),'small blind sits left of the dealer');
+    assert.equal(g.bbSeat,nextLive(g.sbSeat),'big blind sits left of the small blind');
+    assert.equal(g.turn,nextLive(g.bbSeat),'preflop action starts left of the big blind');
+    const snap=room.publicState(room.room.hostToken).game;
+    assert.deepEqual([snap.dealer,snap.sbSeat,snap.bbSeat],[g.dealer,g.sbSeat,g.bbSeat],'buttons are sent to players');
+    seen.push(g.dealer);
+    if(h===3)g.players.find(p=>p.seat===nextLive(g.dealer)).stack=0; // the next dealer busts this hand
+    room.startHand();
+  }
+  assert.deepEqual(seen.slice(0,4),[0,1,2,3]);
+  assert.equal(seen[4],5,'a busted seat is skipped by the button');
+  // Heads-up: the dealer posts the small blind and acts first preflop.
+  const duel=await setup(1,1);
+  await say(duel.room,duel.hostWs,{type:'startMatch'});
+  for(let h=0;h<3;h++){
+    const g=duel.room.room.game;
+    assert.equal(g.sbSeat,g.dealer,'heads-up dealer is the small blind');
+    assert.notEqual(g.bbSeat,g.dealer);
+    if(g.turn!==g.dealer)assert.ok(g.players.find(p=>p.seat===g.dealer).allIn,'heads-up dealer acts first preflop');
+    const before=g.dealer;duel.room.startHand();
+    assert.notEqual(duel.room.room.game.dealer,before,'heads-up button alternates');
+  }
+  checks++;
+}
+
 console.log('PASS: '+checks+' room server checks');

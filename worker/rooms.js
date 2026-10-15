@@ -191,7 +191,7 @@ export class Room {
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
-        holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,
+        holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,sbSeat:g.sbSeat??-1,bbSeat:g.bbSeat??-1,
         winners:g.winners||[],result:g.result||'',note:g.note||'',ratingChanges:g.ratingChanges||null,matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
   }
   send(ws,message){try{ws.send(JSON.stringify(message))}catch{}}
@@ -296,6 +296,7 @@ export class Room {
     g.dealer=this.next(old?.dealer??8,alive);
     const sb=participants.length===2?g.dealer:this.next(g.dealer,alive);
     const bb=this.next(sb,alive);
+    g.sbSeat=sb;g.bbSeat=bb;
     for(const p of participants)g.hands[p.seat]=[g.deck.pop(),g.deck.pop()];
     const blind=(seat,amount)=>{const p=participants.find(x=>x.seat===seat);const v=Math.min(p.stack,amount);p.stack-=v;p.bet+=v;p.contribution+=v;g.pot+=v;p.allIn=p.stack===0};
     blind(sb,g.smallBlind);blind(bb,g.bigBlind);

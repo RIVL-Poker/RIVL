@@ -789,3 +789,43 @@ body.in-game .poker-table .community,
 .login-status{min-height:1.4em;margin:14px 0 0!important;font-size:14px!important;color:#e9c383!important}
 .account-google{margin:0 0 14px}.account-google .google-button{margin:8px 0;min-height:44px}
 .account-or{margin-top:6px}
+
+/* Bot practice seats go clockwise in turn order: s1 sits to your left (screen left, just above your seat),
+   then up the left rail, across the top and down the right rail, so the action and the dealer and blind
+   buttons travel around the table instead of jumping between sides. */
+@media (min-width:601px){
+ body.in-game #table .poker-table[data-player-count="9"] .s1{top:calc(100% - 12px);left:22%}
+ body.in-game #table .poker-table[data-player-count="9"] .s2{top:68%;left:0%}
+ body.in-game #table .poker-table[data-player-count="9"] .s3{top:29%;left:0%}
+ body.in-game #table .poker-table[data-player-count="9"] .s4{top:-24px;left:22%}
+ body.in-game #table .poker-table[data-player-count="9"] .s5{top:-24px;left:78%}
+ body.in-game #table .poker-table[data-player-count="9"] .s6{top:29%;left:100%}
+ body.in-game #table .poker-table[data-player-count="9"] .s7{top:68%;left:100%}
+ body.in-game #table .poker-table[data-player-count="9"] .s8{top:calc(100% - 12px);left:78%}
+ body.in-game #table .poker-table[data-player-count="6"] .s1{top:75%;left:7%}
+ body.in-game #table .poker-table[data-player-count="6"] .s2{top:23%;left:7%}
+ body.in-game #table .poker-table[data-player-count="6"] .s3{top:-24px;left:50%}
+ body.in-game #table .poker-table[data-player-count="6"] .s4{top:23%;left:93%}
+ body.in-game #table .poker-table[data-player-count="6"] .s5{top:75%;left:93%}
+}
+@media (max-width:600px){
+ body.in-game #table .poker-table:is([data-player-count="9"],[data-player-count="6"]) .seat{top:auto;bottom:auto;left:auto;right:auto;transform:none}
+ body.in-game #table .poker-table[data-player-count="9"] .s1{top:79%;left:-12%}
+ body.in-game #table .poker-table[data-player-count="9"] .s2{top:60%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s3{top:27%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s4{top:8%;left:-14%}
+ body.in-game #table .poker-table[data-player-count="9"] .s5{top:8%;right:-14%}
+ body.in-game #table .poker-table[data-player-count="9"] .s6{top:27%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s7{top:60%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s8{top:79%;right:-12%}
+ body.in-game #table .poker-table[data-player-count="6"] .s1{top:60%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s2{top:27%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s3{top:-16px;left:50%;transform:translateX(-50%)}
+ body.in-game #table .poker-table[data-player-count="6"] .s4{top:27%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s5{top:60%;right:-18%}
+}
+/* Small and big blind chips sit on the opposite side of the avatar from the dealer "D". */
+.is-sb>.avatar,.is-bb>.avatar{position:relative}
+.is-sb>.avatar::before,.is-bb>.avatar::before{position:absolute;left:-6px;bottom:-3px;min-width:17px;height:15px;padding:0 2px;border-radius:8px;font:900 8px/15px Inter,Arial,sans-serif;text-align:center;box-shadow:0 1px 3px #000a}
+.is-sb>.avatar::before{content:'SB';background:#2c5fa8;color:#fff;border:1px solid #9cc1f5}
+.is-bb>.avatar::before{content:'BB';background:#b8862f;color:#160e04;border:1px solid #f6d48e}
