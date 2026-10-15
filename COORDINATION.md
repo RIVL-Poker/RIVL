@@ -32,6 +32,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Who | Task | Branch | Files touched | Status |
 |---|---|---|---|---|
 | Claude | Multiplayer infrastructure test | (none, test only) | none | Done, see log |
+| Claude | Stricter decision grading (preflop charts, tighter thresholds) | `claude/decision-grading-accuracy-cnnv3r` | rating.js, worker/grading.js, tests.js, README.md | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -63,3 +64,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Google sign-in: the Worker verifies the ID token (`worker/google.js`), then the Directory signs in the Google-linked account, links Google to the signed-in code account, or creates one after asking for a name. Each Google sign-in gets its own device key in a new `sessions` table; `/api/signout` ends only that one. Only Google's `sub` id is stored, no email.
 - Needs `GOOGLE_CLIENT_ID` in `wrangler.toml` (public value); without it the Google button stays hidden.
 
+### 2026-10-15 04:10 UTC · Claude
+- Decision grading is stricter (branch `claude/decision-grading-accuracy-cnnv3r`). Preflop is now graded against standard opening/defending charts by seat instead of equity vs random hands; postflop "Best" needs the top EV option within 1% of the pot (was 2%, plus a floor that lifted small losses to Good).
+- Opponent ranges now react to the board and bet size, so overbet shoves with one pair no longer grade as Best. Bots use the same model, so they shove less.
+- `rating.js` analyze() reads `sbSeat`/`bbSeat` (player indexes) when present; `worker/grading.js` now passes them. Server grading samples 600 runouts (was 300).
