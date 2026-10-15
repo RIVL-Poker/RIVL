@@ -77,6 +77,31 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// Deterministic hand-ranking and tied-showdown edge cases.
+{
+  const {room,hostWs}=await setup(0,3);
+  await say(room,hostWs,{type:'startMatch'});
+  const val=cards=>room.handValue(cards);
+  assert.equal(val(['AS','2H','3D','4C','5S'])[0],4,'wheel is a straight');
+  assert.equal(val(['AS','2H','3D','4C','5S'])[1],5,'wheel is five-high');
+  assert.ok(room.compare(val(['TS','JS','QS','KS','AS']),val(['9S','TS','JS','QS','KS']))>0,'higher straight flush wins');
+  assert.ok(room.compare(val(['AS','AH','AD','AC','2S']),val(['KS','KH','KD','KC','AS']))>0,'higher quads win');
+  assert.ok(room.compare(val(['AS','AH','AD','KS','KH']),val(['QS','QH','QD','AS','AH']))>0,'full house compares trips first');
+  assert.ok(room.compare(val(['AS','KS','QS','JS','9S']),val(['AH','KH','QH','JH','8H']))>0,'flush kickers break ties');
+  const g=room.room.game;
+  g.board=['AS','KS','QS','JS','TS'];
+  g.hands={0:['2H','3D'],1:['4H','5D'],2:['6H','7D']};
+  const amounts=[101,101,101];
+  for(let i=0;i<3;i++){g.players[i].stack=1000-amounts[i];g.players[i].contribution=amounts[i];g.players[i].bet=amounts[i];g.players[i].folded=false}
+  g.pot=303;
+  const total=chips(g);
+  room.finishHand();
+  assert.equal(chips(g),total,'tied showdown conserves chips');
+  assert.deepEqual(g.players.map(p=>p.stack),[1000,1000,1000],'three-way board tie splits equally');
+  assert.equal(g.winners.length,3);
+  checks++;
+}
+
 // 2. Showdown reveals every non-folded hand to everyone.
 {
   const {room,players,hostWs}=await setup(0,2);
