@@ -1213,3 +1213,69 @@ body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-car
 /* Phones: during a bot game the page header (title and name button) is hidden, like in full screen, so the
    table keeps enough height for 9 seats, the board and your seat. The sidebar and table bar stay. */
 @media(max-width:600px){body.in-game main>header{display:none}}
+
+/* Phone bot table. The betting controls shrink to two short rows (the raise box drops its label and slider,
+   and the pot total line moves to the top of the table), and the freed height goes to the table. The Cairo
+   artwork is drawn a little larger than the scene's width and taller than its natural shape, so the painted
+   table grows, and the table box is pinned to the painted orange rim (7-93% across, 42-84% down the image).
+   Every seat then sits on an oval just outside that rim, mirrored left to right, with your seat below it. */
+@media(max-width:600px){
+  body.in-game #table{position:relative}
+  body.in-game #table .actions{flex:0 0 auto!important;min-height:0!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-template-rows:34px 30px!important;gap:4px!important;padding:4px 8px!important}
+  body.in-game #table .actions>button{padding:0 4px;font-size:12px;min-height:0}
+  body.in-game #table .raise{grid-column:1/-1;grid-row:2;display:grid!important;grid-template-columns:120px minmax(0,1fr);gap:4px!important;padding:0!important;border:0;height:auto;min-width:0}
+  body.in-game #table .raise>label,body.in-game #table .raise>input[type=range]{display:none}
+  body.in-game #table .raise .amount-row{grid-template-columns:30px minmax(0,1fr) 30px;gap:3px}
+  body.in-game #table .raise .amount-row input,body.in-game #table .raise .amount-row button{height:30px}
+  body.in-game #table .raise .amount-row input{font-size:15px;padding:2px 6px}
+  body.in-game #table .raise .amount-row button{font-size:18px}
+  body.in-game #table .raise .quick-bets{gap:3px}
+  body.in-game #table .raise .quick-bets button{height:30px;padding:0 2px!important;font-size:9px}
+  body.in-game #table .actions .rivl-pot-stats{position:absolute;z-index:6;top:calc(var(--phone-gamebar) + 4px);left:50%;transform:translateX(-50%);width:auto!important;padding:0 9px!important;height:20px;background:#0b0908cc;pointer-events:none}
+  body.in-game #table .gamebar{--phone-gamebar:52px;flex:0 0 52px;height:52px}
+  body.in-game #table{--phone-gamebar:52px}
+  body.in-game #table .bottom-toggle{flex-basis:30px;height:30px}
+  body.in-game #table .bottom-toggle button{height:26px;padding:3px 16px;font-size:11px}
+  body.in-game #table .demo-notice{flex-basis:18px;padding:2px;font-size:10px}
+
+  body.in-game #table .table-scene{--scene-w:calc(100vw - 75px);--bg-w:106%;--bg-h:min(94%,var(--scene-w)*1.4);position:relative;padding:0!important;background-size:var(--bg-w) var(--bg-h)!important;background-position:50% 75%!important}
+  body.table-focus.in-game #table .table-scene{--scene-w:100vw}
+}
+@media(max-width:520px){
+  body:not(.table-focus).in-game #table .table-scene{--scene-w:calc(100vw - 54px)}
+}
+@media(max-width:600px){
+  body.in-game #table .table-scene .poker-table{position:absolute!important;margin:0!important;aspect-ratio:auto!important;
+    left:calc(50% - var(--bg-w)*.43)!important;width:calc(var(--bg-w)*.86)!important;
+    top:calc((100% - var(--bg-h))*.75 + var(--bg-h)*.42)!important;height:calc(var(--bg-h)*.42)!important}
+  body.in-game #table .poker-table[data-player-count] .seat{right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:7;
+    max-width:none;padding:2px 6px 2px 2px;gap:4px;font-size:9px;line-height:1.15;border-radius:16px}
+  body.in-game #table .poker-table[data-player-count] .seat>span{white-space:normal;width:max-content;max-width:54px}
+  body.in-game #table .poker-table[data-player-count] .seat>.bb-count{top:calc(100% + 1px)!important;bottom:auto!important}
+  body.in-game #table .seat .think-dots{position:absolute;top:-7px;right:2px;height:10px;padding:0 3px;gap:2px}
+  body.in-game #table .seat .think-dots b{width:3px;height:3px}
+  body.in-game #table .myseat{left:50%!important;top:calc(100% + 24px)!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:8}
+  body.in-game #table .poker-table{--board-card:24px;--board-gap:2px}
+  body.in-game #table .community{top:50%!important}
+  body.in-game #table .pot{top:calc(50% - var(--board-card)*.735 - 14px)!important;left:50%!important;right:auto!important;transform:translate(-50%,-50%)!important}
+  body.in-game #table .pot-chips{width:auto;max-width:90px;justify-content:center}
+  /* The hand result and decision grade float in the sky above the top seats, clear of the ring. */
+  body.in-game #table .win-fx{top:calc(-14% - 46px)!important}
+  body.in-game #table .grade-fx{bottom:auto!important;top:calc(-14% - 136px)}
+  body.in-game #table .muck-pile{top:calc(50% + var(--board-card)*.735 + 26px)!important;left:50%!important;transform:translate(-50%,-50%)!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s1{left:28%!important;top:-12%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s2{left:72%!important;top:-12%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s1{left:13%!important;top:72%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s2{left:14%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3{left:50%!important;top:-14%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s4{left:86%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s5{left:87%!important;top:72%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s1{left:14%!important;top:86%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s2{left:11%!important;top:56%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s3{left:14%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s4{left:31%!important;top:-14%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s5{left:69%!important;top:-14%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s6{left:86%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s7{left:89%!important;top:56%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s8{left:86%!important;top:86%!important}
+}
