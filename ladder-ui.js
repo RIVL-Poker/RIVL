@@ -63,7 +63,7 @@ function showMatchResult(s){
     <h2 id="mrTitle">${ord(s.place)} <span>of ${s.size}</span></h2>
     <div class="mr-rating"><strong>${Math.round(s.before)} → ${Math.round(s.after)}</strong><em class="${d>=0?'positive':'negative'}">${signed(d)}</em></div>
     <div class="mr-split"><div><small>PLACEMENT · ${Math.round(RivlRating.W_PLACE*100)}%</small><b class="${s.placePart>=0?'positive':'negative'}">≈ ${signed(s.placePart)}</b></div><div><small>DECISIONS · ${Math.round(RivlRating.W_DEC*100)}%</small><b class="${s.accPart>=0?'positive':'negative'}">≈ ${signed(s.accPart)}</b></div><div><small>ACCURACY</small><b>${s.acc==null?'–':s.acc.toFixed(1)+'%'}</b></div></div>
-    <p class="mr-tier">${t.name}${t.next?` · ${Math.round(t.next-s.after)} to ${RivlRating.tier(t.next).name}`:''}${prov?` · Provisional (±${Math.round(s.rdAfter)})`:''}</p>
+    <p class="mr-tier">${t.name}${t.next?` · ${Math.round(t.next-s.after)} to ${RivlRating.tier(t.next).name}`:''}</p>
     <div class="grade-chips">${chips}</div>
     ${moment('BEST MOMENT',s.brilliant)}${moment('BIGGEST LEAK',s.worst)}
     <div class="mr-table"><div class="mr-row head"><span>#</span><span>PLAYER</span><span>ACCURACY</span><span>RATING</span></div>${rows}</div>
@@ -93,8 +93,8 @@ function sparkline(points,w=560,h=120){
 }
 function renderRankedTracker(acct,elo,games,set){
   const rt=RivlRating.tier(elo);
-  set('rtTier',rt.name);const gem=$('rtHeroGem');if(gem){gem.replaceChildren();const svg=window.rivlLeagueIcons?.icon(rt.key);if(svg)gem.append(svg);gem.setAttribute('aria-label',rt.name+' league emblem')}const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;
-  set('rtRd',acct?`±${acct.rd} rating deviation`:'Sign in to get a Ranked Elo');
+  set('rtTier',rt.name);window.rivlLeagueIcons?.decorate($('rtTier'),rt.key,{prepend:true});window.rivlPaintAvatar?.();const badge=$('rtTier');if(badge)badge.className='rt-tier league-'+rt.key;
+  
   const bar=$('rtBar');if(bar){bar.style.width=(rt.progress*100).toFixed(0)+'%';bar.className='league-'+rt.key}
   set('rtBarFrom',`${rt.name} ${rt.lo.toLocaleString()}`);
   set('rtBarTo',rt.next?`${RivlRating.tier(rt.next).name} ${rt.next.toLocaleString()}`:'Top league');
@@ -117,7 +117,7 @@ function refreshRatingUI(){
   const acct=window.rivlAccount?.current?.(),games=acct?.games||0,elo=acct?acct.rating:0;
   set('sideTier','ELO');
   set('sideRating',elo.toLocaleString());
-  set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${acct.provisional?'Provisional · ':''}±${acct.rd} · ${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
+  set('sideRatingLabel',!acct?'Sign in to play Ranked':games?`${games} ranked ${games===1?'match':'matches'}`:'No ranked matches yet');
   set('sideRank',acct?.rank?`Ranked #${acct.rank}`:'');
   document.querySelectorAll('.season .tier-progress').forEach(el=>el.style.width=(RivlRating.tier(elo).progress*100).toFixed(0)+'%');
   set('onlineProfileRating',elo.toLocaleString());
@@ -164,6 +164,22 @@ function refreshRatingUI(){
   }
 }
 
+function renderLeagueRankStrip(){
+  const strip=$('leagueRankStrip');
+  if(!strip||!window.RivlRating?.LEAGUES)return;
+  strip.replaceChildren();
+  for(const [name,lo,hi,key] of RivlRating.LEAGUES){
+    const cell=document.createElement('div');cell.className='league-rank-item';
+    const pill=document.createElement('span');pill.className='rt-tier league-'+key+' league-rank-pill';
+    const gem=window.rivlLeagueIcons?.icon(key);if(gem)pill.append(gem);
+    const title=document.createElement('span');title.textContent=name;pill.append(title);
+    const range=document.createElement('span');range.className='league-rank-range';
+    range.textContent=hi===Infinity?lo.toLocaleString()+'+ Elo':lo.toLocaleString()+'–'+(hi-1).toLocaleString()+' Elo';
+    cell.append(pill,range);strip.append(cell);
+  }
+}
+document.addEventListener('DOMContentLoaded',renderLeagueRankStrip);
+if(document.readyState!=='loading')renderLeagueRankStrip();
 document.addEventListener('DOMContentLoaded',refreshRatingUI);
 if(document.readyState!=='loading')refreshRatingUI();
 (function wireReset(){

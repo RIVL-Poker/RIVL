@@ -41,7 +41,22 @@ let g2=mk(['A♠','K♠'],['Q♠','J♠','T♠'],40,100);assert(R.grade(R.analyz
 assert(['Best','Excellent','Good'].includes(R.grade(R.analyze(g2,0,400),'raise',1000).label),'shoving the nuts grades well');
 let g3=mk(['9♥','8♥'],['7♣','2♥','K♦'],30,80);const once=JSON.stringify(R.analyze(g3,0,R.GRADE_ITERS).opts.map(o=>o.ev));
 assert(once===JSON.stringify(R.analyze(g3,0,R.GRADE_ITERS).opts.map(o=>o.ev)),'the same spot always gets the same analysis (seeded)');
+// Preflop is graded against standard opening/defending charts; the table is 9-handed with the hero at seat `at`.
+const P9=(hole,at,acts,heroBet=0)=>{const players=[];for(let k=0;k<9;k++){const a=k===at?{bet:heroBet,line:0}:acts[k]||(k===7?{bet:5,line:0}:k===8?{bet:10,line:0}:{bet:0,line:0});players.push({name:'p'+k,hole:k===at?hole:['2♣','3♦'],bet:a.bet,stack:990,folded:!!a.f,allin:false,raiseLocked:false,line:a.line||0})}return{bb:10,minRaise:10,currentBet:Math.max(...players.map(p=>p.bet)),pot:players.reduce((s,p)=>s+p.bet,0),board:[],hand:1,street:0,sbSeat:7,bbSeat:8,players}};
+const pf=(hole,at,acts,type,amt,heroBet)=>R.grade(R.analyze(P9(hole,at,acts,heroBet),at,400),type,amt||0).label;
+const F={bet:0,f:1},early={0:F,1:F,2:F,3:F,4:F,5:F};
+assert(pf(['A♠','Q♦'],0,{},'fold')==='Mistake','folding AQo first in under the gun is a mistake');
+assert(pf(['J♠','8♦'],0,{},'raise',25)==='Mistake','opening J8o under the gun is a mistake');
+assert(pf(['K♠','9♦'],6,early,'raise',25)==='Best','opening K9o on the button is the book play');
+assert(pf(['A♠','A♦'],0,{},'call')==='Inaccuracy','open-limping aces is not best');
+assert(pf(['9♦','8♣'],5,{0:F,1:F,2:F,3:F,4:F},'raise',1000)==='Blunder','a 100 BB open-shove with 98o is a blunder');
+const bbVs=opener=>({...Object.fromEntries([0,1,2,3,4,5,6].map(k=>[k,k===opener?{bet:25,line:2}:F])),7:{bet:5,f:1}});
+assert(pf(['9♠','6♠'],8,bbVs(6),'call',0,10)==='Best'&&pf(['9♠','6♠'],8,bbVs(0),'call',0,10)==='Mistake','the big blind defends 96s against the button, not under the gun');
+assert(pf(['7♠','2♦'],8,{...early,6:F,7:{bet:5,line:1}},'fold',0,10)==='Mistake','folding when checking is free');
+const post=(hole,board,pot,bet,line)=>({bb:10,minRaise:10,currentBet:bet,pot,board,hand:1,street:1,players:[{name:'You',hole,bet:0,stack:900,folded:false,allin:false,line:1},{name:'Ace',hole:['2♣','3♦'],bet,stack:900,folded:false,allin:false,line}]});
+assert(R.grade(R.analyze(post(['K♠','Q♦'],['K♥','7♣','2♦'],100,0,1),0,1500),'raise',900).label!=='Best','a 9x-pot shove with top pair is not the best play');
+assert(R.grade(R.analyze(post(['4♠','6♥'],['K♦','K♠','K♥','3♦','J♠'],205,100,2),0,1500),'fold').label!=='Brilliant','folding trips the board gives everyone is not brilliant');
 const lg=r=>R.tier(r).name;
 assert(lg(0)==='Prospect'&&lg(349)==='Prospect'&&lg(350)==='Challenger'&&lg(699)==='Challenger'&&lg(700)==='Elite'&&lg(1050)==='Master'&&lg(1400)==='Grandmaster'&&lg(1749)==='Grandmaster'&&lg(1750)==='Champion'&&lg(3500)==='Champion','league bands');
 assert(R.tier(525).progress===.5&&R.tier(350).next===700&&R.tier(3000).next===null,'league progress');
-console.log('PASS: 12 poker engine checks + 8 rating checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks');

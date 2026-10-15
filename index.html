@@ -125,8 +125,8 @@
                       <button id="roomRaise" class="gold">RAISE TO</button>
                       <div class="raise rivl-pvp-raise">
                         <label for="roomRaiseAmount">RAISE TO · CHIPS <span id="roomAmountLabel">40</span></label>
-                        <div class="amount-row"><button id="roomMinusBet" type="button" aria-label="Decrease raise">−</button><input id="roomRaiseAmount" type="number" inputmode="numeric" min="20" step="1" value="40" aria-label="Raise to amount"><button id="roomPlusBet" type="button" aria-label="Increase raise">+</button></div>
-                        <input id="roomRaiseSlider" type="range" min="20" max="1000" step="1" value="40" aria-label="Raise amount slider">
+                        <div class="amount-row"><button id="roomMinusBet" type="button" aria-label="Decrease raise">−</button><input id="roomRaiseAmount" type="number" inputmode="numeric" min="20" step="5" value="40" aria-label="Raise to amount"><button id="roomPlusBet" type="button" aria-label="Increase raise">+</button></div>
+                        <input id="roomRaiseSlider" type="range" min="20" max="1000" step="5" value="40" aria-label="Raise amount slider">
                         <div class="quick-bets"><button data-room-bet="min">MIN</button><button data-room-bet="half">½ POT</button><button data-room-bet="pot">POT</button><button data-room-bet="all">ALL IN</button></div>
                       </div>
                       <button id="roomAllin" class="outline">ALL IN</button>
@@ -209,10 +209,10 @@
                     <div class="raise"><label for="betinput">RAISE TO · CHIPS <span id="amountlabel">20</span></label>
                         <div class="amount-row"><button type="button" id="minusBet"
                                 aria-label="Decrease bet">−</button><input id="betinput" type="number"
-                                inputmode="numeric" min="10" max="1000" step="1" value="20"
+                                inputmode="numeric" min="10" max="1000" step="5" value="20"
                                 aria-label="Raise to chips"><button type="button" id="plusBet"
                                 aria-label="Increase bet">+</button></div><input type="range" min="10" max="1000"
-                            step="1" value="20" id="betamount" aria-label="Bet slider">
+                            step="5" value="20" id="betamount" aria-label="Bet slider">
                         <div class="quick-bets"><button data-bet="min">MIN</button><button data-bet="half">½
                                 POT</button><button data-bet="pot">POT</button><button data-bet="all">ALL IN</button>
                         </div>
@@ -236,10 +236,11 @@
                 <h1>YOUR PROFILE</h1>
                 <article class="panel ranked-tracker" aria-labelledby="rtTitle">
                     <div class="rt-head">
-                        <div class="rt-hero-gem" id="rtHeroGem" aria-hidden="true"></div>
-                        <div class="rt-id"><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier league-prospect" id="rtTier">Prospect</span></div>
-                        <div class="rt-score"><strong id="onlineProfileRating">0</strong><small id="rtRd">±350</small></div>
+                        <button type="button" class="rt-hero-gem profile-avatar rivl-avatar-edit" id="rtHeroGem" aria-label="Change profile picture" title="Change profile picture"><span class="rivl-avatar-plus" aria-hidden="true">+</span></button>
+                        <div class="rt-id"><h2 id="rtTitle" data-player-name>Player</h2><span class="rt-tier league-prospect" id="rtTier">Prospect</span><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden><small id="profilePhotoStatus" class="muted" role="status" hidden></small></div>
+                        <div class="rt-score"><strong id="onlineProfileRating">0</strong><small id="rtRd" hidden></small></div>
                     </div>
+<dialog id="rivlPhotoNotice" class="rivl-photo-notice" aria-labelledby="rivlPhotoNoticeTitle"><h2 id="rivlPhotoNoticeTitle">♠ PROFILE PHOTO GUIDELINES</h2><p>Your profile picture is visible to other players at your tables. Only upload images you own or have permission to share. Do not upload offensive, explicit, harassing, or impersonating images.</p><p>Other players can report inappropriate pictures. Reported pictures may be hidden while they are reviewed. Repeated violations may lead to restrictions.</p><button type="button" class="gold" id="rivlPhotoNoticeClose">CLOSE</button></dialog>
                     <div class="rt-progress"><div class="rt-bar"><span id="rtBar"></span></div><div class="rt-bar-labels"><span id="rtBarFrom">Prospect 0</span><span id="rtBarTo">Challenger 350</span></div></div>
                     <div class="rt-tiles">
                         <div><small>RANKED MATCHES</small><b id="rtGames">0</b></div>
@@ -254,23 +255,30 @@
                     <div class="rt-foot"><p id="onlineProfileDetails" class="muted">Sign in or create an account to play Ranked.</p></div>
                     <p id="onlineProfileRecord" hidden></p>
                 </article>
-                <h2 class="profile-section-heading">BOT PRACTICE · UNRANKED · THIS DEVICE</h2>
-                <div class="panel profile-card"><div><p id="profTier">Challenger · Bot practice</p><strong id="profRating">1,500 practice rating</strong></div></div>
-                <div class="stat-grid">
-                    <article class="panel"><h3>BOT PRACTICE MATCHES</h3><h2 id="profGames">0</h2></article>
-                    <article class="panel"><h3>WINS</h3><h2 id="profWins">0</h2></article>
-                    <article class="panel"><h3>WIN RATE</h3><h2 id="profWinRate">–</h2></article>
-                    <article class="panel"><h3>AVG ACCURACY</h3><h2 id="profAcc">–</h2></article>
+                <h2 class="profile-section-heading">BOT PRACTICE MODE RATING</h2>
+                <div class="panel ladder">
+                    <h3>BOT PRACTICE MODE RATING</h3>
+                    <div id="ladderRows" class="bot-skill-summary" aria-live="polite"></div>
                 </div>
-                <div class="profile-grid">
-                    <article class="panel"><h3>BOT PRACTICE RATING HISTORY</h3><div id="profChart"></div></article>
-                    <article class="panel"><h3>DECISION QUALITY · ALL BOT MATCHES</h3><div id="profLabels"></div></article>
+                <div class="panel how">
+                    <h3>HOW BOT SKILL RATING WORKS</h3>
+                    <p><b>Every decision is graded.</b> Your choice is compared with the best option, given the hands
+                        your opponents likely hold, and labelled like a chess move: Brilliant, Best, Excellent, Good,
+                        Inaccuracy, Mistake or Blunder.</p>
+                    <p><b>Each match scores you against every bot:</b> 60% finishing place, 40% decision accuracy.</p>
+                    <p><b>Glicko-2 updates the ratings.</b> Beating higher-rated bots is worth more. <b>RD</b> is the
+                        rating uncertainty, calculated behind the scenes.</p>
+                    <p>Bot games never change Ranked Elo. Leaving a match early leaves it unrated.</p>
+                    <div class="reset-row"><button class="outline" id="resetLadder" type="button">RESET
+                            BOT LADDER</button><span id="resetConfirm" hidden>Erase all bot practice ratings and match history on this
+                            device? <button class="outline" id="resetYes" type="button">ERASE</button> <button
+                                class="outline" id="resetNo" type="button">KEEP</button></span></div>
                 </div>
-                <article class="panel"><h3>RECENT BOT PRACTICE MATCHES</h3><div id="profMatches" class="mr-table"></div></article>
                 <article class="panel account-panel" id="accountPanel">
                     <h3>ONLINE ACCOUNT</h3>
                     <div id="accountSignedOut">
-                        <p class="muted">Free. No email or password: you get a private sign-in code.</p>
+                        <div class="account-google" data-google-slot hidden><p class="muted">Sign in with Google to stay signed in here and on any device.</p><div class="google-button"></div><p class="muted account-or">Or play without Google: you get a private sign-in code.</p></div>
+                        <p class="muted" data-google-fallback>Free. No email or password: you get a private sign-in code.</p>
                         <div class="account-forms">
                             <label>Choose a name <input id="accountName" maxlength="20" autocomplete="nickname" placeholder="3 to 20 characters"></label>
                             <button class="gold" id="accountCreate" type="button">CREATE ACCOUNT</button>
@@ -280,17 +288,19 @@
                     </div>
                     <div id="accountSignedIn" hidden>
                         <p><strong id="accountTitle"></strong> · <span id="accountRating"></span></p>
-                        <p class="muted">Save your sign-in code. It is the only way into this account on another device.</p>
+                        <p class="muted" id="accountKeyNote">Save your sign-in code. It is the only way into this account on another device.</p>
                         <div class="account-key"><code id="accountKey" hidden></code><button class="outline" id="accountShowKey" type="button">SHOW CODE</button><button class="outline" id="accountCopyKey" type="button">COPY CODE</button><button class="outline" id="accountSignOut" type="button">SIGN OUT</button></div>
+                        <div id="accountGoogleLink" class="account-google" hidden><div data-google-slot hidden><p class="muted">Connect Google to sign in to this account on any device without the code.</p><div class="google-button"></div></div></div>
                     </div>
                     <p id="accountStatus" class="muted" role="status"></p>
                 </article>
             </section>
             <section id="leaderboard" class="view content-view">
                 <h1>LEADERBOARDS</h1>
+                <div class="league-rank-strip" id="leagueRankStrip" aria-label="Ranked Elo league thresholds"></div>
                 <div class="panel ladder">
                     <div class="ladder-top"><h3>RANKED · ELO</h3><div class="league-tabs" role="group" aria-label="Ranked leaderboard view"><button type="button" class="outline" id="lbMine" aria-pressed="false" hidden>MY LEAGUE</button><button type="button" class="outline" id="lbTop" aria-pressed="true">TOP 50</button></div></div>
-                    <div class="online-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>ELO</span><span>RD</span><span>MATCHES</span><span>WINS</span></div>
+                    <div class="online-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>ELO</span><span class="rating-deviation-cell">RD</span><span>MATCHES</span><span>WINS</span></div>
                     <div id="onlineRows"><p class="muted">Loading…</p></div>
                 </div>
                 <div class="panel ladder">
@@ -357,7 +367,7 @@
                 <p class="muted">Draft for review before public launch · Updated October 14, 2026</p>
                 <div class="panel rivl-privacy-panel">
                     <h3>What RIVL collects</h3>
-                    <p>When you create an account, RIVL stores your chosen display name and a securely hashed version of your private sign-in code to recognize your account. We also store ranked match results, ratings, and information needed to run multiplayer rooms. Your browser may store your sign-in code, game preferences, and bot-practice statistics locally on your device.</p>
+                    <p>When you create an account, RIVL stores your chosen display name and a securely hashed version of your private sign-in code to recognize your account. If you sign in with Google, Google tells RIVL a stable account ID that RIVL keeps to recognize you next time; RIVL does not store your email address, and Google may show your name and email to you during sign-in. We also store ranked match results, ratings, and information needed to run multiplayer rooms. Your browser may store your sign-in code, game preferences, and bot-practice statistics locally on your device.</p>
                     <h3>How we use information</h3>
                     <p>We use this information to provide accounts, multiplayer games, rankings, and the leaderboard, prevent abuse, troubleshoot problems, and maintain the service. Your display name, Elo rating, and certain match statistics may be visible to other players.</p>
                     <h3>Hosting and technical information</h3>
@@ -378,14 +388,31 @@
         <div class="rivl-welcome-dialog" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" aria-describedby="welcomeDescription" tabindex="-1">
             <div class="rivl-welcome-mark">♠</div>
             <h2 id="welcomeTitle">WELCOME TO RIVL</h2>
-            <p id="welcomeDescription">Play free Texas Hold'em, challenge real players, and climb the Elo rankings. Every ranked match is another step toward the top. <strong>Compete. Improve. Become RIVL Champion.</strong></p>
-            <button type="button" class="gold" id="welcomeOk">GET STARTED</button>
+            <p id="welcomeDescription">Play free Texas Hold'em, challenge real players, and climb the Elo rankings. Sign in once and RIVL remembers you on this device. <strong>Compete. Improve. Become RIVL Champion.</strong></p>
+            <div id="loginStart" class="login-step">
+                <div data-google-slot hidden><div class="google-button login-google"></div></div>
+                <button type="button" class="outline login-alt" id="loginUseCode">USE A SIGN-IN CODE</button>
+                <button type="button" class="rivl-welcome-skip" id="welcomeOk">Play bots without signing in</button>
+            </div>
+            <form id="loginName" class="login-step" hidden>
+                <label>Pick your table name <input id="loginNameInput" maxlength="20" autocomplete="nickname" placeholder="3 to 20 characters" required></label>
+                <button type="submit" class="gold">CREATE ACCOUNT</button>
+                <button type="button" class="rivl-welcome-skip" data-login-back>Back</button>
+            </form>
+            <form id="loginCode" class="login-step" hidden>
+                <label>Sign-in code <input id="loginCodeInput" autocomplete="off" spellcheck="false" placeholder="Paste your code" required></label>
+                <button type="submit" class="gold">SIGN IN</button>
+                <button type="button" class="outline login-alt" id="loginCreate">NEW HERE? CREATE AN ACCOUNT</button>
+                <button type="button" class="rivl-welcome-skip" data-login-back>Back</button>
+            </form>
+            <p id="loginStatus" class="login-status" role="status"></p>
         </div>
     </div>
     <script src="welcome-support.js"></script>
     <script src="league-icons.js"></script>
     <script src="profile.js"></script>
     <script src="account.js"></script>
+    <script src="login.js"></script>
     <script src="engine.js"></script>
     <script src="rating.js"></script>
     <script src="script.js"></script>

@@ -622,6 +622,10 @@ body.rivl-modal-open{overflow:hidden}
  .ranked-tracker .rt-score small{font-size:10px}
 }
 
+/* Keep rating deviation internally; hide it from all visible screens. */
+#rtRd,.rating-deviation-cell{display:none!important}
+.online-row{grid-template-columns:42px minmax(100px,1.5fr) minmax(75px,1fr) 90px 72px 65px!important}
+.ladder-row{grid-template-columns:42px minmax(100px,1.5fr) minmax(75px,1fr) 90px 72px 90px!important}
 /* Personal bot practice summary: a single spacious stats bar, no bot ranking. */
 .bot-skill-summary{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;border:1px solid #63482d;border-radius:12px;overflow:hidden;background:linear-gradient(110deg,#221a14,#111010);margin-top:16px}
 .bot-skill-name,.bot-skill-stat{display:flex;flex-direction:column;justify-content:center;gap:7px;padding:22px 20px;min-width:110px;flex:1;border-right:1px solid #49382a}
@@ -633,3 +637,195 @@ body.rivl-modal-open{overflow:hidden}
 .bot-skill-decisions{flex:1 0 100%;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:13px 20px;border-top:1px solid #49382a}
 .bot-skill-decisions strong{font-size:13px;font-weight:600;line-height:1.6}
 @media(max-width:700px){.bot-skill-name,.bot-skill-stat{flex:1 1 45%;padding:15px 13px}.bot-skill-name strong{font-size:20px}.bot-skill-stat strong{font-size:23px}.bot-skill-decisions{padding:13px}}
+
+/* Ranked league reference strip directly below the Leaderboards title. */
+#leaderboard.content-view{padding-top:23px}
+#leaderboard>h1{margin:0 0 17px}
+.league-rank-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:0 0 23px}
+.league-rank-item{display:flex;flex-direction:column;align-items:center;gap:9px;min-width:0}
+.league-rank-pill{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:38px;margin:0;padding:7px 9px;white-space:nowrap;letter-spacing:.045em;font-size:11px}
+.league-rank-pill .rivl-league-icon{width:19px;height:19px;flex-shrink:0}
+.league-rank-range{color:#d5c1a5;font-size:12px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:center}
+#rtTier .rivl-league-icon{width:18px;height:18px;flex-shrink:0}
+@media(max-width:980px){.league-rank-strip{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:17px}}
+@media(max-width:540px){.league-rank-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 8px}.league-rank-pill{font-size:10px;padding:6px 5px}.league-rank-range{font-size:11px}}
+
+/* Profile identity: keep only the large left emblem and properly space the rank pill. */
+.ranked-tracker #rtTitle>.rivl-league-icon{display:none!important}
+.ranked-tracker #rtTier{gap:9px;padding:7px 16px 7px 12px;min-height:36px;line-height:1.2;white-space:nowrap}
+.ranked-tracker #rtTier .rivl-league-icon{width:19px;height:19px;flex:0 0 19px;margin:0;display:block}
+@media(max-width:600px){.ranked-tracker #rtTier{gap:7px;padding:5px 11px 5px 9px;min-height:30px}.ranked-tracker #rtTier .rivl-league-icon{width:16px;height:16px;flex-basis:16px}}
+
+/* Real-time room chat in private and ranked online tables. */
+#roomGame #roomTabContent:has(.room-chat){padding:4px 10px 8px}
+.room-chat{display:flex;flex-direction:column;gap:7px;min-width:0}
+.room-chat-feed{height:86px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:3px;padding:4px 6px;font-size:12px}
+.room-chat-line{overflow-wrap:anywhere;line-height:1.35}
+.room-chat-line b{color:#f0be77;font-size:12px;float:none}
+.room-chat-line.mine b{color:#91c9ee}
+.room-chat-empty{color:#a89b8b;font-style:italic}
+.room-chat-form{display:flex;gap:8px;min-width:0}
+.room-chat-form input{min-width:0;flex:1;background:#181719;color:#fff;border:1px solid #7d603d;border-radius:6px;padding:8px 11px;font:inherit;font-size:13px}
+.room-chat-form .gold{padding:7px 16px;font-size:12px;flex:0 0 auto}
+#roomGame .game-panel:not(.collapsed):has(.room-chat){max-height:280px}
+body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:185px;min-height:185px;overflow:hidden}
+@media(max-width:600px){body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:170px;min-height:170px}.room-chat-feed{height:68px}.room-chat-form input{font-size:12px}}
+
+/* Profile initial or optional account-backed photo. */
+.ranked-tracker .profile-avatar{border:3px solid #d6a654;border-radius:50%;background:linear-gradient(135deg,#50351e,#151115);overflow:hidden;filter:none;box-shadow:0 3px 14px #0009}
+.ranked-tracker .profile-avatar .profile-initial{font-size:clamp(48px,6vw,78px);font-weight:800;color:#f5c982;line-height:1}
+.rivl-avatar-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.profile-photo-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}
+.profile-photo-button{display:inline-flex;align-items:center;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.04em;padding:7px 12px;border:1px solid #8e663c;border-radius:6px;color:#f0c37e}
+.profile-photo-button:hover{background:#4c341d}
+#removeProfilePhoto{font-size:11px;padding:7px 12px}
+#profilePhotoStatus{max-width:310px;font-size:11px}
+.room-avatar,.rivl-pvp-seat .avatar,#roomMyAvatar{overflow:hidden}
+.room-avatar .rivl-avatar-photo,.rivl-pvp-seat .avatar .rivl-avatar-photo,#roomMyAvatar .rivl-avatar-photo{width:100%;height:100%;object-fit:cover}
+@media(max-width:600px){.ranked-tracker .profile-avatar .profile-initial{font-size:40px}}
+
+.rivl-report-photo{display:block;cursor:pointer;background:transparent;border:0;color:#d6a975;font-size:9px;letter-spacing:.04em;padding:3px 0;text-decoration:underline}
+.rivl-report-photo:hover{color:#fff}
+.rivl-pvp-seat .rivl-report-photo{font-size:8px;margin:2px auto 0}
+
+/* Compact centered profile identity and clickable photo editor */
+.ranked-tracker .rt-head{position:relative;justify-content:center;gap:22px;min-height:156px;padding:8px 95px 8px 8px}
+.ranked-tracker .rt-id{flex:0 1 auto;align-items:flex-start;gap:12px}
+.ranked-tracker .rt-score{position:absolute;right:0;top:50%;transform:translateY(-50%);margin:0}
+.ranked-tracker .rivl-avatar-edit{position:relative;cursor:pointer;padding:0;appearance:none;color:inherit;font:inherit;overflow:visible;transition:border-color .15s,box-shadow .15s}
+.ranked-tracker .rivl-avatar-edit:hover{box-shadow:0 0 0 3px #f1c57955,0 3px 14px #0009}
+.ranked-tracker .rivl-avatar-edit:focus-visible{outline:3px solid #f4d197;outline-offset:4px}
+.rivl-avatar-plus{position:absolute;bottom:0;left:-7px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;border:2px solid #d6a654;background:#211712;color:#f4d197;font-size:26px;font-weight:700;line-height:1;box-shadow:0 2px 9px #000b;pointer-events:none}
+.rivl-photo-notice{max-width:min(460px,calc(100vw - 36px));padding:28px;border:1px solid #c99b54;border-radius:14px;background:linear-gradient(140deg,#271b15,#0f0d0e);color:#f7efe6;box-shadow:0 20px 70px #000d}
+.rivl-photo-notice::backdrop{background:#000b;backdrop-filter:blur(4px)}
+.rivl-photo-notice h2{color:#f4c477;font-size:20px;letter-spacing:.045em;margin:0 0 16px}
+.rivl-photo-notice p{line-height:1.55;margin:0 0 15px}
+.rivl-photo-notice button{margin-top:8px;min-width:120px}
+@media(max-width:600px){.ranked-tracker .rt-head{padding:10px 0 65px;justify-content:center;gap:14px}.ranked-tracker .rt-score{top:auto;bottom:0;right:0;transform:none}.ranked-tracker .rt-id{min-width:0}.rivl-avatar-plus{width:30px;height:30px;font-size:23px}}
+
+/* Profile header: left-aligned identity and plus anchored at avatar bottom-left. */
+.ranked-tracker .rt-head{justify-content:flex-start;padding:8px 95px 8px 8px}
+.ranked-tracker .rivl-avatar-edit .rivl-avatar-plus{left:auto;right:0;bottom:0;transform:translate(22%,22%)}
+@media(max-width:600px){.ranked-tracker .rt-head{justify-content:flex-start;padding:10px 0 65px}}
+
+
+/* Cairo table room: live DOM elements, not a flattened gameplay screenshot.
+   Shared by bot practice and multiplayer; seat and action layouts stay intact. */
+body.in-game .table-scene,
+.rivl-pvp-scene{
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse 40% 22% at 72% 19%,rgba(255,187,95,.55),transparent 80%),
+    linear-gradient(180deg,#321d22 0%,#a25435 21%,#dc9653 33%,#31282c 35%,#142b33 43%,#1b2529 47%,#3d2418 48%,#120e0e 100%);
+}
+body.in-game .table-scene::before,
+.rivl-pvp-scene::before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 3% 8% at 72% 27%,#ffe0a1 0%,#f6b66b 48%,transparent 55%),
+    repeating-linear-gradient(90deg,transparent 0 11%,rgba(12,10,15,.42) 11.3% 11.6%,transparent 12% 19%),
+    linear-gradient(90deg,rgba(12,8,7,.8),transparent 24% 76%,rgba(12,8,7,.8)),
+    repeating-linear-gradient(0deg,transparent 0 16px,rgba(242,162,78,.09) 17px 18px,transparent 19px 36px);
+  opacity:.8;
+}
+body.in-game .table-scene::after,
+.rivl-pvp-scene::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:29%;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(90deg,#24150e 0 2px,#44281a 3px 75px,#18100e 76px 79px),
+             linear-gradient(180deg,transparent,#160d09);
+  opacity:.32;
+}
+body.in-game .poker-table,
+.rivl-pvp-table{
+  background:
+    radial-gradient(ellipse at 50% 50%,rgba(66,44,31,.45),transparent 75%),
+    repeating-radial-gradient(ellipse at 50% 50%,transparent 0 20px,rgba(177,112,49,.018) 21px 22px),
+    #181312;
+  border-color:#1b110d;
+  box-shadow:inset 0 0 0 2px #d79b51,inset 0 0 0 8px #22140f,inset 0 0 0 10px #98612c,
+    inset 0 0 30px #090705,0 0 0 2px #9c682f,0 0 0 8px #1a100c,
+    0 0 0 10px #ad7137,0 9px 0 #3a2010,0 13px 0 #bd8038,0 19px 0 #20110a,
+    0 25px 32px rgba(0,0,0,.75),0 0 45px rgba(233,143,56,.2);
+}
+body.in-game .poker-table::before,
+.rivl-pvp-table::before{
+  content:"";position:absolute;inset:5%;border:1px solid rgba(199,133,62,.34);
+  border-radius:50%;pointer-events:none;
+}
+body.in-game .poker-table::after,
+.rivl-pvp-table::after{
+  content:"♠  R I V L  ♠";position:absolute;left:50%;top:15%;transform:translateX(-50%);
+  color:rgba(207,143,74,.35);font-size:clamp(9px,1.3vw,17px);letter-spacing:.2em;
+  font-weight:800;white-space:nowrap;pointer-events:none;
+}
+body.in-game .skyline{color:#f5c782;text-shadow:0 2px 8px #000;position:relative}
+body.in-game .poker-table .community,
+.rivl-pvp-table .community{position:relative;z-index:2}
+@media(max-width:650px){
+ body.in-game .poker-table::after,.rivl-pvp-table::after{top:12%;font-size:9px}
+}
+/* Bot thinking: a breathing gold ring on the seat plus three bouncing dots while the bot decides. */
+.think-dots{display:none;align-items:center;gap:3px;flex-shrink:0;height:15px;padding:0 6px;border-radius:8px;background:#2a1f12;border:1px solid #d4a34c}
+.think-dots b{width:5px;height:5px;border-radius:50%;background:#f1c983;animation:think-dot 1.2s ease-in-out infinite}
+.think-dots b:nth-child(2){animation-delay:.15s}.think-dots b:nth-child(3){animation-delay:.3s}
+.seat.is-thinking .think-dots{display:inline-flex}
+.seat.is-thinking{animation:think-ring 1.6s ease-in-out infinite}
+.seat.is-thinking .avatar{animation:think-avatar 1.6s ease-in-out infinite}
+@keyframes think-dot{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-3px);opacity:1}}
+@keyframes think-ring{0%,100%{box-shadow:0 0 0 2px #d4a34c,0 0 6px #d4a34c55}50%{box-shadow:0 0 0 2px #ffdc7d,0 0 18px #e5ad58bb}}
+@keyframes think-avatar{0%,100%{border-color:#d4a34c}50%{border-color:#ffe39a}}
+@media (prefers-reduced-motion:reduce){.seat.is-thinking,.seat.is-thinking .avatar,.think-dots b{animation:none!important}.seat.is-thinking{box-shadow:0 0 0 2px #ffdc7d,0 0 12px #e5ad58}.think-dots b{opacity:1}}
+
+/* Login screen (login.js) and Google sign-in in the account panel. */
+.login-step{display:grid;gap:12px;justify-items:center}
+.login-step[hidden],[data-google-slot][hidden]{display:none}
+.login-step label{display:grid;gap:8px;width:100%;text-align:left;font-weight:600;color:#e9c383}
+.login-step input{width:100%;background:#141414;border:1px solid #816338;border-radius:8px;padding:12px;color:#eee;font:inherit}
+.login-step .gold,.login-step .login-alt{width:100%;min-height:48px}
+.login-step .rivl-welcome-skip{margin-top:0}
+.login-google{min-height:44px;display:flex;justify-content:center;margin-bottom:4px}
+.login-status{min-height:1.4em;margin:14px 0 0!important;font-size:14px!important;color:#e9c383!important}
+.account-google{margin:0 0 14px}.account-google .google-button{margin:8px 0;min-height:44px}
+.account-or{margin-top:6px}
+
+/* Bot practice seats go clockwise in turn order: s1 sits to your left (screen left, just above your seat),
+   then up the left rail, across the top and down the right rail, so the action and the dealer and blind
+   buttons travel around the table instead of jumping between sides. */
+@media (min-width:601px){
+ body.in-game #table .poker-table[data-player-count="9"] .s1{top:calc(100% - 12px);left:22%}
+ body.in-game #table .poker-table[data-player-count="9"] .s2{top:68%;left:0%}
+ body.in-game #table .poker-table[data-player-count="9"] .s3{top:29%;left:0%}
+ body.in-game #table .poker-table[data-player-count="9"] .s4{top:-24px;left:22%}
+ body.in-game #table .poker-table[data-player-count="9"] .s5{top:-24px;left:78%}
+ body.in-game #table .poker-table[data-player-count="9"] .s6{top:29%;left:100%}
+ body.in-game #table .poker-table[data-player-count="9"] .s7{top:68%;left:100%}
+ body.in-game #table .poker-table[data-player-count="9"] .s8{top:calc(100% - 12px);left:78%}
+ body.in-game #table .poker-table[data-player-count="6"] .s1{top:75%;left:7%}
+ body.in-game #table .poker-table[data-player-count="6"] .s2{top:23%;left:7%}
+ body.in-game #table .poker-table[data-player-count="6"] .s3{top:-24px;left:50%}
+ body.in-game #table .poker-table[data-player-count="6"] .s4{top:23%;left:93%}
+ body.in-game #table .poker-table[data-player-count="6"] .s5{top:75%;left:93%}
+}
+@media (max-width:600px){
+ body.in-game #table .poker-table:is([data-player-count="9"],[data-player-count="6"]) .seat{top:auto;bottom:auto;left:auto;right:auto;transform:none}
+ body.in-game #table .poker-table[data-player-count="9"] .s1{top:79%;left:-12%}
+ body.in-game #table .poker-table[data-player-count="9"] .s2{top:60%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s3{top:27%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s4{top:8%;left:-14%}
+ body.in-game #table .poker-table[data-player-count="9"] .s5{top:8%;right:-14%}
+ body.in-game #table .poker-table[data-player-count="9"] .s6{top:27%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s7{top:60%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s8{top:79%;right:-12%}
+ body.in-game #table .poker-table[data-player-count="6"] .s1{top:60%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s2{top:27%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s3{top:-16px;left:50%;transform:translateX(-50%)}
+ body.in-game #table .poker-table[data-player-count="6"] .s4{top:27%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s5{top:60%;right:-18%}
+}
+/* Small and big blind chips sit on the opposite side of the avatar from the dealer "D". */
+.is-sb>.avatar,.is-bb>.avatar{position:relative}
+.is-sb>.avatar::before,.is-bb>.avatar::before{position:absolute;left:-6px;bottom:-3px;min-width:17px;height:15px;padding:0 2px;border-radius:8px;font:900 8px/15px Inter,Arial,sans-serif;text-align:center;box-shadow:0 1px 3px #000a}
+.is-sb>.avatar::before{content:'SB';background:#2c5fa8;color:#fff;border:1px solid #9cc1f5}
+.is-bb>.avatar::before{content:'BB';background:#b8862f;color:#160e04;border:1px solid #f6d48e}

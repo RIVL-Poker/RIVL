@@ -9,13 +9,14 @@ const R=globalThis.RivlRating;
 const SUIT={S:'♠',H:'♥',D:'♦',C:'♣'};
 const card=c=>c[0]+SUIT[c[1]];
 // Fewer samples than the browser's live coach keeps each graded action well inside a Worker's CPU budget.
-export const SERVER_ITERS=300;
+export const SERVER_ITERS=600;
 const STREETS={preflop:'Preflop',flop:'Flop',turn:'Turn',river:'River'};
 
 // Grade the decision `seat` is about to make in room game `g`. Returns {label,acc,weight,lossBB} or null.
 export function gradeDecision(g,seat,action,amount){
   const i=g.players.findIndex(p=>p.seat===seat);if(i<0)return null;
-  const state={pot:g.pot,currentBet:g.currentBet,minRaise:g.minRaise,bb:g.bigBlind,board:g.board.map(card),hand:g.handNumber,street:STREETS[g.phase]||g.phase,
+  const idx=s=>g.players.findIndex(p=>p.seat===s);
+  const state={sbSeat:idx(g.sbSeat),bbSeat:idx(g.bbSeat),pot:g.pot,currentBet:g.currentBet,minRaise:g.minRaise,bb:g.bigBlind,board:g.board.map(card),hand:g.handNumber,street:STREETS[g.phase]||g.phase,
     players:g.players.map(p=>({hole:(g.hands[p.seat]||[]).map(card),bet:p.bet,stack:p.stack,folded:p.folded,allin:p.allIn,line:p.line||0,raiseLocked:!!g.raiseLocked?.includes(p.seat)}))};
   const type=action==='allin'?(state.players[i].stack<=Math.max(0,g.currentBet-g.players[i].bet)?'call':'raise'):action==='check'?'call':action;
   const target=action==='allin'?g.players[i].bet+g.players[i].stack:Math.round(Number(amount)||0);
