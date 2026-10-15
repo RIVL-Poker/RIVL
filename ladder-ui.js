@@ -134,6 +134,18 @@ function refreshRatingUI(){
   const botRows=recent.map(m=>({date:m.date||m.t||0,html:`<p>BOT · ${ord(m.place)} place · ${m.acc==null?'–':m.acc.toFixed(0)+'%'} <b class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)}</b></p>`}));
   const onlineRows=online.map(m=>({date:m.date||0,html:`<p>${m.mode==='Ranked PvP'||m.mode==='Rated PvP'?'RANKED':'UNRANKED'} PVP · <b class="${m.result==='Win'?'positive':'negative'}">${m.result}</b> · ${m.players} players · ${Number(m.stack||0).toLocaleString()} chips</p>`}));
   if(rl)rl.innerHTML=[...botRows,...onlineRows].sort((a,b)=>b.date-a.date).slice(0,5).map(m=>m.html).join('')||'<p>No completed matches yet.</p>';
+  // profile
+  set('profRating',`${Math.max(0,Math.round(me.r-1500)).toLocaleString()} Skill Rating`);
+  set('profTier','Bot Practice · Unranked');
+  set('profGames',me.games||0);set('profWins',me.wins||0);
+  set('profWinRate',me.games?Math.round(100*(me.wins||0)/me.games)+'%':'–');
+  set('profAcc',me.accN?(me.accSum/me.accN).toFixed(1)+'%':'–');
+  const ch=$('profChart');if(ch)ch.innerHTML=sparkline(st.matches.length?[st.matches[0].before,...st.matches.map(m=>m.after)]:[]);
+  const lb=$('profLabels');
+  if(lb){const total=RivlRating.LABELS.reduce((s,l)=>s+(st.labels[l]||0),0);
+    lb.innerHTML=total?RivlRating.LABELS.map(l=>{const n=st.labels[l]||0,w=n/total*100;return `<div class="lbar ${LABEL_CLASS(l)}"><span><b>${RivlRating.GLYPH[l]}</b> ${l}</span><i><em style="width:${w.toFixed(1)}%"></em></i><span>${n}</span></div>`}).join(''):'<p class="muted">Your decision breakdown appears after your first rated match.</p>'}
+  const pm=$('profMatches');
+  if(pm){const ms=st.matches.slice(-8).reverse();pm.innerHTML=ms.length?`<div class="mr-row head"><span>PLACE</span><span>TABLE</span><span>ACCURACY</span><span>RATING</span></div>`+ms.map(m=>`<div class="mr-row"><span>${ord(m.place)}</span><span>${m.size}-max</span><span>${m.acc==null?'–':m.acc.toFixed(1)+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)} · ${Math.round(m.after)}</span></div>`).join(''):'<p class="muted">No rated matches yet.</p>'}
   // Bot Practice is a personal performance summary, not a leaderboard of bot opponents.
   const lt=$('ladderRows');
   if(lt){
