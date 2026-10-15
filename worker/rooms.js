@@ -193,8 +193,12 @@ export class Room {
     if(room.pendingResults){
       // Ratings are computed by the Directory from the server's own finishing order.
       const out=await this.dir('/results',room.pendingResults);
-      if(out&&g){g.ratingChanges=out.changes||[];if(out.rated===false)g.note='Unrated: at least two signed-in players are needed for a rated match.'}
-      room.pendingResults=null;
+      // A transient Directory failure must not silently discard a ranked match result.
+      // The Directory deduplicates by matchId, so retrying is safe.
+      if(out&&!out.error){
+        if(g){g.ratingChanges=out.changes||[];if(out.rated===false)g.note='Unrated: at least two signed-in players are needed for a rated match.'}
+        room.pendingResults=null;
+      }
     }
     await this.syncLobby();
     if(this.matchOver(g))await this.armAlarm(room.lastActive+IDLE_MS);
@@ -321,7 +325,13 @@ export class Room {
       const contributors=g.players.filter(p=>p.contribution>=cap);
       const amount=(cap-previous)*contributors.length;previous=cap;
       const eligible=contenders.filter(p=>p.contribution>=cap);
-      if(!eligible.length)continue;
+      // An unmatched top contribution is an uncalled bet, not a contested pot.
+      // Return it to its contributor even when every other player is all-in.
+      if(contributors.length===1){
+        const p=contributors[0];p.stack+=amount;
+        continue;
+      }
+      if(!eligible.length)throw Error('Side pot has no eligible player');
       const scored=eligible.map(p=>({p,v:values.get(p.seat)})).sort((a,b)=>this.compare(b.v,a.v));
       const winners=scored.filter(x=>this.compare(x.v,scored[0].v)===0).map(x=>x.p);
       const each=Math.floor(amount/winners.length);let remainder=amount%winners.length;
@@ -427,6 +437,10 @@ export class Room {
     }
     // Finished matches, lobbies and tables where every human is away wait for players; rooms idle for 6 hours are deleted.
     if(this.matchOver(g)||g.phase==='showdown'&&this.humansAway(g)){
+      if(room.pendingResults){
+        await this.save();
+        if(room.pendingResults){await this.state.storage.setAlarm(Date.now()+30000);return}
+      }
       if(Date.now()>=idleUntil&&!this.sockets().length)return this.destroy();
       await this.state.storage.setAlarm(Math.max(idleUntil,Date.now()+60000));return;
     }
