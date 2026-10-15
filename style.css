@@ -1374,3 +1374,36 @@ body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .mu
  body.in-game #table .rivl-pov-balance strong{font-size:20px}
 }
 @media(max-width:900px){body.in-game #table>.rivl-pov-balance{display:none!important}}
+
+/* POV v2 refinement: symmetric cards, centered live clock, and
+   a matching balance column inside the existing pot statistics panel. */
+@media(min-width:901px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:92px!important;height:124px!important;min-width:92px!important;min-height:124px!important;
+   max-width:92px!important;max-height:124px!important;font-size:31px!important}
+ body.in-game #table .poker-table>.myseat>.turn{
+   left:-68px!important;top:62px!important;width:80px!important;height:80px!important;
+   font-size:32px!important;box-sizing:border-box!important}
+ body.in-game #table .rivl-pov-pot-balance-row{
+   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:8px}
+ body.in-game #table .rivl-pov-stat{min-width:0}
+ body.in-game #table .rivl-pov-balance-stat{
+   border-left:1px solid #6c4c27;padding-left:9px}
+ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   display:flex;align-items:center;gap:6px;font-size:clamp(15px,1.35vw,23px)}
+ body.in-game #table .rivl-pov-chip-icon{
+   display:inline-grid;place-items:center;flex:0 0 20px;width:20px;height:20px;
+   border-radius:50%;border:2px solid #d3a451;color:#edc475;font-size:12px;
+   background:repeating-linear-gradient(0deg,#17120c 0 3px,#ac7d3e 3px 5px)}
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:76px!important;height:102px!important;min-width:76px!important;min-height:102px!important;
+   max-width:76px!important;max-height:102px!important;font-size:25px!important}
+ body.in-game #table .poker-table>.myseat>.turn{
+   left:-52px!important;top:51px!important;width:66px!important;height:66px!important;font-size:26px!important}
+}
+@media(max-width:900px){
+ body.in-game #table .rivl-pov-balance-stat{display:none!important}
+ body.in-game #table .rivl-pov-pot-balance-row{display:contents}
+}
