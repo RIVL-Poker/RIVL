@@ -193,8 +193,12 @@ export class Room {
     if(room.pendingResults){
       // Ratings are computed by the Directory from the server's own finishing order.
       const out=await this.dir('/results',room.pendingResults);
-      if(out&&g){g.ratingChanges=out.changes||[];if(out.rated===false)g.note='Unrated: at least two signed-in players are needed for a rated match.'}
-      room.pendingResults=null;
+      // A transient Directory failure must not silently discard a ranked match result.
+      // The Directory deduplicates by matchId, so retrying is safe.
+      if(out&&!out.error){
+        if(g){g.ratingChanges=out.changes||[];if(out.rated===false)g.note='Unrated: at least two signed-in players are needed for a rated match.'}
+        room.pendingResults=null;
+      }
     }
     await this.syncLobby();
     if(this.matchOver(g))await this.armAlarm(room.lastActive+IDLE_MS);
@@ -427,6 +431,10 @@ export class Room {
     }
     // Finished matches, lobbies and tables where every human is away wait for players; rooms idle for 6 hours are deleted.
     if(this.matchOver(g)||g.phase==='showdown'&&this.humansAway(g)){
+      if(room.pendingResults){
+        await this.save();
+        if(room.pendingResults){await this.state.storage.setAlarm(Date.now()+30000);return}
+      }
       if(Date.now()>=idleUntil&&!this.sockets().length)return this.destroy();
       await this.state.storage.setAlarm(Math.max(idleUntil,Date.now()+60000));return;
     }
