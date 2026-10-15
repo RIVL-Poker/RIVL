@@ -245,8 +245,9 @@
         $('roomRaise').disabled=!l.canRaise;
         $('roomAllin').disabled=!l.canRaise&&l.raiseToMax>l.call;
         const amount=$('roomRaiseAmount'),slider=$('roomRaiseSlider');
-        amount.min=slider.min=l.raiseToMin;amount.max=slider.max=l.raiseToMax;amount.step=slider.step=5;
-        if(Number(amount.value)<l.raiseToMin||Number(amount.value)>l.raiseToMax)amount.value=l.raiseToMin;
+        const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);
+        amount.min=slider.min=first;amount.max=slider.max=last;amount.step=slider.step=5;
+        if(Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
       }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
@@ -348,8 +349,8 @@
   $('roomRaiseAmount').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('roomRaise').click()}});
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
   $('roomNext').onclick=()=>{if(!snapshot?.ranked)return send({type:'newMatch'});send({type:'leave'});resetView('Finding your next Ranked match…');enter('ranked')};
-  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const raw=clamp(Math.round(Number(value)||l.raiseToMin),l.raiseToMin,l.raiseToMax);const n=raw===l.raiseToMax&&raw%5!==0?raw:clamp(Math.round(raw/5)*5,l.raiseToMin,l.raiseToMax);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
-  $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=e.target.value;}});
+  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);const raw=Number(value);const n=clamp(5*Math.round((Number.isFinite(raw)?raw:first)/5),first,last);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
+  $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){const l=snapshot?.game?.legal;if(l){const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);$('roomRaiseSlider').value=clamp(5*Math.round(n/5),first,last)}$('roomAmountLabel').textContent=e.target.value;}});
   $('roomRaiseAmount').addEventListener('change',e=>setRoomBet(e.target.value));
   $('roomRaiseSlider').addEventListener('input',e=>setRoomBet(e.target.value));
   $('roomMinusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)-5);
