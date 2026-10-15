@@ -865,4 +865,21 @@ body.in-game .poker-table .community,
  body.in-game .poker-table[data-player-count="6"] .muck-pile{top:9%}
  body.in-game #table .poker-table[data-player-count="9"] :is(.s1,.s8)>.bb-count{top:auto;bottom:calc(100% + 1px)}
  .bb-count{height:12px;padding:0 4px;font-size:8px;line-height:10px}
+
+/* Global ranked leaderboard: exactly six aligned columns, no wrapping of ranks. */
+#leaderboard .online-row{
+  display:grid!important;
+  grid-template-columns:48px minmax(160px,2.5fr) minmax(110px,1.4fr) minmax(65px,.65fr) minmax(75px,.7fr) minmax(60px,.6fr)!important;
+  gap:12px;
+  align-items:center;
+  min-width:0;
+  font-size:14px;
+}
+#leaderboard .online-row span{display:block!important;min-width:0;overflow-wrap:normal;word-break:normal}
+#leaderboard .online-row span:first-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+#leaderboard .online-row span:nth-child(n+4){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+#leaderboard .online-row.head{font-size:11px}
+@media(max-width:680px){
+  #leaderboard .panel.ladder{overflow-x:auto}
+  #leaderboard .online-row{min-width:570px}
 }

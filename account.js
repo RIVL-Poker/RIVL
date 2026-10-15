@@ -52,31 +52,24 @@
   }
   window.rivlAccount={current:()=>state,key:()=>state?.key||null,refresh,call,google,setAccount,reportAvatar:async(targetId,reason)=>{if(!state)throw Error('Sign in to report photos.');return call('/api/report-avatar',{key:state.key,targetId,reason})},updateAvatar:async avatar=>{if(!state)throw Error('Sign in to save a profile picture.');const {account}=await call('/api/avatar',{key:state.key,avatar});setAccount(account,state.key);return account}};
 
-  // Ranked leaderboard: "My league" (signed in) or the global top 50.
-  let board=null;
+  // One global ranked Elo leaderboard, independent of the viewer's league.
   async function loadLeaderboard(){
     const rows=$('onlineRows');if(!rows)return;
-    const mine=$('lbMine'),top=$('lbTop');
-    if(mine)mine.hidden=!state;
-    if(!state||!board)board=state?'mine':'top';
-    mine?.setAttribute('aria-pressed',String(board==='mine'));top?.setAttribute('aria-pressed',String(board==='top'));
-    const note=text=>{const p=document.createElement('p');p.className='muted';p.textContent=text;rows.append(p)};
+    rows.replaceChildren();
     try{
-      const data=board==='mine'?await call('/api/leaderboard/league?r='+state.rating+'&key='+encodeURIComponent(state.key)):await call('/api/leaderboard');
-      const {players,total}=data;
-      rows.replaceChildren();
-      if(board==='mine'&&data.near&&players.length)note(`${data.league} has ${total} ${total===1?'player':'players'} so far. Showing the ${players.length} players nearest your Elo.`);
-      if(!players.length){note('No ranked matches yet.');return}
+      const data=await call('/api/leaderboard');
+      const players=Array.isArray(data.players)?data.players:[];
+      if(!players.length){const p=document.createElement('p');p.className='muted';p.textContent='No ranked matches yet.';rows.append(p);return}
       players.forEach((p,i)=>{
-        const row=document.createElement('div');row.className='online-row'+(state&&p.id===state.id?' me':'');
-        for(const v of [board==='mine'?p.rank:i+1,p.name,p.league,p.rating.toLocaleString(),'',p.games,p.wins]){const c=document.createElement('span');c.textContent=v;row.append(c)}
+        const row=document.createElement('div');
+        row.className='online-row'+(state&&p.id===state.id?' me':'');
+        const cells=[i+1,p.name,p.league,Number(p.rating||0).toLocaleString(),p.games??0,p.wins??0];
+        for(const value of cells){const cell=document.createElement('span');cell.textContent=value;row.append(cell)}
         window.rivlLeagueIcons?.decorate(row.children[1],p.leagueKey||window.RivlRating?.tier(p.rating).key,{prepend:true});
         row.children[2].className='league-'+p.leagueKey;
         rows.append(row);
       });
-      if(board==='mine'&&!data.near&&total>players.length)note(`The ${players.length} of ${total} ${data.league} players nearest your Elo.`);
-      if(board==='top'&&total>players.length)note(`Top ${players.length} of ${total} ranked players.`);
-    }catch(e){rows.replaceChildren();note(e.message)}
+    }catch(err){const p=document.createElement('p');p.className='muted';p.textContent=err.message;rows.replaceChildren(p)}
   }
 
   function init(){
@@ -100,8 +93,6 @@
       setAccount(null);status('Signed out.');
     });
     document.querySelectorAll('.nav[data-view="leaderboard"]').forEach(b=>b.addEventListener('click',loadLeaderboard));
-    $('lbMine')?.addEventListener('click',()=>{board='mine';loadLeaderboard()});
-    $('lbTop')?.addEventListener('click',()=>{board='top';loadLeaderboard()});
     document.querySelectorAll('.nav[data-view="profile"]').forEach(b=>b.addEventListener('click',refresh));
     loadLeaderboard();
   }
