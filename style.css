@@ -1198,3 +1198,18 @@ body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-car
   body.in-game #table .pot,#roomGame .rivl-pvp-table .pot{right:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
   body.in-game #table .muck-pile{left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
 }
+/* Phones: the pot total / equity panel sits in the action area, and at full size it took ~75px of height
+   from the table, which squashed the seats, board and hero seat together. Keep it to one slim line. */
+@media(max-width:750px){
+  body.in-game #table .actions{grid-template-rows:40px 92px 22px!important}
+  body.in-game #table .raise .amount-row input,body.in-game #table .raise .amount-row button{height:28px}
+  body.in-game #table .actions .rivl-pot-stats,#roomGame .rivl-bet-actions .rivl-pot-stats{min-height:0!important;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-radius:7px}
+  .rivl-pot-stats .rivl-pot-stats-label{font-size:9px}
+  .rivl-pot-stats .rivl-pot-stats-value{font-size:14px;gap:5px}
+  .rivl-pot-stats .rivl-pot-stats-chip{width:13px;height:13px;border-width:2px;box-shadow:inset 0 0 0 2px #a11c23}
+  .rivl-pot-stats .rivl-pot-stats-percent{font-size:14px}
+  .rivl-pot-stats .rivl-pot-stats-divider{height:14px;width:1px;margin:0 4px}
+}
+/* Phones: during a bot game the page header (title and name button) is hidden, like in full screen, so the
+   table keeps enough height for 9 seats, the board and your seat. The sidebar and table bar stay. */
+@media(max-width:600px){body.in-game main>header{display:none}}
