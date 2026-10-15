@@ -1608,3 +1608,23 @@ body.in-game #roomGame .rivl-room-panel-toggle > button:hover{
   #roomGame .rivl-pvp-board,
   #roomGame .rivl-pvp-table .pot{top:49%!important}
 }
+
+/* Match approved table reference: larger five-card board, realistic burn stack,
+   and pot chips aligned alongside it. Desktop only; hero cards untouched. */
+@media (min-width:901px){
+  body.in-game #table .poker-table,
+  #roomGame .rivl-pvp-table{
+    --board-card:clamp(45px,7.2vh,68px);
+    --board-gap:6px;
+  }
+  body.in-game #table .community,
+  body.in-game #table .pot,
+  body.in-game #table .muck-pile,
+  #roomGame .rivl-pvp-board,
+  #roomGame .rivl-pvp-table .pot{top:49%!important}
+  body.in-game #table .muck-pile .card,
+  body.in-game #table .muck-pile .card.back{
+    width:var(--board-card)!important;
+    height:calc(var(--board-card)*1.47)!important;
+  }
+}
