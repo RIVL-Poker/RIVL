@@ -102,6 +102,18 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// Raises use five-chip increments; a genuine all-in remains legal.
+{
+  const {room,hostWs}=await setup(0,2);
+  await say(room,hostWs,{type:'startMatch'});
+  const g=room.room.game,seat=g.turn,p=g.players.find(x=>x.seat===seat),l=room.legal(seat);
+  const invalid=l.raiseToMin+1;
+  if(invalid<l.raiseToMax){assert.throws(()=>room.applyAction(seat,'raise',invalid),/increments of 5/);assert.equal(p.contribution,p.bet,'invalid raise does not move chips')}
+  const valid=Math.ceil(l.raiseToMin/5)*5;
+  if(valid<=l.raiseToMax){room.applyAction(seat,'raise',valid);assert.equal(p.bet,valid)}
+  checks++;
+}
+
 // 2. Showdown reveals every non-folded hand to everyone.
 {
   const {room,players,hostWs}=await setup(0,2);
