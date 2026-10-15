@@ -321,7 +321,13 @@ export class Room {
       const contributors=g.players.filter(p=>p.contribution>=cap);
       const amount=(cap-previous)*contributors.length;previous=cap;
       const eligible=contenders.filter(p=>p.contribution>=cap);
-      if(!eligible.length)continue;
+      // An unmatched top contribution is an uncalled bet, not a contested pot.
+      // Return it to its contributor even when every other player is all-in.
+      if(contributors.length===1){
+        const p=contributors[0];p.stack+=amount;
+        continue;
+      }
+      if(!eligible.length)throw Error('Side pot has no eligible player');
       const scored=eligible.map(p=>({p,v:values.get(p.seat)})).sort((a,b)=>this.compare(b.v,a.v));
       const winners=scored.filter(x=>this.compare(x.v,scored[0].v)===0).map(x=>x.p);
       const each=Math.floor(amount/winners.length);let remainder=amount%winners.length;
