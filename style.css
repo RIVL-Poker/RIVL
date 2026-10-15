@@ -923,3 +923,38 @@ body.in-game .skyline,.rivl-pvp-scene .skyline{
 @media(max-width:600px){
  body.in-game .table-scene,.rivl-pvp-scene{background-position:center center!important}
 }
+
+
+/* Cairo photo-art integration. Requires assets/cairo-table-photo.webp before merging.
+   One photograph covers the whole table scene; gameplay DOM stays above it. */
+body.in-game .table-scene,
+.rivl-pvp-scene{
+  position:relative;
+  background:#130e0d url("assets/cairo-table-photo.webp") center center/100% 100% no-repeat!important;
+}
+body.in-game .table-scene::before,
+body.in-game .table-scene::after,
+.rivl-pvp-scene::before,
+.rivl-pvp-scene::after{content:none!important}
+/* Photo already includes the ornate oval and card-zone artwork. Do not draw a second table. */
+body.in-game .table-scene .poker-table,
+.rivl-pvp-scene .rivl-pvp-table{
+  background:transparent!important;border-color:transparent!important;
+  box-shadow:none!important;
+  width:min(91%,1100px,calc((100dvh - 300px)*2.4))!important;
+  aspect-ratio:2.45/1!important;
+  margin:10px auto 15px!important;
+}
+body.in-game .table-scene .poker-table::before,
+body.in-game .table-scene .poker-table::after,
+.rivl-pvp-scene .rivl-pvp-table::before,
+.rivl-pvp-scene .rivl-pvp-table::after{content:none!important}
+body.in-game .table-scene .skyline,
+.rivl-pvp-scene .skyline{visibility:hidden}
+/* Maintain live controls, seats, and pot above photographic table. */
+body.in-game .poker-table>.seat,
+body.in-game .poker-table>.community,
+body.in-game .poker-table>.pot,
+.rivl-pvp-table>.rivl-pvp-opponents,
+.rivl-pvp-table>.community,
+.rivl-pvp-table>.pot{position:relative;z-index:2}
