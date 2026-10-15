@@ -1,13 +1,10 @@
 name: Preview winner popup on Cloudflare Pages
-
 on:
   push:
     branches:
       - test/winner-showdown-presentation-20261015
-
 permissions:
   contents: read
-
 jobs:
   preview:
     runs-on: ubuntu-latest
@@ -20,10 +17,11 @@ jobs:
       - run: node tests.js
       - run: node tests-worker.mjs
       - run: node scripts/build-site.mjs
-      - name: Publish isolated Pages preview (never production)
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: "4.150.0"
-          command: pages project create rivl-winner-preview --production-branch=main && pages deploy dist --project-name=rivl-winner-preview --branch=winner-showdown-preview
+      - name: Create isolated preview project and publish
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npm install --no-save wrangler@4.150.0
+          npx wrangler pages project create rivl-winner-preview --production-branch=main || echo "Project may already exist; trying deployment"
+          npx wrangler pages deploy dist --project-name=rivl-winner-preview --branch=winner-showdown-preview
