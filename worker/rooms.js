@@ -369,6 +369,7 @@ export class Room {
       if(!legal.canRaise)throw Error('Cannot raise');
       const target=action==='allin'?p.bet+p.stack:Number(amount);
       if(!Number.isInteger(target)||target<=g.currentBet||target>legal.raiseToMax)throw Error('Invalid raise amount');
+      if(target%5!==0&&target!==legal.raiseToMax)throw Error('Raises must be in increments of 5');
       if(target<g.currentBet+g.minRaise&&target!==legal.raiseToMax)throw Error('Raise below minimum');
       const increment=target-g.currentBet,wasMin=g.minRaise;
       const v=target-p.bet;p.stack-=v;p.bet=target;p.contribution+=v;g.pot+=v;
@@ -404,7 +405,7 @@ export class Room {
     const potOdds=legal.call/Math.max(1,g.pot+legal.call);
     const mayRaise=legal.canRaise&&(g.streetRaises||0)<BOT_RAISES_PER_STREET;
     if(mayRaise&&(strength>.72&&Math.random()<style.aggression+.2||legal.check&&strength>.55&&Math.random()<style.aggression)){
-      const target=Math.min(legal.raiseToMax,Math.max(legal.raiseToMin,g.currentBet+Math.round(g.pot*(.5+Math.random()*.4))));
+      const target=Math.min(legal.raiseToMax,Math.max(legal.raiseToMin,g.currentBet+5*Math.round(g.pot*(.5+Math.random()*.4)/5)));
       if(target>g.currentBet)return ['raise',target];
     }
     if(legal.check)return ['check'];

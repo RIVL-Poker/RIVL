@@ -125,8 +125,8 @@
                       <button id="roomRaise" class="gold">RAISE TO</button>
                       <div class="raise rivl-pvp-raise">
                         <label for="roomRaiseAmount">RAISE TO · CHIPS <span id="roomAmountLabel">40</span></label>
-                        <div class="amount-row"><button id="roomMinusBet" type="button" aria-label="Decrease raise">−</button><input id="roomRaiseAmount" type="number" inputmode="numeric" min="20" step="1" value="40" aria-label="Raise to amount"><button id="roomPlusBet" type="button" aria-label="Increase raise">+</button></div>
-                        <input id="roomRaiseSlider" type="range" min="20" max="1000" step="1" value="40" aria-label="Raise amount slider">
+                        <div class="amount-row"><button id="roomMinusBet" type="button" aria-label="Decrease raise">−</button><input id="roomRaiseAmount" type="number" inputmode="numeric" min="20" step="5" value="40" aria-label="Raise to amount"><button id="roomPlusBet" type="button" aria-label="Increase raise">+</button></div>
+                        <input id="roomRaiseSlider" type="range" min="20" max="1000" step="5" value="40" aria-label="Raise amount slider">
                         <div class="quick-bets"><button data-room-bet="min">MIN</button><button data-room-bet="half">½ POT</button><button data-room-bet="pot">POT</button><button data-room-bet="all">ALL IN</button></div>
                       </div>
                       <button id="roomAllin" class="outline">ALL IN</button>
@@ -209,10 +209,10 @@
                     <div class="raise"><label for="betinput">RAISE TO · CHIPS <span id="amountlabel">20</span></label>
                         <div class="amount-row"><button type="button" id="minusBet"
                                 aria-label="Decrease bet">−</button><input id="betinput" type="number"
-                                inputmode="numeric" min="10" max="1000" step="1" value="20"
+                                inputmode="numeric" min="10" max="1000" step="5" value="20"
                                 aria-label="Raise to chips"><button type="button" id="plusBet"
                                 aria-label="Increase bet">+</button></div><input type="range" min="10" max="1000"
-                            step="1" value="20" id="betamount" aria-label="Bet slider">
+                            step="5" value="20" id="betamount" aria-label="Bet slider">
                         <div class="quick-bets"><button data-bet="min">MIN</button><button data-bet="half">½
                                 POT</button><button data-bet="pot">POT</button><button data-bet="all">ALL IN</button>
                         </div>
