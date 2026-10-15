@@ -931,7 +931,7 @@ body.in-game .skyline,.rivl-pvp-scene .skyline{
 body.in-game .table-scene,
 .rivl-pvp-scene {
   background-color:#130e0d!important;
-  background-image:url("assets/CAIRO%20BACKGROUND%20TEST%202.png")!important;
+  background-image:var(--table-bg,url("assets/CAIRO%20BACKGROUND%20TEST%203.png"))!important;
   background-repeat:no-repeat!important;
   background-position:center center!important;
   /* Fit within the scene and never enlarge a 1536px-wide source beyond 1:1 CSS pixels.
@@ -965,3 +965,8 @@ body.in-game .table-scene .poker-table::after,
 .rivl-pvp-scene .rivl-pvp-table::after { content:none!important; }
 body.in-game .table-scene .skyline,
 .rivl-pvp-scene .skyline { visibility:hidden; }
+
+/* Table Themes: photo previews for the selectable table backgrounds (table-themes.js). */
+.theme-preview.theme-photo{background-size:cover;background-position:center 20%;border-color:#80572b}
+.table-theme button{width:100%;margin-top:6px;padding:10px}
+.table-theme button:disabled{cursor:default;color:var(--gold);border-color:#e4b66e}
