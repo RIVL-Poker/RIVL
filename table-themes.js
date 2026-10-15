@@ -3,6 +3,7 @@
 const TABLE_THEMES = [
   {id: 'cairo-sunset', file: 'CAIRO BACKGROUND TEST 3.png', name: 'Cairo Sunset', description: 'The Nile and the pyramids at sunset.'},
   {id: 'cairo-overcast', file: 'CAIRO BACKGROUND (OVERCAST) TEST 1.png', name: 'Cairo Overcast', description: 'The same terrace under a stormy sky.'},
+  {id: 'original', file: 'ORIGINAL Background test 1.png', name: 'Original', description: 'The classic black and gold table.'},
 ];
 
 (function(){
