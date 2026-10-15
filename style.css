@@ -1720,3 +1720,55 @@ body.in-game #table .win-fx.visible,
   body.in-game #table .win-fx strong,
   #roomGame .rivl-room-win-fx strong{font-size:clamp(22px,5vw,29px)!important}
 }
+
+/* Symmetric Cairo winner presentation — showdown cards only, matching table card faces. */
+body.in-game #table .win-fx,
+#roomGame .rivl-room-win-fx{
+  text-align:center!important;
+  font-family:inherit!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  display:block!important;
+  font-family:inherit!important;
+  font-size:clamp(25px,2.7vw,37px)!important;
+  font-weight:800!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  color:#f3cb77!important;
+  white-space:normal!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards,
+#roomGame .rivl-room-win-fx .rivl-winner-cards{
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  gap:12px!important;margin:18px auto 14px!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards .card,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  position:relative!important;inset:auto!important;transform:none!important;
+  width:clamp(58px,5.5vw,78px)!important;
+  height:clamp(84px,7.7vw,110px)!important;
+  border:1px solid #d2bc8b!important;border-radius:7px!important;
+  box-shadow:0 4px 10px #0009!important;
+  font-family:inherit!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  margin:8px 0 0!important;
+  font-family:inherit!important;
+  font-size:clamp(15px,1.4vw,19px)!important;
+  font-weight:650!important;letter-spacing:.04em!important;
+  text-transform:uppercase!important;color:#f4deb0!important;
+}
+body.in-game #table .win-fx small,
+#roomGame .rivl-room-win-fx .rivl-victory-gain{
+  display:block!important;margin:10px auto 0!important;
+  font-family:inherit!important;font-size:clamp(14px,1.25vw,18px)!important;
+  font-weight:700!important;letter-spacing:.025em!important;color:#eec376!important;
+}
+@media(max-width:650px){
+ body.in-game #table .win-fx .rivl-winner-cards .card,
+ #roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  width:50px!important;height:72px!important;
+ }
+}
