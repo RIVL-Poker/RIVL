@@ -73,3 +73,6 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Bot practice setup has a time limit picker (Off, 5, 10, 15 minutes; remembered per browser). Off is the default and counts time played. Timed games climb the five blind levels evenly over the limit; when time runs out the current hand plays out and the match ends on the normal results screen.
 - The raise bar resets to the minimum legal raise at every new decision, in bot practice (`script.js`) and online rooms (`rooms.js`).
 - Bot table board cards are centred (`.community` box was wider than its cards and left-aligned them).
+
+### 2026-10-15 04:15 UTC · Claude
+- Bot practice has a SAVE button next to LEAVE TABLE. It pauses everything (match clock, decision timer, bots) and stores the game in this browser (`localStorage` key `rivlBotSave`). The Play screen shows a "Saved bot game" card with Resume and Discard; starting a new bot game asks before discarding a save. Resuming clears the save. Saves are per device, not on the account.

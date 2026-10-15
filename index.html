@@ -35,6 +35,7 @@
                     <h1>PLAY. IMPROVE.<br><em>CLIMB.</em></h1>
                     <p>Every decision is graded like a chess move. No real money.</p>
                 </div>
+                <div id="resumeBanner" class="resume-banner" hidden><div><strong>SAVED BOT GAME</strong><span id="resumeInfo"></span></div><button class="gold" id="resumeSaved" type="button">RESUME GAME</button><button class="outline" id="discardSaved" type="button">DISCARD</button></div>
                                 <div id="modeSelect" class="rivl-menu-step">
                     <div class="section-title"><h2>CHOOSE YOUR GAME</h2></div>
                     <div class="rivl-mode-grid">
@@ -155,9 +156,10 @@
                     <div><small>BLINDS</small><strong id="blinds">5 / 10</strong></div>
                     <div><small id="clockLabel">MATCH CLOCK</small><strong id="clock">00:00</strong></div>
                     <div><small>ACCURACY</small><strong id="liveAcc">–</strong></div>
-                    <div><small>PLAYERS</small><strong id="players">6</strong></div><button class="outline"
-                        id="leave">LEAVE TABLE</button>
+                    <div><small>PLAYERS</small><strong id="players">6</strong></div><span class="gamebar-actions"><button class="outline" id="save" type="button" title="Pause and save this game to finish later">SAVE</button><button class="outline"
+                        id="leave">LEAVE TABLE</button></span>
                 </div>
+                <div id="pausedFx" class="paused-fx" role="dialog" aria-modal="true" aria-labelledby="pausedTitle" hidden><div class="paused-card"><strong id="pausedTitle">GAME SAVED</strong><p>Your game is paused, clocks included. You can close this tab and resume it later from the Play screen.</p><button class="gold" id="resumeNow" type="button">RESUME NOW</button><button class="outline" id="saveExit" type="button">BACK TO MENU</button></div></div>
                 <div class="table-scene">
                     <div class="skyline">♠ RIVL · CAIRO TABLE ♠</div>
                     <div class="poker-table">
