@@ -966,6 +966,18 @@ body.in-game .table-scene .poker-table::after,
 body.in-game .table-scene .skyline,
 .rivl-pvp-scene .skyline { visibility:hidden; }
 
+/* Desktop Cairo photo framing: fill the available scene horizontally AND
+   vertically without cropping the skyline or near leather rail. This intentionally
+   widens the photographic table, not the actual interactive game geometry.
+   Narrow/mobile layouts retain their existing contain treatment. */
+@media (min-width:901px) {
+  body.in-game .table-scene,
+  .rivl-pvp-scene {
+    background-size:100% 100%!important;
+    background-position:center center!important;
+  }
+}
+
 /* Table Themes: photo previews for the selectable table backgrounds (table-themes.js). */
 .theme-preview.theme-photo{background-size:cover;background-position:center 20%;border-color:#80572b}
 .table-theme button{width:100%;margin-top:6px;padding:10px}
