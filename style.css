@@ -1662,3 +1662,145 @@ body.in-game #roomGame .rivl-pvp-board .card.back{
     linear-gradient(150deg,#1d1a17,#0e0d0c 55%,#1c140c)!important;
   box-shadow:inset 0 0 0 2px #110e0b,inset 0 0 0 3px #8a6630,0 1px 0 #5a4120,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important;
 }
+
+/* Larger winner result with revealed showdown hole cards; visual only. */
+#table .win-fx{min-width:min(330px,80vw);max-width:min(460px,90vw);padding:20px 30px;border-radius:18px}
+#table .win-fx strong{font-size:clamp(24px,2.4vw,34px)}
+#table .win-fx .win-hand{font-size:clamp(17px,1.6vw,23px);margin-top:7px}
+.rivl-winner-cards{display:flex;justify-content:center;align-items:center;gap:9px;margin:12px auto 8px}
+.rivl-winner-cards .card{position:relative!important;inset:auto!important;transform:none!important;width:clamp(48px,5vw,70px)!important;height:clamp(68px,7vw,98px)!important;font-size:18px!important}
+.rivl-room-win-fx{display:none;position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);z-index:35;pointer-events:none;text-align:center;min-width:270px;max-width:90%;box-sizing:border-box;padding:18px 24px;border:1px solid #dfb55d;border-radius:17px;background:linear-gradient(125deg,#1a130bf5,#090909f5);box-shadow:0 0 34px #e6ae4380;color:#f5d28b}
+.rivl-room-win-fx.visible{display:block;animation:winnerIn .35s ease-out}
+.rivl-room-win-fx strong{display:block;font-size:clamp(23px,2.4vw,32px)}
+.rivl-room-win-fx .rivl-win-hand{font-size:clamp(16px,1.5vw,21px);margin-top:6px;color:white}
+@media(max-width:650px){#table .win-fx{padding:12px 14px;min-width:220px}.rivl-room-win-fx{padding:12px 16px;min-width:210px}.rivl-winner-cards .card{width:43px!important;height:61px!important}}
+
+/* Cairo victory presentation: centered, premium gold, and large enough to celebrate a hand. */
+body.in-game #table .poker-table .win-fx,
+#roomGame .rivl-pvp-table .rivl-room-win-fx{
+  top:50%!important;left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  box-sizing:border-box!important;
+  width:max-content!important;min-width:min(390px,86vw)!important;
+  max-width:min(540px,90vw)!important;
+  padding:24px 32px 22px!important;
+  border:2px solid #e5b65c!important;
+  border-radius:22px!important;
+  background:radial-gradient(ellipse at 50% 0%,#62421e 0%,#26190e 38%,#0c0b0a 90%)!important;
+  box-shadow:0 0 0 2px #080605,0 0 0 4px #a67735,0 12px 45px #000d,0 0 55px #c98d3b80,inset 0 1px 18px #f0b85c29!important;
+  color:#ffda8a!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  font-size:clamp(29px,3.3vw,43px)!important;
+  font-weight:900!important;letter-spacing:.075em!important;
+  line-height:1.12!important;
+  text-shadow:0 2px 0 #40200a,0 0 24px #f0ad56a6!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  margin-top:11px!important;
+  font-size:clamp(19px,1.9vw,25px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em!important;color:#fff2d0!important;
+}
+body.in-game #table .win-fx small{margin-top:13px!important;font-size:clamp(13px,1.15vw,16px)!important;color:#f8d59d!important}
+body.in-game #table .win-fx.visible,
+#roomGame .rivl-room-win-fx.visible{animation:rivlVictoryEntrance .42s cubic-bezier(.2,.85,.2,1) both!important}
+@keyframes rivlVictoryEntrance{
+  from{opacity:0;transform:translate(-50%,-46%) scale(.88)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:650px){
+  body.in-game #table .poker-table .win-fx,
+  #roomGame .rivl-pvp-table .rivl-room-win-fx{
+    min-width:min(260px,88vw)!important;max-width:90vw!important;
+    padding:14px 16px!important;border-radius:16px!important;
+  }
+  body.in-game #table .win-fx strong,
+  #roomGame .rivl-room-win-fx strong{font-size:clamp(22px,5vw,29px)!important}
+}
+
+/* Symmetric Cairo winner presentation — showdown cards only, matching table card faces. */
+body.in-game #table .win-fx,
+#roomGame .rivl-room-win-fx{
+  text-align:center!important;
+  font-family:inherit!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  display:block!important;
+  font-family:inherit!important;
+  font-size:clamp(25px,2.7vw,37px)!important;
+  font-weight:800!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  color:#f3cb77!important;
+  white-space:normal!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards,
+#roomGame .rivl-room-win-fx .rivl-winner-cards{
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  gap:12px!important;margin:18px auto 14px!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards .card,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  position:relative!important;inset:auto!important;transform:none!important;
+  width:clamp(58px,5.5vw,78px)!important;
+  height:clamp(84px,7.7vw,110px)!important;
+  border:1px solid #d2bc8b!important;border-radius:7px!important;
+  box-shadow:0 4px 10px #0009!important;
+  font-family:inherit!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  margin:8px 0 0!important;
+  font-family:inherit!important;
+  font-size:clamp(15px,1.4vw,19px)!important;
+  font-weight:650!important;letter-spacing:.04em!important;
+  text-transform:uppercase!important;color:#f4deb0!important;
+}
+body.in-game #table .win-fx small,
+#roomGame .rivl-room-win-fx .rivl-victory-gain{
+  display:block!important;margin:10px auto 0!important;
+  font-family:inherit!important;font-size:clamp(14px,1.25vw,18px)!important;
+  font-weight:700!important;letter-spacing:.025em!important;color:#eec376!important;
+}
+@media(max-width:650px){
+ body.in-game #table .win-fx .rivl-winner-cards .card,
+ #roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  width:50px!important;height:72px!important;
+ }
+}
+
+/* Match the widely tracked gold TEXAS HOLD'EM heading across victory copy.
+   Keep playing cards on the game's original face typography. */
+body.in-game #table .win-fx,
+#roomGame .rivl-room-win-fx{
+  font-family:Inter,Arial,sans-serif!important;
+  letter-spacing:.18em!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  font-family:Inter,Arial,sans-serif!important;
+  font-weight:750!important;
+  letter-spacing:.19em!important;
+  text-shadow:0 1px 9px #c18a3c38!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  font-family:Inter,Arial,sans-serif!important;
+  font-weight:450!important;
+  letter-spacing:.2em!important;
+}
+body.in-game #table .win-fx small,
+#roomGame .rivl-room-win-fx .rivl-victory-gain{
+  font-family:Inter,Arial,sans-serif!important;
+  font-weight:450!important;
+  letter-spacing:.16em!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards .card,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  font-family:Georgia,'Times New Roman',serif!important;
+  letter-spacing:normal!important;
+}

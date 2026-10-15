@@ -242,6 +242,20 @@
       });
       if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
       renderRoomPanel();
+      // Large showdown banner. Use only publicly revealed cards from the server.
+      const winnerOverlay=$('rivlRoomWinFx')||(()=>{const el=document.createElement('div');el.id='rivlRoomWinFx';el.className='rivl-room-win-fx';el.setAttribute('aria-live','polite');$('roomPokerTable').append(el);return el})();
+      if(g.phase==='showdown'&&g.result&&!g.matchOver){
+        const winner=g.winners?.length===1?g.winners[0]:null;
+        const winnerCards=winner?g.shown?.[winner.seat]:null;
+        winnerOverlay.replaceChildren();
+        const heading=document.createElement('strong');heading.textContent=winner?winner.name+' WINS':g.winners?.length>1?'SPLIT POT':'HAND COMPLETE';
+        const hand=document.createElement('div');hand.className='rivl-win-hand';hand.textContent=winner?.hand||'UNCONTESTED';
+        winnerOverlay.append(heading);
+        if(Array.isArray(winnerCards)&&winnerCards.length===2){const cards=document.createElement('div');cards.className='rivl-winner-cards';winnerCards.forEach(code=>cards.append(cardNode(code)));winnerOverlay.append(cards)}
+        winnerOverlay.append(hand);
+        if(winner&&Number.isFinite(Number(winner.amount))){const gain=document.createElement('small');gain.className='rivl-victory-gain';gain.textContent=winner.name+' +'+Number(winner.amount).toLocaleString();winnerOverlay.append(gain)}
+        winnerOverlay.classList.add('visible');
+      }else winnerOverlay.classList.remove('visible');
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=!(g.matchOver&&(host||snapshot.ranked));
       $('roomNext').textContent=snapshot.ranked?'FIND NEXT RANKED MATCH':'BACK TO LOBBY';
