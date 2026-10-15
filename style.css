@@ -1491,3 +1491,38 @@ body.in-game #table .flying-chip,
 #roomGame .flying-chip{
   box-shadow:inset 0 1px 2px #fff6,inset 0 -2px 2px #0006,0 2px 1px #0008,0 5px 8px #0009;
 }
+
+/* Photoreal-inspired Cairo clay chips: cosmetic only; retain existing stack/flight geometry. */
+body.in-game #table .pile-chip,
+#roomGame .pile-chip{
+  --face:#e7dfd0;--inlay:#f0e8d9;--stripe:#302b27;--line:#b7a587;--edge:#b9ae9c;
+  background:
+    linear-gradient(180deg,#ffffff20 0%,#0000 24%,#0007 79%,#000b 100%),
+    repeating-linear-gradient(90deg,var(--edge) 0 .115em,var(--stripe) .115em .15em,var(--edge) .15em .29em);
+  box-shadow:0 .025em .025em #fff4,inset 0 -.065em .07em #0008,0 .085em .08em #000c,0 .2em .23em #0007;
+}
+body.in-game #table .pile-chip::after,
+#roomGame .pile-chip::after{
+  background:
+    radial-gradient(ellipse at 34% 20%,#fff8 0%,#fff0 45%),
+    radial-gradient(closest-side,#25201c 0 10%,#0000 11%),
+    radial-gradient(closest-side,var(--inlay) 0 37%,#8f806c 38% 40%,var(--face) 41% 57%,var(--line) 58% 60%,#0000 61%),
+    repeating-conic-gradient(from 10deg,var(--stripe) 0 8deg,var(--face) 8deg 44deg,var(--stripe) 44deg 52deg,var(--face) 52deg 60deg);
+  box-shadow:inset 0 .025em .04em #fff9,inset 0 -.06em .08em #0008,0 -.02em .035em #0007;
+}
+body.in-game #table .pile-chip.chip-maroon,#roomGame .pile-chip.chip-maroon{
+  --face:#772e37;--inlay:#953e48;--stripe:#e7dccb;--line:#c6a775;--edge:#55202a;
+}
+body.in-game #table .pile-chip.chip-gold,#roomGame .pile-chip.chip-gold{
+  --face:#c2a06b;--inlay:#e0bc80;--stripe:#413127;--line:#856a43;--edge:#8d7049;
+}
+body.in-game #table .pile-chip.chip-black,#roomGame .pile-chip.chip-black{
+  --face:#393635;--inlay:#4b4744;--stripe:#d7c6a8;--line:#ab9877;--edge:#211f1e;
+}
+/* Balance indicator: understated dark clay medallion, without gold horizontal stripes. */
+body.in-game #table .actions .rivl-pov-chip-icon{
+  background:radial-gradient(circle at 32% 24%,#797571,#383635 48%,#1d1c1c 80%)!important;
+  border:1px solid #8f8981!important;
+  box-shadow:inset 0 1px 2px #fff5,inset 0 -2px 3px #000a,0 2px 3px #0008!important;
+  color:#e2d8c7!important;
+}
