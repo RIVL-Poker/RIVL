@@ -1540,3 +1540,23 @@ body.in-game #table .actions .rivl-pov-balance-stat .rivl-pov-chip-icon,
   box-shadow:inset 0 1px 2px #ffdd8055,0 0 0 1px #3b260e,0 2px 4px #0009!important;
   text-shadow:0 0 4px #e9a83c99!important;
 }
+
+/* Raise only the far-edge player nameplates on desktop. X positions, table,
+   cards, clocks, betting UI and mobile geometry remain untouched. */
+@media (min-width:901px){
+  body.in-game #table .poker-table[data-player-count="3"] .s1,
+  body.in-game #table .poker-table[data-player-count="3"] .s2{top:-21%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3,
+  body.in-game #table .poker-table[data-player-count="9"] .s4,
+  body.in-game #table .poker-table[data-player-count="9"] .s5{top:-23%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s2{top:-31%!important}
+}
