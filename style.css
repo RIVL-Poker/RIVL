@@ -865,6 +865,7 @@ body.in-game .poker-table .community,
  body.in-game .poker-table[data-player-count="6"] .muck-pile{top:9%}
  body.in-game #table .poker-table[data-player-count="9"] :is(.s1,.s8)>.bb-count{top:auto;bottom:calc(100% + 1px)}
  .bb-count{height:12px;padding:0 4px;font-size:8px;line-height:10px}
+}
 
 /* Global ranked leaderboard: exactly six aligned columns, no wrapping of ranks. */
 #leaderboard .online-row{
@@ -889,7 +890,7 @@ body.in-game .poker-table .community,
    The gameplay elements remain independent HTML, clickable and untransformed. */
 body.in-game .table-scene,
 .rivl-pvp-scene{
-  background:#1b1418 url("assets/cairo-room.svg") center center/cover no-repeat!important;
+  background:#1b1418 center center/cover no-repeat!important;
   isolation:isolate;
 }
 body.in-game .table-scene::before,
