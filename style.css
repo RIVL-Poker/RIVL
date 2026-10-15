@@ -925,12 +925,12 @@ body.in-game .skyline,.rivl-pvp-scene .skyline{
 }
 
 
-/* Cairo image registration — preserve 1536x1024 artwork without distortion.
+/* Cairo image registration — use the uploaded photographic Cairo table without stretching.
    Do not reposition cards or seats by changing the existing table geometry. */
 body.in-game .table-scene,
 .rivl-pvp-scene {
   background-color:#130e0d!important;
-  background-image:url("assets/cairo-table-photo.webp")!important;
+  background-image:url("assets/CAIRO%20BACKGROUND%20TEST%201.png")!important;
   background-repeat:no-repeat!important;
   background-position:center center!important;
   background-size:contain!important;
