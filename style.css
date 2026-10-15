@@ -1329,3 +1329,12 @@ body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .mu
  body.in-game #table .myseat .turn{visibility:hidden}
 }
 @media(max-width:900px){body.in-game #table .rivl-player-hud{display:none!important}}
+
+/* Overlay HUD on the lower table edge rather than adding document height.
+   Keep the betting console unobstructed below. */
+@media(min-width:901px){
+ body.in-game #table .rivl-player-hud{position:absolute!important;left:50%;bottom:148px;transform:translateX(-50%);z-index:12;margin:0!important;min-height:0!important;height:112px;max-width:none;width:calc(100% - 72px)}
+ body.in-game #table .rivl-player-balance{align-self:end;margin-bottom:0}
+ body.in-game #table .rivl-hud-clock{align-self:end}
+ body.in-game #table .rivl-player-hand{align-self:end}
+}
