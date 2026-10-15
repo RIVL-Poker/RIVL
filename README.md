@@ -11,6 +11,9 @@ Every push to `main` tests and deploys the site and the rooms server together to
 1. Secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token made from the **Edit Cloudflare Workers** template.
 2. Variable `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID (shown on the Workers & Pages overview page).
 
+### Sign in with Google (optional)
+The site opens on a login screen. Its Google button appears once `GOOGLE_CLIENT_ID` in `wrangler.toml` holds an OAuth 2.0 **Web application** client ID from Google Cloud Console (APIs & Services > Credentials), with the site's addresses (for example `https://rivlpoker.com`) under Authorized JavaScript origins. The client ID is public, so it belongs in `wrangler.toml`; no client secret is needed. The server checks every Google token itself (`worker/google.js`).
+
 Then run the workflow from the Actions tab (or push to `main`). The site appears at `https://rivl.<your-subdomain>.workers.dev`; a custom domain can be added in the Cloudflare dashboard under the Worker's Settings > Domains & Routes. See ROOMS.md for how online rooms work.
 
 ## v1.4.1
@@ -35,6 +38,8 @@ Then run the workflow from the Actions tab (or push to `main`). The site appears
 - worker/rooms.js — Cloudflare Worker: serves the site and runs rooms
 - worker/directory.js — accounts, online ratings, lobby and daily free-plan budget
 - account.js — sign up / sign in and the online leaderboard
+- login.js — the login screen (Google, sign-in code or guest)
+- worker/google.js — verifies Google ID tokens
 
 ## Tests
 `node tests-worker.mjs` plays 60 simulated room matches (chip conservation, no stuck turns, matches end) and checks reveal, reconnect, sit-out, leave/host hand-off, idle cleanup, accounts, rated results, the lobby and the free-plan budget.

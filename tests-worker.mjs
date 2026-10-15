@@ -431,7 +431,6 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
-console.log('PASS: '+checks+' room server checks');
 
 // Chat: private and ranked players can exchange authenticated messages; reconnect sees history.
 {
@@ -455,3 +454,58 @@ console.log('PASS: '+checks+' room server checks');
   assert.equal(reconnect.last('state').state.chat[0].name,'Host');
   checks++;
 }
+
+// Google sign-in: the Worker verifies the ID token (signature, issuer, audience, expiry) before the Directory
+// signs in, links or creates an account. Each Google sign-in gets its own device key; sign-out ends only that one.
+{
+  const {resetGoogleKeys}=await import('./worker/google.js');
+  const CLIENT='test-client.apps.googleusercontent.com';
+  const pair=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
+  const other=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
+  const jwk=await crypto.subtle.exportKey('jwk',pair.publicKey);
+  const realFetch=globalThis.fetch;let certFetches=0;
+  globalThis.fetch=async url=>{if(String(url).startsWith('https://www.googleapis.com/oauth2/v3/certs')){certFetches++;return Response.json({keys:[{...jwk,kid:'k1',alg:'RS256',use:'sig'}]},{headers:{'Cache-Control':'public, max-age=3600'}})}return realFetch(url)};
+  resetGoogleKeys();
+  const enc=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
+  const token=async(claims={},{key=pair.privateKey,kid='k1'}={})=>{
+    const now=Math.floor(Date.now()/1000);
+    const body=enc({alg:'RS256',kid,typ:'JWT'})+'.'+enc({iss:'https://accounts.google.com',aud:CLIENT,sub:'g-111',email:'a@example.com',given_name:'Ann',iat:now,exp:now+3600,...claims});
+    return body+'.'+Buffer.from(await crypto.subtle.sign('RSASSA-PKCS1-v1_5',key,new TextEncoder().encode(body))).toString('base64url');
+  };
+  const unset=makeEnv();
+  assert.equal((await api(unset,'/api/config')).data.googleClientId,'','no client ID: the page hides the Google button');
+  assert.equal((await api(unset,'/api/google',{credential:await token()})).status,503);
+  const env=makeEnv({GOOGLE_CLIENT_ID:CLIENT});
+  assert.equal((await api(env,'/api/config')).data.googleClientId,CLIENT);
+  for(const [claims,opts,why] of [[{aud:'someone-else'},{},'wrong audience'],[{iss:'https://evil.example'},{},'wrong issuer'],[{exp:Math.floor(Date.now()/1000)-600},{},'expired'],[{},{key:other.privateKey},'bad signature'],[{},{kid:'nope'},'unknown key']])
+    assert.equal((await api(env,'/api/google',{credential:await token(claims,opts)})).status,401,why);
+  assert.equal((await api(env,'/api/google',{credential:'not.a.token'})).status,401);
+  // First sign-in asks for a name; the same token then creates the account.
+  const first=(await api(env,'/api/google',{credential:await token()})).data;
+  assert.deepEqual(first,{needsName:true});
+  assert.equal((await api(env,'/api/google',{credential:await token(),name:'x'})).status,400);
+  const made=(await api(env,'/api/google',{credential:await token(),name:'Gina'})).data;
+  assert.ok(made.created&&made.key&&made.account.google&&made.account.name==='Gina');
+  assert.equal((await api(env,'/api/me',{key:made.key})).data.account.name,'Gina','the Google device key works like a sign-in code');
+  // Signing in again (another device) returns a different key; both stay valid until signed out.
+  const again=(await api(env,'/api/google',{credential:await token()})).data;
+  assert.ok(!again.needsName&&again.account.id===made.account.id&&again.key!==made.key);
+  await api(env,'/api/signout',{key:again.key});
+  assert.equal((await api(env,'/api/me',{key:again.key})).status,401,'signed-out device key stops working');
+  assert.equal((await api(env,'/api/me',{key:made.key})).status,200,'other devices stay signed in');
+  // A sign-in-code account can connect Google; that Google account then signs in to it.
+  const coder=(await api(env,'/api/accounts',{name:'Hank'})).data;
+  assert.equal(coder.account.google,false);
+  const linked=(await api(env,'/api/google',{credential:await token({sub:'g-222'}),key:coder.key})).data;
+  assert.ok(linked.account.google&&linked.key===coder.key,'linking keeps the sign-in code');
+  assert.equal((await api(env,'/api/google',{credential:await token({sub:'g-222'})})).data.account.name,'Hank');
+  assert.equal((await api(env,'/api/google',{credential:await token({sub:'g-111'}),key:coder.key})).status,409,'one Google account per RIVL account');
+  assert.equal((await api(env,'/api/signout',{key:coder.key})).status,200);
+  assert.equal((await api(env,'/api/me',{key:coder.key})).status,200,'sign-out never deletes a sign-in code');
+  assert.equal(certFetches,2,'Google keys are cached (the one refetch was for the unknown key id)');
+  assert.equal((await api(env,'/api/leaderboard')).data.players.some(p=>'google' in p),false,'others never see how a player signs in');
+  globalThis.fetch=realFetch;
+  checks++;
+}
+
+console.log('PASS: '+checks+' room server checks');

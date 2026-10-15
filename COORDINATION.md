@@ -57,3 +57,9 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 ### 2026-10-15 02:40 UTC · Claude
 - Bots now take a random 2–5 seconds on every decision, in bot practice (`script.js`) and online rooms (`worker/rooms.js`). The bot whose turn it is gets a pulsing gold ring and three bouncing dots, and the status line names who is thinking.
 - Online rooms: the server starts a bot's think clock on its turn (`g.botThinking`, `g.deadline`) and the room alarm makes the move when it runs out. Each bot move is now its own alarm and save, so bot-heavy rooms use a few more storage writes per hand than before.
+
+### 2026-10-15 03:30 UTC · Claude
+- Login screen on load (`login.js`, replaces the welcome popup): Continue with Google, use a sign-in code, or play bots as a guest. Signed-in players skip it.
+- Google sign-in: the Worker verifies the ID token (`worker/google.js`), then the Directory signs in the Google-linked account, links Google to the signed-in code account, or creates one after asking for a name. Each Google sign-in gets its own device key in a new `sessions` table; `/api/signout` ends only that one. Only Google's `sub` id is stored, no email.
+- Needs `GOOGLE_CLIENT_ID` in `wrangler.toml` (public value); without it the Google button stays hidden.
+
