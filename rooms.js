@@ -204,6 +204,10 @@
       if(previousPhase!=='showdown'&&g.phase==='showdown')pvpSound('win');
       previousPhase=g.phase;
       $('roomPot').textContent=g.pot;
+      $('roomPotTotal').textContent=Number(g.pot||0).toLocaleString();
+      const myContribution=Number(g.players.find(p=>p.seat===snapshot.mySeat)?.contribution||0);
+      $('roomPotEquity').textContent=g.pot?Math.round(100*myContribution/g.pot)+'%':'0%';
+      $('roomPotChips').innerHTML=Array.from({length:g.pot?Math.min(16,Math.max(1,Math.ceil(g.pot/45))):0},()=>'<i class="pot-chip"></i>').join('');
       const seats=$('roomGamePlayers');seats.replaceChildren();
       const count=Math.min(9,opponents.length+1);
       $('roomPokerTable').dataset.playerCount=String(count);

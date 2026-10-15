@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=exterior-tags-20261015">
+    <link rel="stylesheet" href="style.css?v=pot-layout-20261015">
     <script src="screen-modes.js"></script>
 </head>
 
@@ -110,7 +110,7 @@
                     <div class="skyline">♠ RIVL · CAIRO TABLE ♠</div>
                     <div class="poker-table rivl-pvp-table" id="roomPokerTable">
                       <div id="roomGamePlayers" class="rivl-pvp-opponents"></div>
-                      <div class="pot">POT <strong id="roomPot">0</strong></div>
+                      <div class="pot"><strong id="roomPot" class="rivl-sr-only">0</strong><div id="roomPotChips" class="pot-chips" aria-hidden="true"></div></div>
                       <div id="roomBoard" class="community rivl-pvp-board"></div>
                       <div class="myseat rivl-pvp-myseat">
                         <div id="roomHoleCards" class="holecards"></div>
@@ -133,6 +133,7 @@
                         <div class="quick-bets"><button data-room-bet="min">MIN</button><button data-room-bet="half">½ POT</button><button data-room-bet="pot">POT</button><button data-room-bet="all">ALL IN</button></div>
                       </div>
                       <button id="roomAllin" class="outline">ALL IN</button>
+                      <aside class="rivl-pot-stats" aria-label="Pot statistics"><div class="rivl-pot-stats-label">POT TOTAL</div><div class="rivl-pot-stats-value"><span class="rivl-pot-stats-chip" aria-hidden="true"></span><strong id="roomPotTotal">0</strong></div><div class="rivl-pot-stats-divider"></div><div class="rivl-pot-stats-label">MY EQUITY IN POT</div><strong class="rivl-pot-stats-percent" id="roomPotEquity">0%</strong></aside>
                     </div>
                     <h3 id="roomWinner" aria-live="polite"></h3>
                     <div id="roomRatings" aria-live="polite"></div>
@@ -188,7 +189,7 @@
                         <div class="seat s8">
                             <div class="avatar">B</div><span>Blaze · 1,000</span>
                         </div>
-                        <div class="pot">POT <strong id="pot">15</strong>
+                        <div class="pot"><strong id="pot" class="rivl-sr-only">15</strong>
                             <div id="potChips" class="pot-chips" aria-hidden="true"></div>
                         </div>
                         <div id="winFx" class="win-fx" aria-live="polite"></div>
@@ -221,6 +222,7 @@
                                 POT</button><button data-bet="pot">POT</button><button data-bet="all">ALL IN</button>
                         </div>
                     </div>
+                    <aside class="rivl-pot-stats" aria-label="Pot statistics"><div class="rivl-pot-stats-label">POT TOTAL</div><div class="rivl-pot-stats-value"><span class="rivl-pot-stats-chip" aria-hidden="true"></span><strong id="botPotTotal">0</strong></div><div class="rivl-pot-stats-divider"></div><div class="rivl-pot-stats-label">MY EQUITY IN POT</div><strong class="rivl-pot-stats-percent" id="botPotEquity">0%</strong></aside>
                 </div>
                 <div class="bottom-toggle"><button id="togglePanel" aria-expanded="false">⌃ &nbsp; OPEN GAME
                         PANEL</button></div>
