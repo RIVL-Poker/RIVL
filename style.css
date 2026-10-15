@@ -1311,3 +1311,66 @@ body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .mu
   border:1px solid #c18b3c!important;border-radius:5px!important;color:#e2ae55!important;display:grid!important;place-items:center;padding:0!important;font-family:Georgia,'Times New Roman',serif;
   box-shadow:inset 0 0 0 2px #110e0b,inset 0 0 0 3px #8a6630,0 1px 0 #5a4120,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important}
 .muck-card::after{content:'♠';font-size:13px;line-height:1;color:#e2ae55;text-shadow:0 1px 1px #000}
+
+/* Player POV v2 — use the existing real hole cards and real turn clock,
+   rather than cloning them. Desktop only; no poker logic or mobile layout changes.
+   No new element is placed over the action controls. */
+@media(min-width:901px){
+ body.in-game #table{position:relative}
+ body.in-game #table .table-scene{isolation:isolate}
+ body.in-game #table .poker-table>.myseat{
+   position:absolute!important;left:50%!important;top:calc(100% + 19px)!important;
+   bottom:auto!important;right:auto!important;transform:translate(-50%,-50%)!important;
+   width:260px!important;height:118px!important;min-width:0!important;
+   background:none!important;border:0!important;box-shadow:none!important;
+   padding:0!important;margin:0!important;display:block!important;
+   pointer-events:none!important;overflow:visible!important;z-index:15!important
+ }
+ body.in-game #table .poker-table>.myseat>.avatar,
+ body.in-game #table .poker-table>.myseat>div:not(.holecards){display:none!important}
+ body.in-game #table .poker-table>.myseat>.holecards{
+   position:absolute!important;left:50%!important;top:0!important;bottom:auto!important;
+   transform:translateX(-50%)!important;display:flex!important;justify-content:center!important;
+   align-items:center!important;gap:10px!important;width:max-content!important;
+   max-width:none!important;visibility:visible!important;pointer-events:none!important
+ }
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:104px!important;height:138px!important;min-width:104px!important;min-height:138px!important;
+   max-width:104px!important;max-height:138px!important;box-sizing:border-box!important;
+   font-size:35px!important;line-height:1.1!important;padding:10px!important;
+   transform:none!important;rotate:none!important;position:relative!important;
+   border-radius:8px!important
+ }
+ body.in-game #table .poker-table>.myseat>.turn{
+   position:absolute!important;left:-86px!important;right:auto!important;
+   top:54px!important;bottom:auto!important;transform:translate(-50%,-50%)!important;
+   width:90px!important;height:90px!important;display:grid!important;place-items:center!important;
+   visibility:visible!important;border:7px solid #d4a654!important;border-radius:50%!important;
+   background:#0c0b0a!important;color:#f3cb80!important;font-size:36px!important;
+   font-weight:800!important;box-shadow:0 0 0 4px #16100a,0 4px 16px #000b!important;
+   font-variant-numeric:tabular-nums
+ }
+ body.in-game #table>.rivl-pov-balance{
+   position:absolute;right:clamp(28px,15%,230px);bottom:clamp(185px,22%,260px);
+   z-index:13;display:flex;align-items:center;gap:13px;padding:12px 20px;
+   border:1px solid #b38a4b;border-radius:12px;background:#100e0ceF;
+   color:#f0c675;pointer-events:none;box-shadow:0 4px 16px #0009
+ }
+ body.in-game #table .rivl-pov-chip-stack{
+   display:grid;place-items:center;width:48px;height:50px;border-radius:45%;
+   color:#f1c56f;font-size:24px;border:2px solid #b68b48;
+   background:repeating-linear-gradient(0deg,#1a1714 0 7px,#bd914b 7px 10px)
+ }
+ body.in-game #table .rivl-pov-balance>div{display:flex;flex-direction:column;gap:4px}
+ body.in-game #table .rivl-pov-label{font-size:12px;letter-spacing:.07em;font-weight:800}
+ body.in-game #table .rivl-pov-balance strong{font-size:27px;font-variant-numeric:tabular-nums}
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+  width:82px!important;height:110px!important;min-width:82px!important;min-height:110px!important;
+  max-width:82px!important;max-height:110px!important;font-size:27px!important}
+ body.in-game #table .poker-table>.myseat>.turn{left:-58px!important;width:70px!important;height:70px!important;font-size:28px!important}
+ body.in-game #table>.rivl-pov-balance{right:6%;padding:8px 12px}
+ body.in-game #table .rivl-pov-balance strong{font-size:20px}
+}
+@media(max-width:900px){body.in-game #table>.rivl-pov-balance{display:none!important}}
