@@ -51,7 +51,7 @@ simple = { limit = 5, period = 60 }
 ALLOWED_ORIGINS = ""
 # "Sign in with Google": the OAuth 2.0 Web client ID from Google Cloud Console (public, not a secret).
 # Empty hides the Google button; players can still use a sign-in code.
-GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_ID = "465836123925-5l16gh2t6l95rf3n6pkgqq55iam7hhvc.apps.googleusercontent.com"
 # Daily budget that keeps online play inside Cloudflare's free plan (resets at midnight UTC).
 # Measured cost is roughly 33 storage writes and 50 seconds of room time per hand, so 1,500 hands
 # (about 20 table-hours) stays under the free limits of 100,000 writes and 13,000 GB-s per day.
