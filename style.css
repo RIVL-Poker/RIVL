@@ -1674,3 +1674,49 @@ body.in-game #roomGame .rivl-pvp-board .card.back{
 .rivl-room-win-fx strong{display:block;font-size:clamp(23px,2.4vw,32px)}
 .rivl-room-win-fx .rivl-win-hand{font-size:clamp(16px,1.5vw,21px);margin-top:6px;color:white}
 @media(max-width:650px){#table .win-fx{padding:12px 14px;min-width:220px}.rivl-room-win-fx{padding:12px 16px;min-width:210px}.rivl-winner-cards .card{width:43px!important;height:61px!important}}
+
+/* Cairo victory presentation: centered, premium gold, and large enough to celebrate a hand. */
+body.in-game #table .poker-table .win-fx,
+#roomGame .rivl-pvp-table .rivl-room-win-fx{
+  top:50%!important;left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  box-sizing:border-box!important;
+  width:max-content!important;min-width:min(390px,86vw)!important;
+  max-width:min(540px,90vw)!important;
+  padding:24px 32px 22px!important;
+  border:2px solid #e5b65c!important;
+  border-radius:22px!important;
+  background:radial-gradient(ellipse at 50% 0%,#62421e 0%,#26190e 38%,#0c0b0a 90%)!important;
+  box-shadow:0 0 0 2px #080605,0 0 0 4px #a67735,0 12px 45px #000d,0 0 55px #c98d3b80,inset 0 1px 18px #f0b85c29!important;
+  color:#ffda8a!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  font-size:clamp(29px,3.3vw,43px)!important;
+  font-weight:900!important;letter-spacing:.075em!important;
+  line-height:1.12!important;
+  text-shadow:0 2px 0 #40200a,0 0 24px #f0ad56a6!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  margin-top:11px!important;
+  font-size:clamp(19px,1.9vw,25px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em!important;color:#fff2d0!important;
+}
+body.in-game #table .win-fx small{margin-top:13px!important;font-size:clamp(13px,1.15vw,16px)!important;color:#f8d59d!important}
+body.in-game #table .win-fx.visible,
+#roomGame .rivl-room-win-fx.visible{animation:rivlVictoryEntrance .42s cubic-bezier(.2,.85,.2,1) both!important}
+@keyframes rivlVictoryEntrance{
+  from{opacity:0;transform:translate(-50%,-46%) scale(.88)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:650px){
+  body.in-game #table .poker-table .win-fx,
+  #roomGame .rivl-pvp-table .rivl-room-win-fx{
+    min-width:min(260px,88vw)!important;max-width:90vw!important;
+    padding:14px 16px!important;border-radius:16px!important;
+  }
+  body.in-game #table .win-fx strong,
+  #roomGame .rivl-room-win-fx strong{font-size:clamp(22px,5vw,29px)!important}
+}
