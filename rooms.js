@@ -277,10 +277,34 @@
   }
   function lobbyLocked(){return !!snapshot?.game&&!snapshot.game.matchOver}
   function send(message){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message));else status('Reconnecting to the room…')}
+  // Ranked lobbies get their own browser history entry, so the phone or browser back gesture leaves the lobby
+  // instead of the site. Leaving a Ranked room by any route lands on the 3/6/9 Ranked menu, not the casual finder.
+  // (script.js declares a global `history` array, so the browser API is reached through window.history.)
+  let skipRankedPop=false;
+  const inRankedHistory=()=>!!window.history.state?.rivlRankedRoom;
+  function markRankedHistory(){if(!inRankedHistory())try{window.history.pushState({rivlRankedRoom:true},'')}catch{}}
+  function dropRankedHistory(){if(inRankedHistory()){skipRankedPop=true;window.history.back()}}
+  function showRankedMenu(message){
+    show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;
+    $('rankedSelectStatus').textContent=window.rivlAccount?.key()?(message||''):'Sign in on your Profile to play Ranked.';
+  }
+  function leaveRoom(){
+    if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return false;
+    const ranked=!!snapshot?.ranked||rankedEntry;
+    send({type:'leave'});resetView('Left room.');
+    if(ranked){dropRankedHistory();showRankedMenu()}
+    return true;
+  }
+  window.addEventListener('popstate',()=>{
+    if(skipRankedPop){skipRankedPop=false;return}
+    if(!token||!(snapshot?.ranked||rankedEntry))return;
+    // Back out of a running Ranked match only after the same confirm as the Leave button; otherwise stay put.
+    if(!leaveRoom())markRankedHistory();
+  });
   function resetView(message){
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
-    clearInterval(queueTimer);socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
+    clearInterval(queueTimer);socket=null;roomCode='';token='';rankedEntry=false;snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
     const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM';
     $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
   }
@@ -293,9 +317,9 @@
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
-      if(message.type==='state'){snapshot=message.state;roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
+      if(message.type==='state'){snapshot=message.state;if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
       else if(message.type==='chat')addChatMessage(message.message);
-      else if(message.type==='removed')resetView(message.reason||'You are no longer in that room.');
+      else if(message.type==='removed'){const ranked=!!snapshot?.ranked||rankedEntry,reason=message.reason||'You are no longer in that room.';resetView(reason);if(ranked){dropRankedHistory();showRankedMenu(reason)}}
       else if(message.error)status(message.error);
     };
     // Reconnect automatically with backoff; the saved token keeps the seat.
@@ -345,10 +369,10 @@
   $('quickPlay').onclick=()=>enter('quick');
   $('createRoom').onclick=()=>enter('create');
   document.querySelectorAll('[data-ranked-count]').forEach(btn=>btn.addEventListener('click',()=>{rankedSize=Number(btn.dataset.rankedCount);enter('ranked')}));
-  $('openRanked').onclick=()=>{show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;$('rankedSelectStatus').textContent=window.rivlAccount?.key()?'':'Sign in on your Profile to play Ranked.'};
+  $('openRanked').onclick=()=>showRankedMenu();
   $('backFromRanked').onclick=()=>{show('play');$('rankedSelect').hidden=true;$('modeSelect').hidden=false};
   $('joinRoom').onclick=()=>enter('join');
-  $('leaveRoom').onclick=()=>{if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return;send({type:'leave'});resetView('Left room.')};
+  $('leaveRoom').onclick=leaveRoom;
   $('roomStart').onclick=()=>send({type:'startMatch'});
   $('roomFold').onclick=()=>send({type:'action',action:'fold'});
   $('roomCall').onclick=()=>send({type:'action',action:snapshot?.game?.legal?.check?'check':'call'});
