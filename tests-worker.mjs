@@ -334,6 +334,23 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+
+// Ranked result delivery survives a temporary Directory outage and retries on alarm.
+{
+  const {room,state}=await setup(0,2);
+  room.room.pendingResults={matchId:'retry-test',players:[{id:'a',place:1},{id:'b',place:2}]};
+  const original=room.dir.bind(room);
+  let calls=0;
+  room.dir=async(path,body)=>{if(path==='/results'){calls++;if(calls===1)return null;return {rated:true,changes:[{id:'a'}]}}return original(path,body)};
+  await room.save();
+  assert.ok(room.room.pendingResults,'a failed result delivery remains pending');
+  await room.alarm();
+  assert.equal(calls,2,'idle alarm retries failed result delivery');
+  assert.equal(room.room.pendingResults,null,'successful delivery clears pending results');
+  assert.deepEqual(room.room.game.ratingChanges,[{id:'a'}]);
+  checks++;
+}
+
 console.log('PASS: '+checks+' room server checks');
 
 // Chat: private and ranked players can exchange authenticated messages; reconnect sees history.
