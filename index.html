@@ -54,9 +54,10 @@
                     <p id="rankedSelectStatus" class="muted" role="status"></p>
                 </div>
                 <div id="playerSelect" class="rivl-menu-step" hidden>
-                    <div class="section-title"><h2>CHOOSE YOUR TABLE</h2><span>15-MINUTE MATCHES</span></div>
+                    <div class="section-title"><h2>CHOOSE YOUR TABLE</h2><span>PICK PLAYERS AND A TIME LIMIT</span></div>
                     <button class="rivl-back outline" id="backToModes">← BACK TO GAME MODES</button>
                     <label class="practice-banner"><input id="coachToggle" type="checkbox" checked> Live grades</label>
+                    <div id="timeLimit" class="practice-banner time-limit" role="group" aria-label="Game time limit"><span>Time limit</span><button type="button" data-minutes="0">OFF</button><button type="button" data-minutes="5">5 MIN</button><button type="button" data-minutes="10">10 MIN</button><button type="button" data-minutes="15">15 MIN</button></div>
                     <div class="modes rivl-card-modes">
                         <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">A<span>♠</span></span><span class="rivl-playing-card">K<span>♠</span></span></div><h3>3 PLAYERS</h3><button class="gold join" data-count="3">PLAY BOTS</button></article>
                         <article class="mode"><div class="rivl-card-art"><span class="rivl-playing-card">Q<span>♥</span></span><span class="rivl-playing-card">Q<span>♠</span></span></div><h3>6 PLAYERS</h3><button class="gold join" data-count="6">PLAY BOTS</button></article>
@@ -152,7 +153,7 @@
             <section id="table" class="view">
                 <div class="gamebar">
                     <div><small>BLINDS</small><strong id="blinds">5 / 10</strong></div>
-                    <div><small>MATCH CLOCK</small><strong id="clock">15:00</strong></div>
+                    <div><small id="clockLabel">MATCH CLOCK</small><strong id="clock">00:00</strong></div>
                     <div><small>ACCURACY</small><strong id="liveAcc">–</strong></div>
                     <div><small>PLAYERS</small><strong id="players">6</strong></div><button class="outline"
                         id="leave">LEAVE TABLE</button>

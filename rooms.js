@@ -26,7 +26,7 @@
   };
   const paintSeatAvatar=(el,p)=>{const a=avatarFor(p);el.replaceChildren();if(/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a)&&a.length<=45000){const img=document.createElement('img');img.src=a;img.alt='';img.className='rivl-avatar-photo';el.append(img)}else el.textContent=a};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
-  let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
+  let clockTimer=null,roomBetKey='',previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
   function animatedCard(code,back,delay=0){const el=cardNode(code,back);if(delay){el.classList.add('rivl-deal-in');el.style.animationDelay=delay+'ms'}return el}
   let roomTab='chat',roomHistory=[],roomChat=[];
@@ -251,10 +251,13 @@
         const amount=$('roomRaiseAmount'),slider=$('roomRaiseSlider');
         const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);
         amount.min=slider.min=first;amount.max=slider.max=last;amount.step=slider.step=5;
-        if(Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
+        // Each new decision starts the raise bar back at the minimum legal raise.
+        const betKey=[g.handNumber,g.board.length,l.call,first].join(':');
+        if(betKey!==roomBetKey||Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
+        roomBetKey=betKey;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
-      }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';
+      }else{roomBetKey='';$('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
       const tick=()=>{
         const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);
