@@ -923,3 +923,34 @@ body.in-game .skyline,.rivl-pvp-scene .skyline{
 @media(max-width:600px){
  body.in-game .table-scene,.rivl-pvp-scene{background-position:center center!important}
 }
+
+
+/* Cairo image registration — use the uploaded photographic Cairo table without stretching.
+   Do not reposition cards or seats by changing the existing table geometry. */
+body.in-game .table-scene,
+.rivl-pvp-scene {
+  background-color:#130e0d!important;
+  background-image:url("assets/CAIRO%20BACKGROUND%20TEST%201.png")!important;
+  background-repeat:no-repeat!important;
+  background-position:center center!important;
+  background-size:contain!important;
+}
+/* The scenery is an image, but every card, seat and pot stays interactive HTML. */
+body.in-game .table-scene::before,
+body.in-game .table-scene::after,
+.rivl-pvp-scene::before,
+.rivl-pvp-scene::after { content:none!important; }
+/* Do not stretch or overwrite the original poker-table dimensions:
+   seat and board positions are defined relative to this box. */
+body.in-game .table-scene .poker-table,
+.rivl-pvp-scene .rivl-pvp-table {
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+body.in-game .table-scene .poker-table::before,
+body.in-game .table-scene .poker-table::after,
+.rivl-pvp-scene .rivl-pvp-table::before,
+.rivl-pvp-scene .rivl-pvp-table::after { content:none!important; }
+body.in-game .table-scene .skyline,
+.rivl-pvp-scene .skyline { visibility:hidden; }
