@@ -1599,6 +1599,64 @@ body.in-game #roomGame .rivl-room-panel-toggle > button:hover{
   border-color:#c49a5a!important;
 }
 
+/* Decision clock: keeps the new round POV clock, but on your turn its ring drains from green to red
+   as the seconds run out, like the online room clock. --turn-left is set by paintTurn() in script.js. */
+@property --turn-left{syntax:'<percentage>';inherits:false;initial-value:100%}
+body.in-game #table .poker-table>.myseat>.turn.is-live{
+  border-color:transparent!important;color:#f7d291!important;
+  background:linear-gradient(#0c0b0a,#0c0b0a) padding-box,
+    conic-gradient(#dc5555 calc(100% - var(--turn-left)),#52bd76 0) border-box!important;
+  transition:--turn-left 1s linear
+}
+
+/* Phones and tablets: the same POV layout as desktop, sized to fit under the table. Your seat pill (avatar,
+   name, chips) gives way to two larger hole cards with the round clock on their left and your BB count on
+   their right. They sit in the strip below the rim where the seat pill was, so the table keeps its size. */
+@media(max-width:900px){
+  body.in-game #table .poker-table>.myseat{
+    width:auto!important;height:auto!important;min-width:0!important;padding:0!important;
+    background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;
+    display:block!important;pointer-events:none!important;overflow:visible!important}
+  body.in-game #table .poker-table>.myseat>.avatar,
+  body.in-game #table .poker-table>.myseat>div:not(.holecards){display:none!important}
+  body.in-game #table .poker-table>.myseat>.holecards{display:flex!important;gap:5px!important;position:relative;z-index:1}
+  body.in-game #table .poker-table>.myseat>.holecards .card{
+    width:44px!important;height:60px!important;font-size:18px!important;padding:3px 4px!important;
+    border-radius:5px!important;box-sizing:border-box!important}
+  body.in-game #table .poker-table>.myseat>.turn{
+    position:absolute!important;right:calc(100% + 10px);top:50%;transform:translateY(-50%);
+    width:46px;height:46px;box-sizing:border-box;padding:0;display:grid;place-items:center;
+    border:4px solid #d4a654;border-radius:50%;background:#0c0b0a;color:#f3cb80;
+    font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px #16100a,0 3px 10px #000b}
+  body.in-game #table .poker-table>.myseat>.bb-count{
+    position:absolute!important;left:calc(100% + 8px)!important;right:auto!important;top:50%!important;bottom:auto!important;
+    transform:translateY(-50%)!important;white-space:nowrap}
+  /* Balance joins the pot total and equity on the slim line at the top of the table. */
+  body.in-game #table .actions .rivl-pov-balance-stat{display:flex!important}
+  body.in-game #table .actions .rivl-pov-stat{display:flex;align-items:center;gap:5px}
+  body.in-game #table .actions .rivl-pov-balance-stat{border-left:1px solid #6c4c27;padding-left:6px}
+  body.in-game #table .actions .rivl-pov-chip-icon{
+    display:inline-grid;place-items:center;width:14px;height:14px;flex:0 0 14px;border-radius:50%;font-size:9px;line-height:1}
+}
+@media(max-width:600px){
+  /* Your seat sits a little lower than the old pill so the bigger cards clear the bottom seats. */
+  body.in-game #table .poker-table>.myseat{top:calc(100% + 30px)!important}
+}
+@media(max-width:600px){
+  /* Short labels so pot, balance and equity fit on the one slim line above the table. */
+  body.in-game #table .actions .rivl-pot-stats{max-width:calc(100% - 12px);gap:5px!important;padding:0 7px!important}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-label{font-size:0!important;letter-spacing:.04em}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-label::after{font-size:8px}
+  body.in-game #table .actions .rivl-pov-stat:not(.rivl-pov-balance-stat) .rivl-pot-stats-label::after{content:'POT'}
+  body.in-game #table .actions .rivl-pov-balance-stat .rivl-pot-stats-label::after{content:'BALANCE'}
+  body.in-game #table .actions .rivl-pot-stats>.rivl-pot-stats-label::after{content:'EQUITY'}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-value,
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-percent{font-size:12px!important}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-divider{margin:0 1px}
+}
+@media(min-width:601px) and (max-width:900px){
+  /* Tablets: drop your cards onto the front rim, below the bottom seats. */
+  body.in-game #table .poker-table>.myseat{top:calc(100% + 48px)!important}
 /* Test: lower the shared board group slightly from 46% to 49% of felt height.
    Preserve card sizing, pot/muck spacing, animations, mobile layout and game logic. */
 @media (min-width:901px){
