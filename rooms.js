@@ -161,9 +161,12 @@
       const active=g.players.filter(p=>p&&!p.sittingOut);
       $('roomPlayerCount').textContent=active.length;
       const me=g.players.find(p=>p.seat===snapshot.mySeat);
-      const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat));
+      // Opponents are laid out clockwise starting at your left, in the server's turn order (seat index order
+      // starting after yours), so the action, dealer and blinds travel around the table instead of jumping.
+      const after=p=>me?(p.seat-me.seat+9)%9:p.seat;
+      const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat)).sort((a,b)=>after(a)-after(b));
       $('roomMyName').textContent=me?.name||'Spectator';
-      paintSeatAvatar($('roomMyAvatar'),snapshot.seats[me?.seat]||me);$('roomMyAvatar').parentElement.classList.toggle('is-dealer',!!me&&me.seat===g.dealer);
+      paintSeatAvatar($('roomMyAvatar'),snapshot.seats[me?.seat]||me);const mySpot=$('roomMyAvatar').parentElement;for(const [cls,seat] of [['is-dealer',g.dealer],['is-sb',g.sbSeat],['is-bb',g.bbSeat]])mySpot.classList.toggle(cls,!!me&&me.seat===seat);
       $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
       $('roomTimer').hidden=g.turn!==me?.seat||g.phase==='showdown';
       const newHand=g.handNumber!==previousHand;
@@ -201,7 +204,7 @@
       $('roomPokerTable').dataset.playerCount=String(count);
       opponents.forEach((p,i)=>{
         const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
-        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'');
+        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
         const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
