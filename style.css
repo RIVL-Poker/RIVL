@@ -1598,3 +1598,13 @@ body.in-game #roomGame .rivl-room-panel-toggle > button:hover{
   background:#261b10!important;
   border-color:#c49a5a!important;
 }
+
+/* Test: lower the shared board group slightly from 46% to 49% of felt height.
+   Preserve card sizing, pot/muck spacing, animations, mobile layout and game logic. */
+@media (min-width:901px){
+  body.in-game #table .community,
+  body.in-game #table .pot,
+  body.in-game #table .muck-pile,
+  #roomGame .rivl-pvp-board,
+  #roomGame .rivl-pvp-table .pot{top:49%!important}
+}
