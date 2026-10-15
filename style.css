@@ -1012,17 +1012,6 @@ body.table-focus #rooms.rivl-match-mode{height:100dvh}
 }
 #rooms.rivl-match-mode .room-topline #roomFocus{min-height:34px;padding:6px 12px;font-size:12px}
 @media(max-width:600px){#rooms.rivl-match-mode .room-topline #roomFocus{min-height:30px;padding:4px 9px}}
-/* On desktop the Cairo artwork stretches to fill the scene, so when full screen or a collapsed sidebar
-   makes the scene bigger, the seat box grows with it and stays on the painted rail. These fractions match
-   the default 1440x900 layout, where the seats were lined up with the painting. */
-@media(min-width:901px){
-  body.table-focus.in-game .table-scene,html.sidebar-collapsed body.in-game .table-scene,
-  body.table-focus #roomGame .rivl-pvp-scene,html.sidebar-collapsed #roomGame .rivl-pvp-scene{position:relative}
-  body.table-focus.in-game .table-scene .poker-table,html.sidebar-collapsed body.in-game .table-scene .poker-table,
-  body.table-focus #roomGame .rivl-pvp-scene .rivl-pvp-table,html.sidebar-collapsed #roomGame .rivl-pvp-scene .rivl-pvp-table{
-    position:absolute;left:18.8%;top:23.6%;width:62.4%;height:54.4%;aspect-ratio:auto;margin:0;
-  }
-}
 
 
 /* Desktop seat badges: symmetric exterior positions for bot and multiplayer.
@@ -1142,4 +1131,70 @@ body.in-game #table .community .card.back,
  body.in-game #table .poker-table[data-player-count="6"] .s4{top:27%!important;left:93%!important}
  body.in-game #table .poker-table[data-player-count="6"] .s3{top:77%!important;left:7%!important}
  body.in-game #table .poker-table[data-player-count="6"] .s5{top:77%!important;left:93%!important}
+}
+
+/* Cairo table layout. On desktop the artwork stretches to fill the scene, so the table box is pinned to the
+   painted orange rim (7-93% across, 43-84% down the image) and every seat is placed on that rim, mirrored
+   left to right. This keeps seats, board and pot on the painting at any window size, in full screen and with
+   the sidebar collapsed. Seat slots run clockwise from the hero's left, the order both seat lists use. */
+@media(min-width:901px){
+  body.in-game #table .table-scene,#roomGame .rivl-pvp-scene{position:relative}
+  body.in-game #table .table-scene .poker-table,#roomGame .rivl-pvp-scene .rivl-pvp-table{
+    position:absolute!important;left:7%!important;top:43%!important;width:86%!important;height:41%!important;
+    aspect-ratio:auto!important;margin:0!important;
+  }
+  #roomGame .rivl-pvp-table[data-player-count="2"] .s1{left:50.0%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s1,#roomGame .rivl-pvp-table[data-player-count="3"] .s1{left:24.4%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s2,#roomGame .rivl-pvp-table[data-player-count="3"] .s2{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s2{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s3{left:99.4%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s2{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s3{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s4{left:99.4%!important;top:51.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s1,#roomGame .rivl-pvp-table[data-player-count="6"] .s1{left:4.1%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s2,#roomGame .rivl-pvp-table[data-player-count="6"] .s2{left:5.2%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3,#roomGame .rivl-pvp-table[data-player-count="6"] .s3{left:50.0%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s4,#roomGame .rivl-pvp-table[data-player-count="6"] .s4{left:94.8%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s5,#roomGame .rivl-pvp-table[data-player-count="6"] .s5{left:95.9%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1{left:4.1%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s2{left:5.2%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s3{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s4{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s5{left:94.8%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s6{left:95.9%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1{left:23.3%!important;top:102.4%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s3{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s4{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s5{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s6{left:99.4%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s7{left:76.7%!important;top:102.4%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s1,#roomGame .rivl-pvp-table[data-player-count="9"] .s1{left:23.3%!important;top:102.4%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s2,#roomGame .rivl-pvp-table[data-player-count="9"] .s2{left:4.1%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s3,#roomGame .rivl-pvp-table[data-player-count="9"] .s3{left:5.2%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s4,#roomGame .rivl-pvp-table[data-player-count="9"] .s4{left:24.4%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s5,#roomGame .rivl-pvp-table[data-player-count="9"] .s5{left:75.6%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s6,#roomGame .rivl-pvp-table[data-player-count="9"] .s6{left:94.8%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s7,#roomGame .rivl-pvp-table[data-player-count="9"] .s7{left:95.9%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s8,#roomGame .rivl-pvp-table[data-player-count="9"] .s8{left:76.7%!important;top:102.4%!important}
+  body.in-game #table .myseat,#roomGame .rivl-pvp-myseat{left:50%!important;top:100%!important;bottom:auto!important;transform:translate(-50%,-50%)!important}
+}
+/* Board in the middle of the felt, the pot's chips just left of the five cards and the muck pile mirrored on
+   the right. --board-card and --board-gap set the card size, so the pot and muck can sit beside the cards. */
+body.in-game #table .poker-table,#roomGame .rivl-pvp-table{--board-card:clamp(24px,4.6vh,43px);--board-gap:5px}
+body.in-game #table .community,#roomGame .rivl-pvp-board{top:46%!important;left:50%!important;transform:translate(-50%,-50%)!important;width:auto!important;right:auto!important;gap:var(--board-gap)!important}
+body.in-game #table .community .card,#roomGame .rivl-pvp-board .card{width:var(--board-card)!important;height:calc(var(--board-card)*1.47)!important}
+body.in-game #table .pot,#roomGame .rivl-pvp-table .pot{top:46%!important;left:auto!important;right:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 12px)!important;transform:translateY(-50%)!important}
+body.in-game #table .pot-chips,#roomGame .pot-chips{height:auto;max-width:92px;justify-content:flex-end}
+body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 12px)!important;transform:translateY(-50%)}
+@media(max-width:900px){
+  body.in-game #table .poker-table,#roomGame .rivl-pvp-table{--board-card:28px;--board-gap:3px}
+  body.in-game #table .community,#roomGame .rivl-pvp-board,
+  body.in-game #table .pot,#roomGame .rivl-pvp-table .pot,body.in-game #table .muck-pile{top:calc(46% + var(--board-card)*.735)!important}
+  body.in-game #table .pot-chips,#roomGame .pot-chips{width:66px;max-width:none}
+  body.in-game #table .pot-chip,#roomGame .pot-chip{width:12px;height:9px;flex-basis:12px;border-width:1.5px}
+  body.in-game #table .pot,#roomGame .rivl-pvp-table .pot{right:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
+  body.in-game #table .muck-pile{left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
 }
