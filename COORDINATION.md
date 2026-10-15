@@ -79,3 +79,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 
 ### 2026-10-15 04:55 UTC · Claude
 - Folded hands now slide into a face-down discard pile by the pot and leave the seat; folded players turn grey until the next deal; every seat shows its stack in big blinds under the avatar. Applies to bot practice, rooms and Ranked. New shared file `muck.js` (added to the build list); touched script.js, rooms.js, index.html, style.css.
+
+### 2026-10-15 07:40 UTC · Claude
+- Added a FULL SCREEN button to the match top bar (bot practice, online rooms and Ranked) and a collapse arrow for the desktop sidebar. Both live in `screen-modes.js`; styles are at the end of `style.css`.
+- Full screen hides the sidebar and page header and uses the browser's real full screen where allowed (iPhone falls back to the same table-only view). Esc, the button, or leaving the match turns it off. The sidebar choice is saved per device.
+- When the scene gets bigger on desktop (full screen or collapsed sidebar), the seat box is sized as a fraction of the scene so it stays on the painted Cairo rail. The normal layout is unchanged.

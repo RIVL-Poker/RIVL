@@ -982,3 +982,44 @@ body.in-game .table-scene .skyline,
 .theme-preview.theme-photo{background-size:cover;background-position:center 20%;border-color:#80572b}
 .table-theme button{width:100%;margin-top:6px;padding:10px}
 .table-theme button:disabled{cursor:default;color:var(--gold);border-color:#e4b66e}
+
+/* Collapsible sidebar (screen-modes.js): desktop only, since phones already use the icon rail. */
+.sidebar-toggle{position:absolute;top:32px;right:12px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin:0;padding:0;background:transparent;border:1px solid #392818;border-radius:8px;color:var(--gold);cursor:pointer}
+.sidebar-toggle:hover{border-color:#bc8846}
+.sidebar-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+@media(min-width:851px){
+  html.sidebar-collapsed .sidebar{width:75px;padding:26px 8px}
+  html.sidebar-collapsed .brand{margin:0 0 12px;font-size:25px;text-align:center}
+  html.sidebar-collapsed .brand span,html.sidebar-collapsed .nav{font-size:0}
+  html.sidebar-collapsed .nav{padding:16px;text-align:center}
+  html.sidebar-collapsed .nav:first-letter{font-size:20px}
+  html.sidebar-collapsed .season,html.sidebar-collapsed .sidefoot{display:none}
+  html.sidebar-collapsed .sidebar-toggle{position:static;margin:0 auto 22px}
+  html.sidebar-collapsed .sidebar-toggle svg{transform:rotate(180deg)}
+}
+@media(max-width:850px){.sidebar-toggle{display:none}}
+
+/* Full screen table (screen-modes.js): only the table, the match info and the action controls. */
+.fs-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.fs-toggle svg{width:17px;height:17px;flex:0 0 17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#rooms:not(.rivl-match-mode) #roomFocus{display:none}
+body.table-focus .sidebar,body.table-focus main>header{display:none}
+body.table-focus.in-game main{height:100dvh}
+body.table-focus #rooms.rivl-match-mode{height:100dvh}
+@media(max-width:600px){
+  .fs-toggle{padding-left:9px;padding-right:9px}
+  .fs-toggle .fs-label{display:none}
+}
+#rooms.rivl-match-mode .room-topline #roomFocus{min-height:34px;padding:6px 12px;font-size:12px}
+@media(max-width:600px){#rooms.rivl-match-mode .room-topline #roomFocus{min-height:30px;padding:4px 9px}}
+/* On desktop the Cairo artwork stretches to fill the scene, so when full screen or a collapsed sidebar
+   makes the scene bigger, the seat box grows with it and stays on the painted rail. These fractions match
+   the default 1440x900 layout, where the seats were lined up with the painting. */
+@media(min-width:901px){
+  body.table-focus.in-game .table-scene,html.sidebar-collapsed body.in-game .table-scene,
+  body.table-focus #roomGame .rivl-pvp-scene,html.sidebar-collapsed #roomGame .rivl-pvp-scene{position:relative}
+  body.table-focus.in-game .table-scene .poker-table,html.sidebar-collapsed body.in-game .table-scene .poker-table,
+  body.table-focus #roomGame .rivl-pvp-scene .rivl-pvp-table,html.sidebar-collapsed #roomGame .rivl-pvp-scene .rivl-pvp-table{
+    position:absolute;left:18.8%;top:23.6%;width:62.4%;height:54.4%;aspect-ratio:auto;margin:0;
+  }
+}
