@@ -68,3 +68,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Decision grading is stricter (branch `claude/decision-grading-accuracy-cnnv3r`). Preflop is now graded against standard opening/defending charts by seat instead of equity vs random hands; postflop "Best" needs the top EV option within 1% of the pot (was 2%, plus a floor that lifted small losses to Good).
 - Opponent ranges now react to the board and bet size, so overbet shoves with one pair no longer grade as Best. Bots use the same model, so they shove less.
 - `rating.js` analyze() reads `sbSeat`/`bbSeat` (player indexes) when present; `worker/grading.js` now passes them. Server grading samples 600 runouts (was 300).
+
+### 2026-10-15 04:10 UTC · Claude
+- Bot practice setup has a time limit picker (Off, 5, 10, 15 minutes; remembered per browser). Off is the default and counts time played. Timed games climb the five blind levels evenly over the limit; when time runs out the current hand plays out and the match ends on the normal results screen.
+- The raise bar resets to the minimum legal raise at every new decision, in bot practice (`script.js`) and online rooms (`rooms.js`).
+- Bot table board cards are centred (`.community` box was wider than its cards and left-aligned them).
