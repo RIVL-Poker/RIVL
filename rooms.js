@@ -245,7 +245,7 @@
         $('roomRaise').disabled=!l.canRaise;
         $('roomAllin').disabled=!l.canRaise&&l.raiseToMax>l.call;
         const amount=$('roomRaiseAmount'),slider=$('roomRaiseSlider');
-        amount.min=slider.min=l.raiseToMin;amount.max=slider.max=l.raiseToMax;
+        amount.min=slider.min=l.raiseToMin;amount.max=slider.max=l.raiseToMax;amount.step=slider.step=5;
         if(Number(amount.value)<l.raiseToMin||Number(amount.value)>l.raiseToMax)amount.value=l.raiseToMin;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
@@ -344,15 +344,16 @@
   $('roomStart').onclick=()=>send({type:'startMatch'});
   $('roomFold').onclick=()=>send({type:'action',action:'fold'});
   $('roomCall').onclick=()=>send({type:'action',action:snapshot?.game?.legal?.check?'check':'call'});
-  $('roomRaise').onclick=()=>send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)});
+  $('roomRaise').onclick=()=>{setRoomBet($('roomRaiseAmount').value);send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)})};
+  $('roomRaiseAmount').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('roomRaise').click()}});
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
   $('roomNext').onclick=()=>{if(!snapshot?.ranked)return send({type:'newMatch'});send({type:'leave'});resetView('Finding your next Ranked match…');enter('ranked')};
-  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const n=clamp(Math.round(Number(value)||l.raiseToMin),l.raiseToMin,l.raiseToMax);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
+  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const raw=clamp(Math.round(Number(value)||l.raiseToMin),l.raiseToMin,l.raiseToMax);const n=raw===l.raiseToMax&&raw%5!==0?raw:clamp(Math.round(raw/5)*5,l.raiseToMin,l.raiseToMax);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
   $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=e.target.value;}});
   $('roomRaiseAmount').addEventListener('change',e=>setRoomBet(e.target.value));
   $('roomRaiseSlider').addEventListener('input',e=>setRoomBet(e.target.value));
-  $('roomMinusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)-1);
-  $('roomPlusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)+1);
+  $('roomMinusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)-5);
+  $('roomPlusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)+5);
   document.querySelectorAll('[data-room-bet]').forEach(button=>button.onclick=()=>{const l=snapshot?.game?.legal,g=snapshot?.game;if(!l||!g)return;const kind=button.dataset.roomBet;setRoomBet(kind==='min'?l.raiseToMin:kind==='all'?l.raiseToMax:kind==='half'?l.raiseToMin+Math.floor(g.pot/2):l.raiseToMin+g.pot)});
 
   $('roomPrivate').onclick=()=>send({type:'visibility',visibility:'private'});
