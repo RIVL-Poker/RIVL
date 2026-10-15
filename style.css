@@ -1275,11 +1275,39 @@ body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-car
 /* Casino chips in the pot: white, maroon, gold and black, drawn as a loose pile of overlapping chips seen from
    a low angle (chips.js places them). Everything is in em, so the pile scales with the pot's font-size. */
 .pot-chips{position:relative;display:block!important;width:5.4em;height:2.9em;margin:0!important;font-size:21px;pointer-events:none}
-.pile-chip{position:absolute;width:1.3em;height:.66em;margin:-.33em 0 0 -.65em;border-radius:50%;transform:rotate(var(--r,0deg));
-  --face:#efe9dc;--edge:#b5ac9b;--stripe:#7a1424;--inlay:#f8f4ec;
-  background:radial-gradient(ellipse at 50% 50%,var(--inlay) 0 30%,var(--stripe) 31% 35%,var(--face) 36% 100%);
-  border:.1em dashed var(--stripe);
-  box-shadow:0 .08em 0 var(--edge),0 .15em 0 var(--edge),0 .17em 0 #0006,0 .25em .3em #000a,inset 0 -.05em .06em #0004,inset 0 .05em .05em #fff5}
-.pile-chip.chip-maroon{--face:#7a1424;--edge:#4c0a15;--stripe:#f3ece0;--inlay:#8e1c2e}
-.pile-chip.chip-gold{--face:#d4a347;--edge:#8e6624;--stripe:#1b1714;--inlay:#e7c06b}
-.pile-chip.chip-black{--face:#1c1a1a;--edge:#050505;--stripe:#d4a347;--inlay:#2b2827}
+/* Each chip is a short cylinder: the element is the striped side, ::after is the top face (edge inserts, face,
+   a fine gold or dark ring and a centre inlay), lifted by the chip's thickness. */
+.pile-chip{position:absolute;width:1.3em;height:.66em;margin:-.26em 0 0 -.65em;border-radius:50%;transform:rotate(var(--r,0deg));
+  --face:#f2eee6;--inlay:#fbf9f4;--stripe:#7a1424;--line:#b9a98a;--edge:#d6cfc1;
+  background:linear-gradient(90deg,#00000070,#0000 28% 72%,#00000070),repeating-linear-gradient(90deg,var(--edge) 0 .17em,var(--stripe) .17em .25em);
+  box-shadow:0 .04em .05em #000d,0 .1em .2em #0008}
+.pile-chip::after,.flying-chip,.rivl-pot-stats-chip{
+  background:linear-gradient(165deg,#ffffff38,#fff0 42%,#0000 60%,#00000030),
+    radial-gradient(closest-side,var(--inlay) 0 48%,var(--line) 49% 52%,var(--face) 53% 66%,#0000 67%),
+    radial-gradient(closest-side,#0000 0 92%,#00000059 96%,#0000 100%),
+    repeating-conic-gradient(from 8deg,var(--stripe) 0 14deg,var(--face) 14deg 60deg)}
+.pile-chip::after{content:'';position:absolute;left:0;right:0;top:-.12em;height:100%;border-radius:50%;box-shadow:inset 0 0 0 .025em #00000047}
+.pile-chip.chip-maroon,.flying-chip:nth-child(4n+2),.rivl-pot-stats-chip{--face:#6e1020;--inlay:#801a2c;--stripe:#f1ebe0;--line:#c9a35a;--edge:#4f0a16}
+.pile-chip.chip-gold,.flying-chip:nth-child(4n+3){--face:#c99a3f;--inlay:#dcb45f;--stripe:#17130f;--line:#7c5a1f;--edge:#8f6a28}
+.pile-chip.chip-black,.flying-chip:nth-child(4n+4){--face:#191818;--inlay:#242222;--stripe:#cfa24a;--line:#8a6a32;--edge:#0c0c0c}
+.flying-chip{--face:#f2eee6;--inlay:#fbf9f4;--stripe:#7a1424;--line:#b9a98a;border:0;box-shadow:0 2px 0 #0007,0 4px 7px #0009}
+.rivl-pot-stats .rivl-pot-stats-chip,.rivl-pot-stats-chip{border:0!important;box-shadow:0 1px 0 #3a0710,0 2px 4px #000a!important}
+
+/* Cards. Faces are crisp ivory with a serif rank and small suit in the corner; every face-down card (the
+   unturned board cards and the discard pile) shares one back: a fine gold lattice inside a gold frame with a
+   spade. The board and discard pile are tilted back a little with a cast shadow, so they lie on the felt. */
+body.in-game #table .poker-table,#roomGame .rivl-pvp-table{perspective:1400px;perspective-origin:50% 46%}
+body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .muck-pile{rotate:x 18deg;transform-origin:50% 60%}
+#table .card:not(.back),#roomGame .card:not(.back),.bot-shown .card{
+  background:linear-gradient(160deg,#fffefb 0%,#f6f2e9 55%,#ebe5d8 100%)!important;color:#151515;border:1px solid #c9c0ad!important;border-radius:5px;
+  font-family:Georgia,'Times New Roman',serif;
+  box-shadow:inset 0 0 0 1px #fff,0 1px 0 #a99f8b,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important}
+#table .card.red-card,#roomGame .card.red,.bot-shown .card.red-card{color:#b0142c!important}
+#table .rivl-clean-card>strong,#roomGame .card:not(.back)>strong{display:flex;flex-direction:column;align-items:center;font-weight:700;letter-spacing:-.04em;line-height:.95}
+#table .rivl-clean-card>strong>small,#roomGame .card:not(.back)>strong>small{display:block;color:inherit;font-size:.72em;font-weight:400;letter-spacing:0;margin-top:.05em}
+#table .rivl-clean-card>span,#roomGame .card:not(.back)>.rivl-card-center{font-family:Georgia,'Times New Roman',serif;font-size:1.25em}
+#table .card.back,#roomGame .card.back,.muck-card{
+  background:repeating-linear-gradient(45deg,#c9963f26 0 1px,#0000 1px 4px),repeating-linear-gradient(-45deg,#c9963f26 0 1px,#0000 1px 4px),linear-gradient(150deg,#1d1a17,#0e0d0c 55%,#1c140c)!important;
+  border:1px solid #c18b3c!important;border-radius:5px!important;color:#e2ae55!important;display:grid!important;place-items:center;padding:0!important;font-family:Georgia,'Times New Roman',serif;
+  box-shadow:inset 0 0 0 2px #110e0b,inset 0 0 0 3px #8a6630,0 1px 0 #5a4120,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important}
+.muck-card::after{content:'♠';font-size:13px;line-height:1;color:#e2ae55;text-shadow:0 1px 1px #000}
