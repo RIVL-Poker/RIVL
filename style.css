@@ -933,7 +933,17 @@ body.in-game .table-scene,
   background-image:url("assets/CAIRO%20BACKGROUND%20TEST%201.png")!important;
   background-repeat:no-repeat!important;
   background-position:center center!important;
-  background-size:contain!important;
+  /* Fit within the scene and never enlarge a 1536px-wide source beyond 1:1 CSS pixels.
+     This prioritizes original texture detail over filling every edge of a wide room. */
+  background-size:min(100%, 1536px) auto!important;
+  image-rendering:auto;
+}
+@media (max-width: 900px) {
+  body.in-game .table-scene,
+  .rivl-pvp-scene {
+    /* On narrow screens show the full scene rather than magnifying/cropping. */
+    background-size:contain!important;
+  }
 }
 /* The scenery is an image, but every card, seat and pot stays interactive HTML. */
 body.in-game .table-scene::before,
