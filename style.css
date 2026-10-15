@@ -1311,3 +1311,232 @@ body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .mu
   border:1px solid #c18b3c!important;border-radius:5px!important;color:#e2ae55!important;display:grid!important;place-items:center;padding:0!important;font-family:Georgia,'Times New Roman',serif;
   box-shadow:inset 0 0 0 2px #110e0b,inset 0 0 0 3px #8a6630,0 1px 0 #5a4120,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important}
 .muck-card::after{content:'♠';font-size:13px;line-height:1;color:#e2ae55;text-shadow:0 1px 1px #000}
+
+/* Player POV v2 — use the existing real hole cards and real turn clock,
+   rather than cloning them. Desktop only; no poker logic or mobile layout changes.
+   No new element is placed over the action controls. */
+@media(min-width:901px){
+ body.in-game #table{position:relative}
+ body.in-game #table .table-scene{isolation:isolate}
+ body.in-game #table .poker-table>.myseat{
+   position:absolute!important;left:50%!important;top:calc(100% + 19px)!important;
+   bottom:auto!important;right:auto!important;transform:translate(-50%,-50%)!important;
+   width:260px!important;height:118px!important;min-width:0!important;
+   background:none!important;border:0!important;box-shadow:none!important;
+   padding:0!important;margin:0!important;display:block!important;
+   pointer-events:none!important;overflow:visible!important;z-index:15!important
+ }
+ body.in-game #table .poker-table>.myseat>.avatar,
+ body.in-game #table .poker-table>.myseat>div:not(.holecards){display:none!important}
+ body.in-game #table .poker-table>.myseat>.holecards{
+   position:absolute!important;left:50%!important;top:0!important;bottom:auto!important;
+   transform:translateX(-50%)!important;display:flex!important;justify-content:center!important;
+   align-items:center!important;gap:10px!important;width:max-content!important;
+   max-width:none!important;visibility:visible!important;pointer-events:none!important
+ }
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:104px!important;height:138px!important;min-width:104px!important;min-height:138px!important;
+   max-width:104px!important;max-height:138px!important;box-sizing:border-box!important;
+   font-size:35px!important;line-height:1.1!important;padding:10px!important;
+   transform:none!important;rotate:none!important;position:relative!important;
+   border-radius:8px!important
+ }
+ body.in-game #table .poker-table>.myseat>.turn{
+   position:absolute!important;left:-86px!important;right:auto!important;
+   top:54px!important;bottom:auto!important;transform:translate(-50%,-50%)!important;
+   width:90px!important;height:90px!important;display:grid!important;place-items:center!important;
+   visibility:visible!important;border:7px solid #d4a654!important;border-radius:50%!important;
+   background:#0c0b0a!important;color:#f3cb80!important;font-size:36px!important;
+   font-weight:800!important;box-shadow:0 0 0 4px #16100a,0 4px 16px #000b!important;
+   font-variant-numeric:tabular-nums
+ }
+ body.in-game #table>.rivl-pov-balance{
+   position:absolute;right:clamp(28px,15%,230px);bottom:clamp(185px,22%,260px);
+   z-index:13;display:flex;align-items:center;gap:13px;padding:12px 20px;
+   border:1px solid #b38a4b;border-radius:12px;background:#100e0ceF;
+   color:#f0c675;pointer-events:none;box-shadow:0 4px 16px #0009
+ }
+ body.in-game #table .rivl-pov-chip-stack{
+   display:grid;place-items:center;width:48px;height:50px;border-radius:45%;
+   color:#f1c56f;font-size:24px;border:2px solid #b68b48;
+   background:repeating-linear-gradient(0deg,#1a1714 0 7px,#bd914b 7px 10px)
+ }
+ body.in-game #table .rivl-pov-balance>div{display:flex;flex-direction:column;gap:4px}
+ body.in-game #table .rivl-pov-label{font-size:12px;letter-spacing:.07em;font-weight:800}
+ body.in-game #table .rivl-pov-balance strong{font-size:27px;font-variant-numeric:tabular-nums}
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+  width:82px!important;height:110px!important;min-width:82px!important;min-height:110px!important;
+  max-width:82px!important;max-height:110px!important;font-size:27px!important}
+ body.in-game #table .poker-table>.myseat>.turn{left:-58px!important;width:70px!important;height:70px!important;font-size:28px!important}
+ body.in-game #table>.rivl-pov-balance{right:6%;padding:8px 12px}
+ body.in-game #table .rivl-pov-balance strong{font-size:20px}
+}
+@media(max-width:900px){body.in-game #table>.rivl-pov-balance{display:none!important}}
+
+/* POV v2 refinement: symmetric cards, centered live clock, and
+   a matching balance column inside the existing pot statistics panel. */
+@media(min-width:901px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:92px!important;height:124px!important;min-width:92px!important;min-height:124px!important;
+   max-width:92px!important;max-height:124px!important;font-size:31px!important}
+ body.in-game #table .poker-table>.myseat>.turn{
+   left:-68px!important;top:62px!important;width:80px!important;height:80px!important;
+   font-size:32px!important;box-sizing:border-box!important}
+ body.in-game #table .rivl-pov-pot-balance-row{
+   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:8px}
+ body.in-game #table .rivl-pov-stat{min-width:0}
+ body.in-game #table .rivl-pov-balance-stat{
+   border-left:1px solid #6c4c27;padding-left:9px}
+ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   display:flex;align-items:center;gap:6px;font-size:clamp(15px,1.35vw,23px)}
+ body.in-game #table .rivl-pov-chip-icon{
+   display:inline-grid;place-items:center;flex:0 0 20px;width:20px;height:20px;
+   border-radius:50%;border:2px solid #d3a451;color:#edc475;font-size:12px;
+   background:repeating-linear-gradient(0deg,#17120c 0 3px,#ac7d3e 3px 5px)}
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:76px!important;height:102px!important;min-width:76px!important;min-height:102px!important;
+   max-width:76px!important;max-height:102px!important;font-size:25px!important}
+ body.in-game #table .poker-table>.myseat>.turn{
+   left:-52px!important;top:51px!important;width:66px!important;height:66px!important;font-size:26px!important}
+}
+@media(max-width:900px){
+ body.in-game #table .rivl-pov-balance-stat{display:none!important}
+ body.in-game #table .rivl-pov-pot-balance-row{display:contents}
+}
+
+/* QA refinement: restore the player's live BB badge beside the two POV cards,
+   and keep the balance number inside its shared pot statistics panel. */
+@media(min-width:901px){
+ body.in-game #table .poker-table>.myseat>.bb-count{
+   position:absolute!important;left:calc(50% + 116px)!important;
+   top:calc(50% + 15px)!important;bottom:auto!important;right:auto!important;
+   transform:none!important;display:inline-flex!important;align-items:center!important;
+   justify-content:center!important;width:max-content!important;min-width:42px;
+   height:20px!important;padding:0 7px!important;z-index:22!important;
+   visibility:visible!important;font-size:11px!important;line-height:18px!important;
+   border-radius:10px!important;background:#1b140c!important;
+   border:1px solid #b8862f!important;color:#f6d48e!important;
+ }
+ body.in-game #table .actions .rivl-pot-stats{
+   min-width:0!important;box-sizing:border-box!important;overflow:hidden!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row{
+   grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr)!important;
+   gap:5px!important;width:100%!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-balance-stat{
+   padding-left:7px!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   font-size:clamp(14px,1.22vw,20px)!important;gap:4px!important;
+   white-space:nowrap!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value strong{
+   font-size:inherit!important;min-width:0!important;font-variant-numeric:tabular-nums!important;
+ }
+ body.in-game #table .actions .rivl-pov-chip-icon{
+   width:17px!important;height:17px!important;flex:0 0 17px!important;font-size:10px!important;
+ }
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.bb-count{
+   left:calc(50% + 94px)!important;top:calc(50% + 12px)!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   font-size:14px!important;gap:3px!important;
+ }
+}
+
+/* Cairo table chips — appearance only. Preserve chip elements, counts, positions,
+   stacking geometry, win-sweep animations, sound and game logic. */
+body.in-game #table .pile-chip,
+#roomGame .pile-chip{
+  --face:#eee7d8;--inlay:#f9f5eb;--stripe:#8f2632;--line:#bd9b5e;--edge:#d4c9b6;
+  background:
+    linear-gradient(90deg,#0009 0%,#ffffff24 15%,#0000 36% 65%,#0008 100%),
+    repeating-linear-gradient(90deg,var(--edge) 0 .13em,var(--stripe) .13em .205em,var(--edge) .205em .265em);
+  box-shadow:0 .045em .035em #000c,0 .13em .19em #0009,inset 0 -.045em .035em #0007;
+}
+body.in-game #table .pile-chip::after,
+#roomGame .pile-chip::after,
+body.in-game #table .flying-chip,
+#roomGame .flying-chip{
+  background:
+    radial-gradient(ellipse at 32% 24%,#ffffff80,transparent 37%),
+    radial-gradient(closest-side,#0000 0 31%,#d4b577 32% 35%,#0000 36%),
+    radial-gradient(closest-side,var(--inlay) 0 46%,var(--line) 47% 51%,var(--face) 52% 69%,transparent 70%),
+    repeating-conic-gradient(from 6deg,var(--stripe) 0 11deg,var(--face) 11deg 46deg,var(--stripe) 46deg 51deg,var(--face) 51deg 60deg);
+}
+body.in-game #table .pile-chip::after,
+#roomGame .pile-chip::after{
+  box-shadow:inset 0 .025em .055em #fff8,inset 0 -.055em .075em #0006,0 -.018em .025em #0006;
+}
+body.in-game #table .pile-chip.chip-maroon,
+#roomGame .pile-chip.chip-maroon{
+  --face:#711d2a;--inlay:#8e2938;--stripe:#f3e7d1;--line:#d4ad65;--edge:#4c111b;
+}
+body.in-game #table .pile-chip.chip-gold,
+#roomGame .pile-chip.chip-gold{
+  --face:#c29a53;--inlay:#e3bb73;--stripe:#241b15;--line:#80602d;--edge:#8b652e;
+}
+body.in-game #table .pile-chip.chip-black,
+#roomGame .pile-chip.chip-black{
+  --face:#252322;--inlay:#393532;--stripe:#d8b471;--line:#ad8246;--edge:#11100f;
+}
+body.in-game #table .flying-chip,
+#roomGame .flying-chip{
+  box-shadow:inset 0 1px 2px #fff6,inset 0 -2px 2px #0006,0 2px 1px #0008,0 5px 8px #0009;
+}
+
+/* Photoreal-inspired Cairo clay chips: cosmetic only; retain existing stack/flight geometry. */
+body.in-game #table .pile-chip,
+#roomGame .pile-chip{
+  --face:#e7dfd0;--inlay:#f0e8d9;--stripe:#302b27;--line:#b7a587;--edge:#b9ae9c;
+  background:
+    linear-gradient(180deg,#ffffff20 0%,#0000 24%,#0007 79%,#000b 100%),
+    repeating-linear-gradient(90deg,var(--edge) 0 .115em,var(--stripe) .115em .15em,var(--edge) .15em .29em);
+  box-shadow:0 .025em .025em #fff4,inset 0 -.065em .07em #0008,0 .085em .08em #000c,0 .2em .23em #0007;
+}
+body.in-game #table .pile-chip::after,
+#roomGame .pile-chip::after{
+  background:
+    radial-gradient(ellipse at 34% 20%,#fff8 0%,#fff0 45%),
+    radial-gradient(closest-side,#25201c 0 10%,#0000 11%),
+    radial-gradient(closest-side,var(--inlay) 0 37%,#8f806c 38% 40%,var(--face) 41% 57%,var(--line) 58% 60%,#0000 61%),
+    repeating-conic-gradient(from 10deg,var(--stripe) 0 8deg,var(--face) 8deg 44deg,var(--stripe) 44deg 52deg,var(--face) 52deg 60deg);
+  box-shadow:inset 0 .025em .04em #fff9,inset 0 -.06em .08em #0008,0 -.02em .035em #0007;
+}
+body.in-game #table .pile-chip.chip-maroon,#roomGame .pile-chip.chip-maroon{
+  --face:#772e37;--inlay:#953e48;--stripe:#e7dccb;--line:#c6a775;--edge:#55202a;
+}
+body.in-game #table .pile-chip.chip-gold,#roomGame .pile-chip.chip-gold{
+  --face:#c2a06b;--inlay:#e0bc80;--stripe:#413127;--line:#856a43;--edge:#8d7049;
+}
+body.in-game #table .pile-chip.chip-black,#roomGame .pile-chip.chip-black{
+  --face:#393635;--inlay:#4b4744;--stripe:#d7c6a8;--line:#ab9877;--edge:#211f1e;
+}
+/* Balance indicator: understated dark clay medallion, without gold horizontal stripes. */
+body.in-game #table .actions .rivl-pov-chip-icon{
+  background:radial-gradient(circle at 32% 24%,#797571,#383635 48%,#1d1c1c 80%)!important;
+  border:1px solid #8f8981!important;
+  box-shadow:inset 0 1px 2px #fff5,inset 0 -2px 3px #000a,0 2px 3px #0008!important;
+  color:#e2d8c7!important;
+}
+
+/* Gold RIVL spade on the balance chip, without bringing back the gold stripes. */
+body.in-game #table .actions .rivl-pov-chip-icon{color:#edbb62!important;text-shadow:0 0 3px #c38a35a6!important}
+
+/* Balance chip: visibly RIVL gold on every table theme and preview. */
+body.in-game #table .actions .rivl-pov-balance-stat .rivl-pov-chip-icon,
+#table .rivl-pov-balance-stat .rivl-pov-chip-icon{
+  color:#f2bd5b!important;
+  -webkit-text-fill-color:#f2bd5b!important;
+  background:radial-gradient(circle at 35% 25%,#493017 0%,#24180d 58%,#110e0b 100%)!important;
+  border:2px solid #dba84f!important;
+  box-shadow:inset 0 1px 2px #ffdd8055,0 0 0 1px #3b260e,0 2px 4px #0009!important;
+  text-shadow:0 0 4px #e9a83c99!important;
+}

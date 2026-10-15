@@ -14,7 +14,7 @@
   function sync(table,hand,folded){
     if(!table)return;
     let s=tables.get(table);const ready=!!s;
-    if(!s||s.hand!==hand){if(s)s.flyers.forEach(f=>f.remove());s={hand,seen:new Set(),landed:0,flyers:[]};tables.set(table,s)}
+    if(!s||s.hand!==hand){if(s)s.flyers.forEach(f=>f.remove());s={hand,seen:new Set(),landed:0,flyers:[]};tables.set(table,s);const oldPile=table.querySelector(':scope>.muck-pile');if(oldPile){oldPile.replaceChildren();oldPile.classList.remove('has-cards');oldPile.dataset.count='0';}}
     const pile=pileFor(table);
     for(const f of folded){
       if(s.seen.has(f.key))continue;
