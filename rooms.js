@@ -200,11 +200,12 @@
       const count=Math.min(9,opponents.length+1);
       $('roomPokerTable').dataset.playerCount=String(count);
       opponents.forEach((p,i)=>{
-        const item=document.createElement('div');
-        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'');
+        const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
+        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
-        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');label.append(who,info);
-        item.append(avatar,label);appendReport(item,snapshot.seats[p.seat]);
+        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
+        item.append(avatar,label);
+        if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}appendReport(item,snapshot.seats[p.seat]);
         const cards=g.shown?.[p.seat];
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
         // Evenly distribute opponents along a mirrored arc around the Cairo table.
@@ -250,7 +251,7 @@
         if(Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
-      }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
+      }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';
       clearInterval(clockTimer);
       const tick=()=>{
         const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);

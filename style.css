@@ -766,3 +766,14 @@ body.in-game .poker-table .community,
 @media(max-width:650px){
  body.in-game .poker-table::after,.rivl-pvp-table::after{top:12%;font-size:9px}
 }
+/* Bot thinking: a breathing gold ring on the seat plus three bouncing dots while the bot decides. */
+.think-dots{display:none;align-items:center;gap:3px;flex-shrink:0;height:15px;padding:0 6px;border-radius:8px;background:#2a1f12;border:1px solid #d4a34c}
+.think-dots b{width:5px;height:5px;border-radius:50%;background:#f1c983;animation:think-dot 1.2s ease-in-out infinite}
+.think-dots b:nth-child(2){animation-delay:.15s}.think-dots b:nth-child(3){animation-delay:.3s}
+.seat.is-thinking .think-dots{display:inline-flex}
+.seat.is-thinking{animation:think-ring 1.6s ease-in-out infinite}
+.seat.is-thinking .avatar{animation:think-avatar 1.6s ease-in-out infinite}
+@keyframes think-dot{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-3px);opacity:1}}
+@keyframes think-ring{0%,100%{box-shadow:0 0 0 2px #d4a34c,0 0 6px #d4a34c55}50%{box-shadow:0 0 0 2px #ffdc7d,0 0 18px #e5ad58bb}}
+@keyframes think-avatar{0%,100%{border-color:#d4a34c}50%{border-color:#ffe39a}}
+@media (prefers-reduced-motion:reduce){.seat.is-thinking,.seat.is-thinking .avatar,.think-dots b{animation:none!important}.seat.is-thinking{box-shadow:0 0 0 2px #ffdc7d,0 0 12px #e5ad58}.think-dots b{opacity:1}}
