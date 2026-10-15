@@ -184,6 +184,30 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// 8. Bots think for a random 2–5 seconds before every move instead of acting at once.
+{
+  const {room,state,hostWs}=await setup(3,1);await say(room,hostWs,{type:'startMatch'});
+  const delays=new Set(),moves=[],orig=room.applyAction.bind(room);
+  room.applyAction=(s,a,x)=>{moves.push(s);return orig(s,a,x)};
+  for(let i=0;i<30&&!room.matchOver();i++){
+    const g=room.room.game;
+    if(g.phase==='showdown'){g.nextHandAt=0;await room.alarm();continue}
+    if(g.turn===0){await say(room,hostWs,{type:'action',action:room.legal(0).check?'check':'call'});continue}
+    const seat=g.turn,left=g.deadline-Date.now();
+    assert.ok(g.players.find(p=>p.seat===seat).bot,'only a bot can hold the turn here');
+    assert.ok(g.botThinking&&left>1900&&left<=5000,'bot think time is 2–5 seconds, got '+left+'ms');
+    assert.ok(state.alarm<=g.deadline,'an alarm is set for the bot\'s move');
+    delays.add(Math.round(left/250));
+    await room.alarm();
+    assert.equal(room.room.game.turn,seat,'an early alarm does not let the bot act before its time');
+    const before=moves.length;
+    room.room.game.deadline=Date.now();await room.alarm();
+    assert.equal(moves[before],seat,'the bot moves once its time is up');
+  }
+  assert.ok(delays.size>2,'think times vary from move to move');
+  checks++;
+}
+
 // ---------- Directory: accounts, online ratings, lobby, free-plan budget ----------
 function fakeSql(){
   const db=new DatabaseSync(':memory:');

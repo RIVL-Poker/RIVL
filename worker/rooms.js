@@ -4,7 +4,10 @@ export {Directory} from './directory.js';
 import {gradeDecision} from './grading.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
-const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=5000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4;
+const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=5000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
+// Bots take a fresh random 2–5 seconds on every decision, so play reads like a person thinking.
+// The cap sits just under 5 seconds so alarm and network delay never push a move past 5.
+const botThinkMs=()=>BOT_THINK_MIN_MS+Math.floor(Math.random()*(BOT_THINK_MAX_MS-BOT_THINK_MIN_MS));
 // Blinds rise every 8 hands so a match reaches a finish.
 const BLINDS=[[10,20],[15,30],[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000]];
 const HAND_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
@@ -359,6 +362,7 @@ export class Room {
   applyAction(seat,action,amount){
     const g=this.room.game,p=g.players.find(x=>x.seat===seat),legal=this.legal(seat);
     if(!legal)throw Error('Not your turn');
+    g.botThinking=false;
     const call=Math.max(0,g.currentBet-p.bet);
     // How each player has bet this hand shapes the ranges decision grading assumes for them.
     const line=action==='raise'||action==='allin'&&p.stack>call?2:(action==='call'||action==='allin')&&call>0?1:0;
@@ -405,7 +409,9 @@ export class Room {
     const potOdds=legal.call/Math.max(1,g.pot+legal.call);
     const mayRaise=legal.canRaise&&(g.streetRaises||0)<BOT_RAISES_PER_STREET;
     if(mayRaise&&(strength>.72&&Math.random()<style.aggression+.2||legal.check&&strength>.55&&Math.random()<style.aggression)){
-      const target=Math.min(legal.raiseToMax,Math.max(legal.raiseToMin,g.currentBet+5*Math.round(g.pot*(.5+Math.random()*.4)/5)));
+      // Raises go in steps of 5 (the server rejects anything else short of all-in), even when the bet to beat is not.
+      const step=x=>5*Math.ceil(x/5),want=Math.max(step(legal.raiseToMin),step(g.currentBet+g.pot*(.5+Math.random()*.4)));
+      const target=want>=legal.raiseToMax?legal.raiseToMax:want;
       if(target>g.currentBet)return ['raise',target];
     }
     if(legal.check)return ['check'];
@@ -420,7 +426,12 @@ export class Room {
       if(alive.length<2||active.length===0||active.length===1&&active[0].bet===g.currentBet){this.endStreet();if(g.phase==='showdown')break;continue}
       const p=g.players.find(x=>x.seat===g.turn);
       if(!p){this.endStreet();if(g.phase==='showdown')break;continue}
-      if(p.bot){const [action,amount]=this.botAction(p,g);this.applyAction(p.seat,action,amount)}
+      if(p.bot){
+        // The first pass starts the bot's think clock; the alarm at that deadline makes the move.
+        if(!g.botThinking){g.botThinking=true;g.deadline=Date.now()+botThinkMs();break}
+        if(Date.now()<g.deadline-50)break;
+        const [action,amount]=this.botAction(p,g);this.applyAction(p.seat,action,amount);
+      }
       else if(p.away||p.left)this.applyAction(p.seat,this.legal(p.seat).check?'check':'fold');
       else break;
       if(g.phase==='showdown')break;
@@ -454,9 +465,10 @@ export class Room {
     }
     if(Date.now()<g.deadline-50){await this.armAlarm(g.deadline);return}
     const p=g.players.find(x=>x.seat===g.turn),legal=p&&this.legal(p.seat);
-    if(legal){
+    if(p?.bot)this.autoAdvance();
+    else if(legal){
       this.applyAction(p.seat,legal.check?'check':'fold');
-      if(!p.bot&&++p.timeouts>=2)p.away=true;
+      if(++p.timeouts>=2)p.away=true;
       this.autoAdvance();
     }
     await this.save();

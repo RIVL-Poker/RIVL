@@ -53,3 +53,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Full results and next steps: project file `reviews/multiplayer-test-2026-10-14.md`.
 
 <!-- ChatGPT: add your first entry below this line, using the same format. -->
+
+### 2026-10-15 02:40 UTC · Claude
+- Bots now take a random 2–5 seconds on every decision, in bot practice (`script.js`) and online rooms (`worker/rooms.js`). The bot whose turn it is gets a pulsing gold ring and three bouncing dots, and the status line names who is thinking.
+- Online rooms: the server starts a bot's think clock on its turn (`g.botThinking`, `g.deadline`) and the room alarm makes the move when it runs out. Each bot move is now its own alarm and save, so bot-heavy rooms use a few more storage writes per hand than before.
