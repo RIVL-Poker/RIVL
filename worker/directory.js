@@ -6,7 +6,7 @@ import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 // rating.js (loaded by grading.js) defines the Ranked leagues shared with the site.
 const R=globalThis.RivlRating;
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
-const LOBBY_TTL=15*60*1000;
+const LOBBY_TTL=15*60*1000,BOARD_TTL=10000;
 const day=()=>new Date().toISOString().slice(0,10);
 const hex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
 const sha256=async text=>hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)));
@@ -38,6 +38,18 @@ export class Directory {
     if(!cols.has('google_sub'))this.sql.exec('ALTER TABLE accounts ADD COLUMN google_sub TEXT');
     this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_google ON accounts(google_sub)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS sessions(key_hash TEXT PRIMARY KEY,account TEXT NOT NULL,created INTEGER NOT NULL)');
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS avatar_reports(id TEXT PRIMARY KEY,reporter TEXT NOT NULL,target TEXT NOT NULL,reason TEXT NOT NULL,created INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'pending')`);
+    this.sql.exec('CREATE INDEX IF NOT EXISTS avatar_reports_target ON avatar_reports(target,status)');
+    // Ladder rank and the leaderboard read only ranked players by rating, so they never scan the whole accounts table.
+    this.sql.exec('CREATE INDEX IF NOT EXISTS accounts_ranked ON accounts(rr) WHERE rgames>0');
+    // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
+    this.boards=new Map();
+  }
+  board(key,build){
+    const hit=this.boards.get(key);if(hit&&Date.now()-hit.t<BOARD_TTL)return hit.value;
+    const value=build();this.boards.set(key,{t:Date.now(),value});
+    if(this.boards.size>200)this.boards.delete(this.boards.keys().next().value);
+    return value;
   }
   rows(q,...b){return this.sql.exec(q,...b).toArray()}
   one(q,...b){return this.rows(q,...b)[0]||null}
@@ -55,9 +67,11 @@ export class Directory {
     const roomsFull=u.rooms>=l.rooms,handsFull=u.hands>=l.hands;
     return {day:day(),usage:u,limits:l,roomsFull,handsFull,busy:roomsFull||handsFull,closed:u.hands>=Math.ceil(l.hands*1.25)};
   }
-  publicAccount(a){
+  // rank is the ladder position; pass false to skip it (rooms only need name and photo when someone sits down).
+  publicAccount(a,rank){
     if(!a)return null;
-    const rank=a.rgames>0?this.one('SELECT COUNT(*)+1 AS n FROM accounts WHERE rgames>0 AND rr>?',a.rr).n:null;
+    if(rank===undefined)rank=a.rgames>0?this.one('SELECT COUNT(*)+1 AS n FROM accounts WHERE rgames>0 AND rr>?',a.rr).n:null;
+    else if(rank===false)rank=null;
     const displayed=Math.max(0,a.rr-(a.elo_offset||0));
     const t=R.tier(displayed);
     return {id:a.id,name:a.name,avatar:a.avatar_blocked?'':(a.avatar||''),rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
@@ -121,6 +135,7 @@ export class Directory {
         if(typeof avatar!=='string'||(avatar!==''&&(!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar)||avatar.length>45000)))return this.reply({error:'Invalid photo. Use a small JPEG, PNG or WebP image.'},400);
         if(avatar&&this.one("SELECT id FROM avatar_reports WHERE target=? AND status='pending'",a.id))return this.reply({error:'Your previous photo is awaiting review. Contact support@rivlpoker.com.'},403);
         this.sql.exec('UPDATE accounts SET avatar=?,avatar_blocked=0 WHERE id=?',avatar,a.id);
+        this.boards.clear();
         return this.reply({account:this.selfAccount(this.one('SELECT * FROM accounts WHERE id=?',a.id))});
       }
       if(path==='/accounts/report-avatar'){
@@ -135,6 +150,7 @@ export class Directory {
         this.sql.exec('INSERT INTO avatar_reports(id,reporter,target,reason,created) VALUES (?,?,?,?,?)',crypto.randomUUID(),reporter.id,target.id,reason,Date.now());
         // Hide reported photos immediately. Do not expose the image while awaiting human review.
         this.sql.exec('UPDATE accounts SET avatar_blocked=1 WHERE id=?',target.id);
+        this.boards.clear();
         return this.reply({ok:true,message:'Report received. The photo is hidden pending review.'});
       }
       if(path==='/accounts/avatar-reports'){
@@ -148,12 +164,13 @@ export class Directory {
         if(body.action==='remove')this.sql.exec("UPDATE accounts SET avatar='',avatar_blocked=0 WHERE id=?",report.target);
         else this.sql.exec('UPDATE accounts SET avatar_blocked=0 WHERE id=?',report.target);
         this.sql.exec("UPDATE avatar_reports SET status=? WHERE target=? AND status='pending'",body.action==='remove'?'removed':'approved',report.target);
+        this.boards.clear();
         return this.reply({ok:true});
       }
       if(path==='/accounts/me'||path==='/verify'){
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign-in code not recognised.'},401);
-        return this.reply({account:path==='/verify'?this.publicAccount(a):this.selfAccount(a)});
+        return this.reply({account:path==='/verify'?this.publicAccount(a,false):this.selfAccount(a)});
       }
       if(path==='/accounts/google')return await this.google(body);
       if(path==='/accounts/signout'){
@@ -162,24 +179,31 @@ export class Directory {
         return this.reply({ok:true});
       }
       if(path==='/leaderboard'){
-        const top=this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY rr DESC LIMIT 50').map(a=>this.publicAccount(a));
-        return this.reply({players:top,total:this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0').n});
+        return this.reply(this.board('top',()=>{
+          // Ranks follow from the sorted list itself: tied ratings share the higher place, as COUNT(rr>me)+1 gives.
+          const rows=this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY rr DESC LIMIT 50');let rank=0;
+          const top=rows.map((a,i)=>{if(!i||a.rr!==rows[i-1].rr)rank=i+1;return this.publicAccount(a,rank)});
+          return {players:top,total:this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0').n};
+        }));
       }
       if(path==='/leaderboard/league'){
-        // Everyone in the league of rating r, nearest to r first (50 at most). A league with under 10 players
-        // falls back to the 10 players nearest r on the whole ladder.
         const r=Number(url.searchParams.get('r'));if(!Number.isFinite(r))return this.reply({error:'Missing rating.'},400);
-        const t=R.tier(r),[,lo,hi]=R.LEAGUES.find(l=>l[0]===t.name),top=hi===Infinity?1e9:hi;
-        const total=this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0 AND MAX(0,rr-elo_offset)>=? AND MAX(0,rr-elo_offset)<?',lo,top).n;
-        const near=total<10;
-        const rows=near?this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY ABS(MAX(0,rr-elo_offset)-?) LIMIT 10',r)
-          :this.rows('SELECT * FROM accounts WHERE rgames>0 AND MAX(0,rr-elo_offset)>=? AND MAX(0,rr-elo_offset)<? ORDER BY ABS(MAX(0,rr-elo_offset)-?) LIMIT 50',lo,top,r);
-        return this.reply({league:t.name,leagueKey:t.key,near,total,players:rows.sort((x,y)=>y.rr-x.rr).map(a=>this.publicAccount(a))});
+        return this.reply(this.board('league:'+r,()=>this.league(r)));
       }
-      if(path==='/results')return this.reply(this.recordResults(body));
-      if(path==='/lobby'||path==='/lobby/ranked'){
+      if(path==='/results'){this.boards.clear();return this.reply(this.recordResults(body))}
+      if(path==='/lobby/claim'){
+        // Ranked queue: pick the fullest Ranked table still filling and count the seat at once, so a rush of
+        // players spreads over tables instead of all reading the same list and piling onto the same three.
         this.sql.exec('DELETE FROM lobby WHERE updated<?',Date.now()-LOBBY_TTL);
-        return this.reply({rooms:path==='/lobby/ranked'?this.rows('SELECT code,host,humans,players FROM lobby WHERE ranked=1 AND size=? ORDER BY humans DESC,updated DESC LIMIT 30',Number(url.searchParams.get('size'))||6):this.rows('SELECT code,host,humans,players FROM lobby WHERE ranked=0 ORDER BY humans DESC,updated DESC LIMIT 30')});
+        const size=[3,6,9].includes(Number(body.size))?Number(body.size):6,skip=(Array.isArray(body.skip)?body.skip:[]).map(String).slice(0,5);
+        const room=this.rows(`SELECT code FROM lobby WHERE ranked=1 AND size=? AND players<? ${skip.length?'AND code NOT IN ('+skip.map(()=>'?').join(',')+')':''} ORDER BY players DESC,updated ASC LIMIT 1`,size,size,...skip)[0];
+        if(!room)return this.reply({code:null});
+        this.sql.exec('UPDATE lobby SET players=players+1,humans=humans+1 WHERE code=?',room.code);
+        return this.reply({code:room.code});
+      }
+      if(path==='/lobby'){
+        this.sql.exec('DELETE FROM lobby WHERE updated<?',Date.now()-LOBBY_TTL);
+        return this.reply({rooms:this.rows('SELECT code,host,humans,players FROM lobby WHERE ranked=0 ORDER BY humans DESC,updated DESC LIMIT 30')});
       }
       if(path==='/lobby/upsert'){
         this.sql.exec('INSERT OR REPLACE INTO lobby(code,host,humans,players,updated,ranked,size) VALUES (?,?,?,?,?,?,?)',String(body.code),String(body.host||'').slice(0,20),Number(body.humans)||0,Number(body.players)||0,Date.now(),body.ranked?1:0,[3,6,9].includes(Number(body.size))?Number(body.size):6);
@@ -195,6 +219,16 @@ export class Directory {
       }
       return this.reply({error:'Not found'},404);
     }catch(e){return this.reply({error:e.message||'Directory error'},500)}
+  }
+  // Everyone in the league of rating r, nearest to r first (50 at most). A league with under 10 players
+  // falls back to the 10 players nearest r on the whole ladder.
+  league(r){
+    const t=R.tier(r),[,lo,hi]=R.LEAGUES.find(l=>l[0]===t.name),top=hi===Infinity?1e9:hi;
+    const total=this.one('SELECT COUNT(*) AS n FROM accounts WHERE rgames>0 AND MAX(0,rr-elo_offset)>=? AND MAX(0,rr-elo_offset)<?',lo,top).n;
+    const near=total<10;
+    const rows=near?this.rows('SELECT * FROM accounts WHERE rgames>0 ORDER BY ABS(MAX(0,rr-elo_offset)-?) LIMIT 10',r)
+      :this.rows('SELECT * FROM accounts WHERE rgames>0 AND MAX(0,rr-elo_offset)>=? AND MAX(0,rr-elo_offset)<? ORDER BY ABS(MAX(0,rr-elo_offset)-?) LIMIT 50',lo,top,r);
+    return {league:t.name,leagueKey:t.key,near,total,players:rows.sort((x,y)=>y.rr-x.rr).map(a=>this.publicAccount(a))};
   }
   // Ranked rooms only: Glicko-2 among signed-in players. Against each opponent the score is 60% finishing place
   // and 40% decision accuracy, as in bot practice; with fewer than 3 graded decisions on either side it is place only.

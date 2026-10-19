@@ -24,6 +24,8 @@
     if(!seat?.accountId||seat.accountId===window.rivlAccount?.current()?.id||!/^data:image\//.test(seat.avatar||''))return;
     const b=document.createElement('button');b.type='button';b.className='rivl-report-photo';b.textContent='REPORT PHOTO';b.title='Report inappropriate profile picture';b.onclick=()=>reportPhoto(seat);el.append(b);
   };
+  // The server sends each seat's photo once; later states leave it out while the seat is unchanged.
+  const keepPhotos=(before,now)=>now?.seats?.forEach((s,i)=>{const old=before?.seats?.[i];if(s&&s.avatar===undefined&&old&&old.name===s.name)s.avatar=old.avatar});
   const paintSeatAvatar=(el,p)=>{const a=avatarFor(p);el.replaceChildren();if(/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a)&&a.length<=45000){const img=document.createElement('img');img.src=a;img.alt='';img.className='rivl-avatar-photo';el.append(img)}else el.textContent=a};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   let clockTimer=null,roomBetKey='',previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
@@ -341,7 +343,7 @@
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
-      if(message.type==='state'){snapshot=message.state;if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
+      if(message.type==='state'){const before=snapshot;snapshot=message.state;keepPhotos(before,snapshot);if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
       else if(message.type==='chat')addChatMessage(message.message);
       else if(message.type==='removed'){const ranked=!!snapshot?.ranked||rankedEntry,reason=message.reason||'You are no longer in that room.';resetView(reason);if(ranked){dropRankedHistory();showRankedMenu(reason)}}
       else if(message.error)status(message.error);
