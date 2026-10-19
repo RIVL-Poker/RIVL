@@ -157,10 +157,13 @@ export default {
         if(!body.key)return json({error:RANKED_SIGN_IN},401);
         const size=body.size==null?6:Number(body.size);
         if(!RANKED_SIZES.includes(size))return json({error:'Choose a 3, 6, or 9-player ranked table.'},400);
-        const lobby=await dir(env,'/lobby/ranked?size='+size);
-        for(const room of (lobby.data.rooms||[]).slice(0,3)){
-          const joined=await joinRoom(room.code,{key:body.key,ranked:true,size});
+        // The Directory hands out one filling table per request and counts the seat straight away.
+        const skip=[];
+        for(let attempt=0;attempt<3;attempt++){
+          const {data}=await dir(env,'/lobby/claim',{size,skip});if(!data.code)break;
+          const joined=await joinRoom(data.code,{key:body.key,ranked:true,size});
           if(joined.status===200||joined.status===401)return send(joined);
+          skip.push(data.code);
         }
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
         return send(await createRoom({key:body.key,ranked:true,size}));
@@ -185,7 +188,7 @@ const rankOf=c=>'23456789TJQKA'.indexOf(c[0])+2;
 
 export class Room {
   constructor(state,env){
-    this.state=state;this.env=env;this.room=null;this.alarmAt=0;
+    this.state=state;this.env=env;this.room=null;this.alarmAt=0;this.photosSent=new WeakMap();
     // Keep-alive pings are answered by Cloudflare without waking the room, so idle tables cost nothing.
     if(typeof WebSocketRequestResponsePair!=='undefined')state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping','pong'));
   }
@@ -210,7 +213,17 @@ export class Room {
         winners:g.winners||[],result:g.result||'',note:g.note||'',ratingChanges:g.ratingChanges||null,matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
   }
   send(ws,message){try{ws.send(JSON.stringify(message))}catch{}}
-  broadcast(){for(const [ws,token] of this.sockets())this.send(ws,{type:'state',state:this.publicState(token),isHost:token===this.room.hostToken})}
+  // Profile photos are sent to each socket once; later updates leave them out until a seat or photo changes,
+  // so every bet does not resend up to nine photos to every player.
+  broadcast(){
+    const photos=this.room.seats.map(s=>s?.avatar||'').join('|');
+    for(const [ws,token] of this.sockets()){
+      const state=this.publicState(token);
+      if(this.photosSent.get(ws)===photos){for(const seat of state.seats)if(/^data:/.test(seat?.avatar||''))delete seat.avatar}
+      else this.photosSent.set(ws,photos);
+      this.send(ws,{type:'state',state,isHost:token===this.room.hostToken});
+    }
+  }
   matchOver(g=this.room?.game){return !g||g.result==='Match complete'}
   humansAway(g){return g.players.filter(p=>!p.bot&&!p.left).every(p=>p.away)}
   ratedSeats(){return Object.values(this.room.members).filter(m=>m.accountId)}

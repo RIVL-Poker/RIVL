@@ -571,4 +571,47 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+// 20. Capacity: the Ranked queue counts a seat as soon as it hands out a table, joins skip the ladder rank,
+// leaderboards are served from one copy, ties share a rank, photos go to each socket once, and photo reports work.
+{
+  const env=makeEnv(),d=env.DIRECTORY.get('global'),call=async(path,body)=>(await d.fetch('https://dir'+path,{method:'POST',body:JSON.stringify(body||{})})).json();
+  await call('/lobby/upsert',{code:'AAAAAA',host:'Ann',humans:1,players:1,ranked:true,size:3});
+  await call('/lobby/upsert',{code:'BBBBBB',host:'Bob',humans:2,players:2,ranked:true,size:6});
+  assert.equal((await call('/lobby/claim',{size:3})).code,'AAAAAA');
+  assert.equal((await call('/lobby/claim',{size:3})).code,'AAAAAA','the first claim already counted its seat');
+  assert.equal((await call('/lobby/claim',{size:3})).code,null,'a table counted full is not handed out again');
+  assert.equal((await call('/lobby/claim',{size:6,skip:['BBBBBB']})).code,null,'a table that refused a join is skipped');
+  assert.equal((await call('/lobby/claim',{size:9})).code,null,'sizes never mix');
+
+  const acc=[];for(const n of ['Ann','Bob','Cat','Dan'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  const dir=env.DIRECTORY.instances.get('global');
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1700,acc[0].account.id);
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1600,acc[1].account.id);
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1600,acc[2].account.id);
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1500,acc[3].account.id);
+  assert.deepEqual((await call('/leaderboard')).players.map(p=>p.rank),[1,2,2,4],'tied ratings share a rank');
+  assert.equal((await call('/accounts/me',{key:acc[1].key})).account.rank,2,'your own page still shows your rank');
+  assert.equal((await call('/verify',{key:acc[1].key})).account.rank,null,'sitting down at a table skips the rank count');
+  dir.sql.exec('UPDATE accounts SET rr=? WHERE id=?',1800,acc[3].account.id);
+  assert.equal((await call('/leaderboard')).players[0].name,'Ann','the leaderboard is served from a short-lived copy');
+  await call('/results',{matchId:'m-cap',players:[]});
+  assert.equal((await call('/leaderboard')).players[0].name,'Dan','a rated result refreshes the leaderboard');
+
+  const photo='data:image/jpeg;base64,'+'A'.repeat(4000);
+  assert.ok((await api(env,'/api/avatar',{key:acc[0].key,avatar:photo})).data.account,'saving a photo works');
+  const room=(await api(env,'/api/rooms',{key:acc[0].key})).data,joined=(await api(env,'/api/rooms/'+room.code+'/join',{key:acc[1].key})).data;
+  const r=roomOf(env,room.code),host=await sit(env,room.code,room.token);
+  assert.equal(host.last('state').state.seats[0].avatar,photo,'a new socket gets the photos');
+  const before=host.messages.length;await say(r,host,{type:'startMatch'});
+  assert.ok(host.messages.length>before&&r.room.game,'the match started');
+  assert.equal(host.last('state').state.seats[0].avatar,undefined,'later updates leave unchanged photos out');
+  assert.equal(host.last('state').state.seats[1].avatar,'B','letter avatars are always sent');
+  const guest=await sit(env,room.code,joined.token);
+  assert.equal(guest.last('state').state.seats[0].avatar,photo,'each socket gets the photos once');
+  const report=await api(env,'/api/report-avatar',{key:acc[1].key,targetId:acc[0].account.id,reason:'Not a real photo'});
+  assert.equal(report.status,200,report.data.error);
+  assert.equal((await api(env,'/api/avatar',{key:acc[0].key,avatar:photo})).status,403,'a reported player waits for review');
+  checks++;
+}
+
 console.log('PASS: '+checks+' room server checks');
