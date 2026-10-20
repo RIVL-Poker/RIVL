@@ -4,12 +4,12 @@
   const stored=key=>{try{return localStorage.getItem(key)}catch{return null}};
   const API=window.RIVL_ROOM_API||stored('rivlRoomApi')||(/^https?:$/.test(location.protocol)?location.origin:'');
   const SESSION='rivlRoomSession';
-  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false,clockOffset=0,retry=0,retryTimer=null,pingTimer=null;
+  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false,clockOffset=0,retry=0,retryTimer=null,pingTimer=null,roomWinKey='',roomWinTimer=null;
   const saveSession=()=>{try{localStorage.setItem(SESSION,JSON.stringify({code:roomCode,token}))}catch{}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION)}catch{}};
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
   const pretty=c=>c?c[0]+suit[c[1]]:'🂠';
-  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');if(back){el.textContent='♠';return el}if(!code)return el;const rank=document.createElement('strong');rank.textContent=code[0]==='T'?'10':code[0];const center=document.createElement('span');center.className='rivl-card-center';center.textContent=suit[code[1]];el.append(rank,center);return el};
+  const cardNode=(code,back=false)=>{const el=document.createElement('div');el.className='card'+(back?' back':'')+(code&&/[HD]$/.test(code)?' red':'');if(back){el.textContent='♠';return el}if(!code)return el;const rank=document.createElement('strong');rank.textContent=code[0]==='T'?'10':code[0];const corner=document.createElement('small');corner.textContent=suit[code[1]];rank.append(corner);const center=document.createElement('span');center.className='rivl-card-center';center.textContent=suit[code[1]];el.append(rank,center);return el};
   const avatarFor=p=>p?.avatar||p?.name?.[0]?.toUpperCase()||'♠';
   const reportPhoto=async seat=>{
     if(!seat?.accountId)return;
@@ -24,9 +24,11 @@
     if(!seat?.accountId||seat.accountId===window.rivlAccount?.current()?.id||!/^data:image\//.test(seat.avatar||''))return;
     const b=document.createElement('button');b.type='button';b.className='rivl-report-photo';b.textContent='REPORT PHOTO';b.title='Report inappropriate profile picture';b.onclick=()=>reportPhoto(seat);el.append(b);
   };
+  // The server sends each seat's photo once; later states leave it out while the seat is unchanged.
+  const keepPhotos=(before,now)=>now?.seats?.forEach((s,i)=>{const old=before?.seats?.[i];if(s&&s.avatar===undefined&&old&&old.name===s.name)s.avatar=old.avatar});
   const paintSeatAvatar=(el,p)=>{const a=avatarFor(p);el.replaceChildren();if(/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a)&&a.length<=45000){const img=document.createElement('img');img.src=a;img.alt='';img.className='rivl-avatar-photo';el.append(img)}else el.textContent=a};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
-  let clockTimer=null,previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
+  let clockTimer=null,roomBetKey='',previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
   function animatedCard(code,back,delay=0){const el=cardNode(code,back);if(delay){el.classList.add('rivl-deal-in');el.style.animationDelay=delay+'ms'}return el}
   let roomTab='chat',roomHistory=[],roomChat=[];
@@ -161,15 +163,23 @@
       const active=g.players.filter(p=>p&&!p.sittingOut);
       $('roomPlayerCount').textContent=active.length;
       const me=g.players.find(p=>p.seat===snapshot.mySeat);
-      const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat));
+      // Opponents are laid out clockwise starting at your left, in the server's turn order (seat index order
+      // starting after yours), so the action, dealer and blinds travel around the table instead of jumping.
+      const after=p=>me?(p.seat-me.seat+9)%9:p.seat;
+      const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat)).sort((a,b)=>after(a)-after(b));
       $('roomMyName').textContent=me?.name||'Spectator';
-      paintSeatAvatar($('roomMyAvatar'),snapshot.seats[me?.seat]||me);$('roomMyAvatar').parentElement.classList.toggle('is-dealer',!!me&&me.seat===g.dealer);
+      paintSeatAvatar($('roomMyAvatar'),snapshot.seats[me?.seat]||me);const mySpot=$('roomMyAvatar').parentElement;for(const [cls,seat] of [['is-dealer',g.dealer],['is-sb',g.sbSeat],['is-bb',g.bbSeat]])mySpot.classList.toggle(cls,!!me&&me.seat===seat);
       $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
       $('roomTimer').hidden=g.turn!==me?.seat||g.phase==='showdown';
       const newHand=g.handNumber!==previousHand;
       if(newHand){previousHand=g.handNumber;previousBoard=[];previousTurn=-1;lastTick=-1}
-      const hole=$('roomHoleCards');
-      if(newHand||hole.children.length!==2){
+      const hole=$('roomHoleCards'),table=$('roomPokerTable'),seatOf=new Map([...$('roomGamePlayers').children].map(el=>[+el.dataset.seat,el]));
+      // Folded hands (yours face up, others face down) slide from their seat into the discard pile.
+      window.rivlTable?.muck(table,roomCode+':'+(g.matchId||'')+':'+g.handNumber,g.players.filter(p=>p&&p.folded&&!p.sittingOut).map(p=>me&&p.seat===me.seat?{key:p.seat,from:hole,cards:[...hole.children]}:{key:p.seat,from:seatOf.get(p.seat)}));
+      mySpot.classList.toggle('is-folded',!!me?.folded);
+      window.rivlTable?.bbCount(mySpot,$('roomMyAvatar'),me?.stack??0,me?g.bigBlind:0);
+      if(me?.folded)hole.replaceChildren();
+      else if(newHand||hole.children.length!==2){
         hole.replaceChildren();
         for(let i=0;i<2;i++)hole.append(animatedCard(g.holeCards?.[i],!g.holeCards?.[i],i*170+100));
         if(g.holeCards?.length){setTimeout(()=>pvpSound('card'),100);setTimeout(()=>pvpSound('card'),270)}
@@ -196,15 +206,20 @@
       if(previousPhase!=='showdown'&&g.phase==='showdown')pvpSound('win');
       previousPhase=g.phase;
       $('roomPot').textContent=g.pot;
+      $('roomPotTotal').textContent=Number(g.pot||0).toLocaleString();
+      const myContribution=Number(g.players.find(p=>p.seat===snapshot.mySeat)?.contribution||0);
+      $('roomPotEquity').textContent=g.pot?Math.round(100*myContribution/g.pot)+'%':'0%';
+      const potEl=$('roomPotChips');if(potEl.dataset.pot!==String(g.pot||0)){potEl.dataset.pot=g.pot||0;potEl.innerHTML=window.rivlChips.pileHTML(g.pot)}
       const seats=$('roomGamePlayers');seats.replaceChildren();
       const count=Math.min(9,opponents.length+1);
       $('roomPokerTable').dataset.playerCount=String(count);
       opponents.forEach((p,i)=>{
-        const item=document.createElement('div');
-        item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'');
+        const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
+        item.dataset.seat=p.seat;item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
-        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn?' ◀ TURN':'');label.append(who,info);
-        item.append(avatar,label);appendReport(item,snapshot.seats[p.seat]);
+        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
+        item.append(avatar,label);
+        if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}appendReport(item,snapshot.seats[p.seat]);
         const cards=g.shown?.[p.seat];
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
         // Evenly distribute opponents along a mirrored arc around the Cairo table.
@@ -225,9 +240,26 @@
           if(Math.abs(cos)>0.45)item.classList.add(cos<0?'shown-right':'shown-left');
         }
         seats.append(item);
+        window.rivlTable?.bbCount(item,avatar,p.stack,g.bigBlind);
       });
       if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
       renderRoomPanel();
+      // Large showdown banner. Use only publicly revealed cards from the server.
+      const winnerOverlay=$('rivlRoomWinFx')||(()=>{const el=document.createElement('div');el.id='rivlRoomWinFx';el.className='rivl-room-win-fx';el.setAttribute('aria-live','polite');$('roomPokerTable').append(el);return el})();
+      // It shows once per hand and steps aside after a few seconds so the board and every revealed hand stay visible.
+      const winKey=roomCode+':'+g.handNumber;
+      if(g.phase==='showdown'&&g.result&&!g.matchOver){if(winKey!==roomWinKey){roomWinKey=winKey;clearTimeout(roomWinTimer);roomWinTimer=setTimeout(()=>winnerOverlay.classList.remove('visible'),WIN_BANNER_MS);
+        const winner=g.winners?.length===1?g.winners[0]:null;
+        const winnerCards=winner?g.shown?.[winner.seat]:null;
+        winnerOverlay.replaceChildren();
+        const heading=document.createElement('strong');heading.textContent=winner?winner.name+' WINS':g.winners?.length>1?'SPLIT POT':'HAND COMPLETE';
+        const hand=document.createElement('div');hand.className='rivl-win-hand';hand.textContent=winner?.hand||'UNCONTESTED';
+        winnerOverlay.append(heading);
+        if(Array.isArray(winnerCards)&&winnerCards.length===2){const cards=document.createElement('div');cards.className='rivl-winner-cards';winnerCards.forEach(code=>cards.append(cardNode(code)));winnerOverlay.append(cards)}
+        winnerOverlay.append(hand);
+        if(winner&&Number.isFinite(Number(winner.amount))){const gain=document.createElement('small');gain.className='rivl-victory-gain';gain.textContent=winner.name+' +'+Number(winner.amount).toLocaleString();winnerOverlay.append(gain)}
+        winnerOverlay.classList.add('visible');}
+      }else{roomWinKey='';clearTimeout(roomWinTimer);winnerOverlay.classList.remove('visible')}
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=!(g.matchOver&&(host||snapshot.ranked));
       $('roomNext').textContent=snapshot.ranked?'FIND NEXT RANKED MATCH':'BACK TO LOBBY';
@@ -245,11 +277,15 @@
         $('roomRaise').disabled=!l.canRaise;
         $('roomAllin').disabled=!l.canRaise&&l.raiseToMax>l.call;
         const amount=$('roomRaiseAmount'),slider=$('roomRaiseSlider');
-        amount.min=slider.min=l.raiseToMin;amount.max=slider.max=l.raiseToMax;
-        if(Number(amount.value)<l.raiseToMin||Number(amount.value)>l.raiseToMax)amount.value=l.raiseToMin;
+        const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);
+        amount.min=slider.min=first;amount.max=slider.max=last;amount.step=slider.step=5;
+        // Each new decision starts the raise bar back at the minimum legal raise.
+        const betKey=[g.handNumber,g.board.length,l.call,first].join(':');
+        if(betKey!==roomBetKey||Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
+        roomBetKey=betKey;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
-      }else $('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':'Waiting for next turn';
+      }else{roomBetKey='';$('roomBetInfo').textContent=g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
       const tick=()=>{
         const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);
@@ -269,10 +305,34 @@
   }
   function lobbyLocked(){return !!snapshot?.game&&!snapshot.game.matchOver}
   function send(message){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(message));else status('Reconnecting to the room…')}
+  // Ranked lobbies get their own browser history entry, so the phone or browser back gesture leaves the lobby
+  // instead of the site. Leaving a Ranked room by any route lands on the 3/6/9 Ranked menu, not the casual finder.
+  // (script.js declares a global `history` array, so the browser API is reached through window.history.)
+  let skipRankedPop=false;
+  const inRankedHistory=()=>!!window.history.state?.rivlRankedRoom;
+  function markRankedHistory(){if(!inRankedHistory())try{window.history.pushState({rivlRankedRoom:true},'')}catch{}}
+  function dropRankedHistory(){if(inRankedHistory()){skipRankedPop=true;window.history.back()}}
+  function showRankedMenu(message){
+    show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;
+    $('rankedSelectStatus').textContent=window.rivlAccount?.key()?(message||''):'Sign in on your Profile to play Ranked.';
+  }
+  function leaveRoom(){
+    if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return false;
+    const ranked=!!snapshot?.ranked||rankedEntry;
+    send({type:'leave'});resetView('Left room.');
+    if(ranked){dropRankedHistory();showRankedMenu()}
+    return true;
+  }
+  window.addEventListener('popstate',()=>{
+    if(skipRankedPop){skipRankedPop=false;return}
+    if(!token||!(snapshot?.ranked||rankedEntry))return;
+    // Back out of a running Ranked match only after the same confirm as the Leave button; otherwise stay put.
+    if(!leaveRoom())markRankedHistory();
+  });
   function resetView(message){
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
-    clearInterval(queueTimer);socket=null;roomCode='';token='';snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
+    clearInterval(queueTimer);socket=null;roomCode='';token='';rankedEntry=false;snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
     const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM';
     $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
   }
@@ -285,9 +345,9 @@
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
-      if(message.type==='state'){snapshot=message.state;roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
+      if(message.type==='state'){const before=snapshot;snapshot=message.state;keepPhotos(before,snapshot);if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
       else if(message.type==='chat')addChatMessage(message.message);
-      else if(message.type==='removed')resetView(message.reason||'You are no longer in that room.');
+      else if(message.type==='removed'){const ranked=!!snapshot?.ranked||rankedEntry,reason=message.reason||'You are no longer in that room.';resetView(reason);if(ranked){dropRankedHistory();showRankedMenu(reason)}}
       else if(message.error)status(message.error);
     };
     // Reconnect automatically with backoff; the saved token keeps the seat.
@@ -337,22 +397,23 @@
   $('quickPlay').onclick=()=>enter('quick');
   $('createRoom').onclick=()=>enter('create');
   document.querySelectorAll('[data-ranked-count]').forEach(btn=>btn.addEventListener('click',()=>{rankedSize=Number(btn.dataset.rankedCount);enter('ranked')}));
-  $('openRanked').onclick=()=>{show('play');$('modeSelect').hidden=true;$('playerSelect').hidden=true;$('rankedSelect').hidden=false;$('rankedSelectStatus').textContent=window.rivlAccount?.key()?'':'Sign in on your Profile to play Ranked.'};
+  $('openRanked').onclick=()=>showRankedMenu();
   $('backFromRanked').onclick=()=>{show('play');$('rankedSelect').hidden=true;$('modeSelect').hidden=false};
   $('joinRoom').onclick=()=>enter('join');
-  $('leaveRoom').onclick=()=>{if(lobbyLocked()&&!confirm(snapshot?.ranked?'Leave this Ranked match? You will place last and lose Elo.':'Leave this match? You will forfeit your seat and chips.'))return;send({type:'leave'});resetView('Left room.')};
+  $('leaveRoom').onclick=leaveRoom;
   $('roomStart').onclick=()=>send({type:'startMatch'});
   $('roomFold').onclick=()=>send({type:'action',action:'fold'});
   $('roomCall').onclick=()=>send({type:'action',action:snapshot?.game?.legal?.check?'check':'call'});
-  $('roomRaise').onclick=()=>send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)});
+  $('roomRaise').onclick=()=>{setRoomBet($('roomRaiseAmount').value);send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)})};
+  $('roomRaiseAmount').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('roomRaise').click()}});
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
   $('roomNext').onclick=()=>{if(!snapshot?.ranked)return send({type:'newMatch'});send({type:'leave'});resetView('Finding your next Ranked match…');enter('ranked')};
-  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const n=clamp(Math.round(Number(value)||l.raiseToMin),l.raiseToMin,l.raiseToMax);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
-  $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=e.target.value;}});
+  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);const raw=Number(value);const n=clamp(5*Math.round((Number.isFinite(raw)?raw:first)/5),first,last);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
+  $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){const l=snapshot?.game?.legal;if(l){const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);$('roomRaiseSlider').value=clamp(5*Math.round(n/5),first,last)}$('roomAmountLabel').textContent=e.target.value;}});
   $('roomRaiseAmount').addEventListener('change',e=>setRoomBet(e.target.value));
   $('roomRaiseSlider').addEventListener('input',e=>setRoomBet(e.target.value));
-  $('roomMinusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)-1);
-  $('roomPlusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)+1);
+  $('roomMinusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)-5);
+  $('roomPlusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)+5);
   document.querySelectorAll('[data-room-bet]').forEach(button=>button.onclick=()=>{const l=snapshot?.game?.legal,g=snapshot?.game;if(!l||!g)return;const kind=button.dataset.roomBet;setRoomBet(kind==='min'?l.raiseToMin:kind==='all'?l.raiseToMax:kind==='half'?l.raiseToMin+Math.floor(g.pot/2):l.raiseToMin+g.pot)});
 
   $('roomPrivate').onclick=()=>send({type:'visibility',visibility:'private'});

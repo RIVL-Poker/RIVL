@@ -1,4 +1,4 @@
-:root{--gold:#efbd70;--text:#f8f4ed;--muted:var(--text);--panel:#101011ee;--line:#6b4b2c}*{box-sizing:border-box}body{margin:0;background:#09090b;color:#f8f4ed;font-family:Inter,Arial,sans-serif}button{cursor:pointer;font:inherit}#app{display:flex;min-height:100vh}.sidebar{width:222px;flex-shrink:0;background:linear-gradient(#101010,#080808);border-right:1px solid #392818;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:26px 16px}.brand{font-size:35px;color:var(--gold);font-weight:900;letter-spacing:3px;margin:0 12px 44px}.brand span{font-size:18px;vertical-align:middle}.sidebar nav{display:grid;gap:10px}.nav{border:0;text-align:left;background:transparent;color:var(--text);padding:16px;border-radius:8px}.nav.active,.nav:hover{background:linear-gradient(90deg,#f4cb85,#a97031);color:#130d07;font-weight:700}.season{margin-top:auto;border:1px solid #70502c;background:#19130d;padding:18px;border-radius:12px}.season small{color:var(--gold)}.season h2{margin:12px 0 0}.season p{color:var(--text);margin:4px 0 15px}.progress{height:7px;border-radius:8px;background:#39302a;overflow:hidden;margin:12px 0}.progress span{display:block;width:60%;height:100%;background:linear-gradient(90deg,#a76e2c,#f5d397)}.sidefoot{font-size:10px;color:var(--text);text-align:center;margin-top:20px}main{min-width:0;flex:1}header{height:70px;background:#0a0a0bdc;border-bottom:1px solid #34281d;display:flex;align-items:center;justify-content:space-between;padding:0 32px}.crumb{font-size:11px;letter-spacing:3px;color:#e1ba7b}.account{display:flex;gap:12px;align-items:center;font-size:13px}.coin{color:var(--gold);margin-right:12px}.avatar{width:39px;height:39px;border:2px solid var(--gold);border-radius:50%;display:inline-grid;place-items:center;background:#292018;color:var(--gold);font-weight:800}.view{display:none}.view.active{display:block}#play{padding:0 30px 40px}.hero{padding:65px 42px;min-height:310px;background:linear-gradient(90deg,#090909ee 5%,#15100aa0 58%,#120e0766),radial-gradient(ellipse at 85% 30%,#f6a04799,transparent 42%),linear-gradient(135deg,#302015,#09090a);border-bottom:1px solid #75502b;position:relative;overflow:hidden}.hero:after{content:'♠';position:absolute;right:12%;top:-95px;font-size:400px;color:#efb65b12;transform:rotate(-16deg)}.eyebrow{color:var(--gold);font-size:12px;letter-spacing:3px}.hero h1{font-size:clamp(35px,5vw,66px);line-height:1.03;margin:17px 0}.hero h1 em{font-style:normal;color:var(--gold)}.hero p{color:var(--text);margin-bottom:22px}.gold{background:linear-gradient(#ffdda0,#c68d46);border:1px solid #f8cc83;color:#170f06;font-weight:800;border-radius:7px;padding:14px 24px}.gold:hover{filter:brightness(1.15)}.section-title{display:flex;align-items:center;justify-content:space-between;margin:26px 0 15px}.section-title h2{font-size:19px;color:var(--gold)}.section-title span{font-size:11px;color:var(--muted)}.modes,.bottom-cards,.theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.mode,.panel{border:1px solid #654728;background:#101010f5;border-radius:10px;padding:18px}.mode{text-align:center}.mini-table{height:112px;margin-bottom:10px;background:radial-gradient(ellipse,#242426 35%,#0c0b0b 36%,#bd8845 39%,#16100b 43%,#090909 60%);display:grid;place-items:center;font-size:32px;color:#b58240}.mode h3{margin:8px 0}.mode p,.panel p{color:var(--text);font-size:13px}.mode .gold{width:100%;margin-top:12px}.bottom-cards{margin-top:20px;grid-template-columns:repeat(2,minmax(0,1fr))}.panel h3{color:var(--gold);font-size:13px}.panel strong{font-size:27px}.panel b{float:right}.positive{color:#4bd28e}.negative{color:#ff7070}.theme-preview{height:95px;display:grid;place-items:center;color:#f1bd76;font-weight:800;letter-spacing:4px;background:radial-gradient(ellipse at 50% 100%,#9d552b,#1e1711 50%,#08090a);border:1px solid #80572b;border-radius:8px}.gamebar{display:flex;gap:24px;align-items:center;justify-content:space-between;padding:14px 25px;background:#0c0b0b}.gamebar>div{display:grid;gap:3px}.gamebar small{color:var(--text);font-size:10px}.gamebar strong{font-size:19px}.outline{border:1px solid #765333;background:#181411;color:white;padding:11px 15px;border-radius:7px}.table-scene{min-height:460px;padding:12px 28px 30px;background:radial-gradient(ellipse at 50% 10%,#d06e3488,transparent 48%),linear-gradient(135deg,#23170e,#08090a 55%,#2b190e)}.skyline{text-align:center;letter-spacing:6px;color:#e8ad63;font-size:12px;padding:10px}.poker-table{position:relative;margin:16px auto 0;width:min(920px,94%);height:390px;border-radius:48%;background:radial-gradient(ellipse,#272729,#111113 70%);border:15px solid #211913;box-shadow:0 0 0 3px #bc8846,0 0 0 10px #080808,0 20px 80px #000}.seat{position:absolute;display:flex;align-items:center;gap:5px;background:#080808d9;border:1px solid #70522e;border-radius:25px;padding:3px 9px 3px 3px;font-size:12px;white-space:nowrap}.seat .avatar{width:32px;height:32px}.s1{top:-20px;left:13%}.s2{top:-35px;right:15%}.s3{top:40%;right:-30px}.s4{bottom:-12px;right:15%}.s5{top:42%;left:-30px}.pot{position:absolute;top:25%;left:50%;transform:translateX(-50%);display:grid;text-align:center;color:var(--gold);font-size:11px}.pot strong{font-size:23px}.community{position:absolute;top:43%;left:50%;transform:translateX(-50%);display:flex;gap:5px}.card{width:43px;height:63px;background:#f3eee7;color:#171717;border-radius:4px;padding:5px;font-size:21px;font-weight:bold;display:flex;flex-direction:column;justify-content:space-between}.card span{align-self:center}.card .red{color:#ce2f3d}.card.back{background:#1c1c20;color:#796b5c;border:1px solid #72624c;place-content:center;text-align:center}.myseat{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:#090909;border:1px solid #e4ad5d;box-shadow:0 0 15px #d7a45166;padding:6px 13px;border-radius:32px}.myseat small{display:block;color:var(--gold);font-size:12px}.turn{border:3px solid #3ecc6f;border-radius:50%;padding:8px}.actions{display:flex;align-items:center;justify-content:center;gap:12px;padding:18px;background:#0d0d0e}.actions>button{min-width:115px;padding:17px}.fold{background:#7e1520;border:1px solid #bb2c39;color:white;border-radius:7px}.check{background:#17202a;border:1px solid #394f60;color:white;border-radius:7px}.raise{border:1px solid #4d3927;border-radius:8px;padding:7px 12px;min-width:210px}.raise label{display:flex;justify-content:space-between;font-size:10px;color:#c9a474}.raise input{width:100%;accent-color:#e6b873}.raise div{display:flex;gap:4px}.raise button{flex:1;background:#181a20;color:white;border:1px solid #36363c;border-radius:4px;padding:5px;font-size:10px}.bottom-toggle{text-align:center;background:#090909}.bottom-toggle button{background:#16120e;color:#e3bb7b;border:1px solid #725331;border-radius:9px 9px 0 0;padding:12px 24px}.game-panel{background:#111113;border-top:1px solid #75532d;overflow:hidden;transition:max-height .25s ease;max-height:260px;padding:10px 22px}.game-panel.collapsed{max-height:0;padding:0 22px;border:0}.tabs{display:flex;gap:12px;flex-wrap:wrap}.tab{background:transparent;color:var(--text);border:0;padding:10px}.tab.selected{color:var(--gold);border-bottom:2px solid var(--gold)}#tabcontent{padding:8px 12px;color:var(--text);font-size:13px}.demo-notice{text-align:center;font-size:11px;color:var(--text);padding:10px}.content-view{padding:35px}.content-view h1{color:var(--gold)}.profile-card{display:flex;align-items:center;gap:24px;max-width:600px}.avatar.large{width:95px;height:95px;font-size:40px}.muted{color:var(--text)}.rankrow{display:grid;grid-template-columns:70px 1fr 100px;padding:16px;border-bottom:1px solid #38302b}.rankrow:first-child{color:var(--gold)}.theme-grid .chosen{border-color:#e4b66e}.midnight{background:linear-gradient(135deg,#080e22,#102c6c)}.royal{background:linear-gradient(135deg,#35080b,#8e2227)}@media(max-width:850px){.sidebar{width:75px;padding:16px 8px}.brand{margin:0 0 35px;font-size:25px}.brand span,.nav{font-size:0}.nav{padding:16px;text-align:center}.nav:first-letter{font-size:20px}.season,.sidefoot{display:none}.modes,.bottom-cards,.theme-grid{grid-template-columns:1fr}.hero{padding:35px 25px}.actions{flex-wrap:wrap}.poker-table{width:100%;height:320px}.seat{font-size:0}.seat .avatar{font-size:12px}.community .card{width:31px;height:48px;font-size:16px}.raise{width:100%}header{padding:0 15px}.crumb{font-size:9px}}@media(max-width:520px){.sidebar{width:54px}.brand{font-size:21px}.account .coin{display:none}#play{padding:0 12px 30px}.gamebar{gap:8px;padding:12px 8px}.gamebar strong{font-size:14px}.gamebar .outline{font-size:10px;padding:8px}.table-scene{padding:10px 8px}.poker-table{border-width:9px}.seat{padding:2px}.seat .avatar{width:25px;height:25px}.s3{right:-15px}.s5{left:-15px}.myseat{font-size:11px}.actions>button{min-width:75px;padding:12px}}
+:root{--gold:#efbd70;--text:#f8f4ed;--muted:var(--text);--panel:#101011ee;--line:#6b4b2c}*{box-sizing:border-box}body{margin:0;background:#09090b;color:#f8f4ed;font-family:Inter,Arial,sans-serif}button{cursor:pointer;font:inherit}#app{display:flex;min-height:100vh}.sidebar{width:222px;flex-shrink:0;background:linear-gradient(#101010,#080808);border-right:1px solid #392818;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:26px 16px}.brand{font-size:35px;color:var(--gold);font-weight:900;letter-spacing:3px;margin:0 12px 44px}.brand span{font-size:18px;vertical-align:middle}.sidebar nav{display:grid;gap:10px}.nav{border:0;text-align:left;background:transparent;color:var(--text);padding:16px;border-radius:8px}.nav.active,.nav:hover{background:linear-gradient(90deg,#f4cb85,#a97031);color:#130d07;font-weight:700}.season{margin-top:auto;border:1px solid #70502c;background:#19130d;padding:18px;border-radius:12px}.season small{color:var(--gold)}.season h2{margin:12px 0 0}.season p{color:var(--text);margin:4px 0 15px}.progress{height:7px;border-radius:8px;background:#39302a;overflow:hidden;margin:12px 0}.progress span{display:block;width:60%;height:100%;background:linear-gradient(90deg,#a76e2c,#f5d397)}.sidefoot{font-size:10px;color:var(--text);text-align:center;margin-top:20px}main{min-width:0;flex:1}header{height:70px;background:#0a0a0bdc;border-bottom:1px solid #34281d;display:flex;align-items:center;justify-content:space-between;padding:0 32px}.crumb{font-size:11px;letter-spacing:3px;color:#e1ba7b}.account{display:flex;gap:12px;align-items:center;font-size:13px}.coin{color:var(--gold);margin-right:12px}.avatar{width:39px;height:39px;border:2px solid var(--gold);border-radius:50%;display:inline-grid;place-items:center;background:#292018;color:var(--gold);font-weight:800}.view{display:none}.view.active{display:block}#play{padding:0 30px 40px}.hero{padding:65px 42px;min-height:310px;background:linear-gradient(90deg,#090909ee 5%,#15100aa0 58%,#120e0766),radial-gradient(ellipse at 85% 30%,#f6a04799,transparent 42%),linear-gradient(135deg,#302015,#09090a);border-bottom:1px solid #75502b;position:relative;overflow:hidden}.hero:after{content:'♠';position:absolute;right:12%;top:-95px;font-size:400px;color:#efb65b12;transform:rotate(-16deg)}.eyebrow{color:var(--gold);font-size:12px;letter-spacing:3px}.hero h1{font-size:clamp(35px,5vw,66px);line-height:1.03;margin:17px 0}.hero h1 em{font-style:normal;color:var(--gold)}.hero p{color:var(--text);margin-bottom:22px}.gold{background:linear-gradient(#ffdda0,#c68d46);border:1px solid #f8cc83;color:#170f06;font-weight:800;border-radius:7px;padding:14px 24px}.gold:hover{filter:brightness(1.15)}.section-title{display:flex;align-items:center;justify-content:space-between;margin:26px 0 15px}.section-title h2{font-size:19px;color:var(--gold)}.section-title span{font-size:11px;color:var(--muted)}.modes,.bottom-cards,.theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.mode,.panel{border:1px solid #654728;background:#101010f5;border-radius:10px;padding:18px}.mode{text-align:center}.mini-table{height:112px;margin-bottom:10px;background:radial-gradient(ellipse,#242426 35%,#0c0b0b 36%,#bd8845 39%,#16100b 43%,#090909 60%);display:grid;place-items:center;font-size:32px;color:#b58240}.mode h3{margin:8px 0}.mode p,.panel p{color:var(--text);font-size:13px}.mode .gold{width:100%;margin-top:12px}.bottom-cards{margin-top:20px;grid-template-columns:repeat(2,minmax(0,1fr))}.panel h3{color:var(--gold);font-size:13px}.panel strong{font-size:27px}.panel b{float:right}.positive{color:#4bd28e}.negative{color:#ff7070}.theme-preview{height:95px;display:grid;place-items:center;color:#f1bd76;font-weight:800;letter-spacing:4px;background:radial-gradient(ellipse at 50% 100%,#9d552b,#1e1711 50%,#08090a);border:1px solid #80572b;border-radius:8px}.gamebar{display:flex;gap:24px;align-items:center;justify-content:space-between;padding:14px 25px;background:#0c0b0b}.gamebar>div{display:grid;gap:3px}.gamebar small{color:var(--text);font-size:10px}.gamebar strong{font-size:19px}.outline{border:1px solid #765333;background:#181411;color:white;padding:11px 15px;border-radius:7px}.table-scene{min-height:460px;padding:12px 28px 30px;background:radial-gradient(ellipse at 50% 10%,#d06e3488,transparent 48%),linear-gradient(135deg,#23170e,#08090a 55%,#2b190e)}.skyline{text-align:center;letter-spacing:6px;color:#e8ad63;font-size:12px;padding:10px}.poker-table{position:relative;margin:16px auto 0;width:min(920px,94%);height:390px;border-radius:48%;background:radial-gradient(ellipse,#272729,#111113 70%);border:15px solid #211913;box-shadow:0 0 0 3px #bc8846,0 0 0 10px #080808,0 20px 80px #000}.seat{position:absolute;display:flex;align-items:center;gap:5px;background:#080808d9;border:1px solid #70522e;border-radius:25px;padding:3px 9px 3px 3px;font-size:12px;white-space:nowrap}.seat .avatar{width:32px;height:32px}.s1{top:-20px;left:13%}.s2{top:-35px;right:15%}.s3{top:40%;right:-30px}.s4{bottom:-12px;right:15%}.s5{top:42%;left:-30px}.pot{position:absolute;top:25%;left:50%;transform:translateX(-50%);display:grid;text-align:center;color:var(--gold);font-size:11px}.pot strong{font-size:23px}.community{position:absolute;top:43%;left:50%;transform:translateX(-50%);display:flex;justify-content:center;gap:5px}.card{width:43px;height:63px;background:#f3eee7;color:#171717;border-radius:4px;padding:5px;font-size:21px;font-weight:bold;display:flex;flex-direction:column;justify-content:space-between}.card span{align-self:center}.card .red{color:#ce2f3d}.card.back{background:#1c1c20;color:#796b5c;border:1px solid #72624c;place-content:center;text-align:center}.myseat{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:#090909;border:1px solid #e4ad5d;box-shadow:0 0 15px #d7a45166;padding:6px 13px;border-radius:32px}.myseat small{display:block;color:var(--gold);font-size:12px}.turn{border:3px solid #3ecc6f;border-radius:50%;padding:8px}.actions{display:flex;align-items:center;justify-content:center;gap:12px;padding:18px;background:#0d0d0e}.actions>button{min-width:115px;padding:17px}.fold{background:#7e1520;border:1px solid #bb2c39;color:white;border-radius:7px}.check{background:#17202a;border:1px solid #394f60;color:white;border-radius:7px}.raise{border:1px solid #4d3927;border-radius:8px;padding:7px 12px;min-width:210px}.raise label{display:flex;justify-content:space-between;font-size:10px;color:#c9a474}.raise input{width:100%;accent-color:#e6b873}.raise div{display:flex;gap:4px}.raise button{flex:1;background:#181a20;color:white;border:1px solid #36363c;border-radius:4px;padding:5px;font-size:10px}.bottom-toggle{text-align:center;background:#090909}.bottom-toggle button{background:#16120e;color:#e3bb7b;border:1px solid #725331;border-radius:9px 9px 0 0;padding:12px 24px}.game-panel{background:#111113;border-top:1px solid #75532d;overflow:hidden;transition:max-height .25s ease;max-height:260px;padding:10px 22px}.game-panel.collapsed{max-height:0;padding:0 22px;border:0}.tabs{display:flex;gap:12px;flex-wrap:wrap}.tab{background:transparent;color:var(--text);border:0;padding:10px}.tab.selected{color:var(--gold);border-bottom:2px solid var(--gold)}#tabcontent{padding:8px 12px;color:var(--text);font-size:13px}.demo-notice{text-align:center;font-size:11px;color:var(--text);padding:10px}.content-view{padding:35px}.content-view h1{color:var(--gold)}.profile-card{display:flex;align-items:center;gap:24px;max-width:600px}.avatar.large{width:95px;height:95px;font-size:40px}.muted{color:var(--text)}.rankrow{display:grid;grid-template-columns:70px 1fr 100px;padding:16px;border-bottom:1px solid #38302b}.rankrow:first-child{color:var(--gold)}.theme-grid .chosen{border-color:#e4b66e}.midnight{background:linear-gradient(135deg,#080e22,#102c6c)}.royal{background:linear-gradient(135deg,#35080b,#8e2227)}@media(max-width:850px){.sidebar{width:75px;padding:16px 8px}.brand{margin:0 0 35px;font-size:25px}.brand span,.nav{font-size:0}.nav{padding:16px;text-align:center}.nav:first-letter{font-size:20px}.season,.sidefoot{display:none}.modes,.bottom-cards,.theme-grid{grid-template-columns:1fr}.hero{padding:35px 25px}.actions{flex-wrap:wrap}.poker-table{width:100%;height:320px}.seat{font-size:0}.seat .avatar{font-size:12px}.community .card{width:31px;height:48px;font-size:16px}.raise{width:100%}header{padding:0 15px}.crumb{font-size:9px}}@media(max-width:520px){.sidebar{width:54px}.brand{font-size:21px}.account .coin{display:none}#play{padding:0 12px 30px}.gamebar{gap:8px;padding:12px 8px}.gamebar strong{font-size:14px}.gamebar .outline{font-size:10px;padding:8px}.table-scene{padding:10px 8px}.poker-table{border-width:9px}.seat{padding:2px}.seat .avatar{width:25px;height:25px}.s3{right:-15px}.s5{left:-15px}.myseat{font-size:11px}.actions>button{min-width:75px;padding:12px}}
 /* v0.2 — game screen is a single viewport; panel opens in-place, never scrolls. */
 body.in-game{overflow:hidden}
 body.in-game #app{height:100dvh;min-height:0;overflow:hidden}
@@ -52,8 +52,8 @@ body.in-game .s1{top:-28px}body.in-game .s2{top:-28px}
 .poker-table{position:relative;overflow:visible}
 .pot{z-index:3}
 .pot-chips{display:flex;justify-content:center;align-items:end;gap:3px;margin-top:6px;height:24px;pointer-events:none}
-.pot-chip,.flying-chip{display:block;width:22px;height:22px;border-radius:50%;border:3px dashed rgba(255,255,255,.8);box-shadow:inset 0 0 0 3px rgba(0,0,0,.28),0 3px 6px #0008;background:#bd2929}
-.pot-chip:nth-child(2),.flying-chip:nth-child(2){background:#2676c6}.pot-chip:nth-child(3),.flying-chip:nth-child(3){background:#268a60}.pot-chip:nth-child(4),.flying-chip:nth-child(4){background:#242424}.pot-chip:nth-child(5),.flying-chip:nth-child(5){background:#b78a2f}
+.flying-chip{display:block;width:22px;height:22px;border-radius:50%;border:3px dashed var(--chip-stripe);box-shadow:inset 0 0 0 3px #0000004d,0 3px 6px #0008;background:var(--chip-face);--chip-face:#efe9dc;--chip-stripe:#7a1424}
+.flying-chip:nth-child(4n+2){--chip-face:#7a1424;--chip-stripe:#f3ece0}.flying-chip:nth-child(4n+3){--chip-face:#d4a347;--chip-stripe:#1b1714}.flying-chip:nth-child(4n+4){--chip-face:#1c1a1a;--chip-stripe:#d4a347}
 .win-fx{display:none;position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);z-index:30;pointer-events:none;text-align:center;min-width:230px;padding:13px 24px;border:1px solid #dfb55d;border-radius:16px;background:linear-gradient(125deg,#1a130bf5,#090909f5);box-shadow:0 0 34px #e6ae4380,0 0 80px #b78b2438;color:#f5d28b;animation:winnerIn .35s ease-out}
 .win-fx.visible{display:block}.win-fx strong{display:block;font-size:23px;letter-spacing:.09em}.win-fx small{display:block;color:#fff4d6;margin-top:5px;font-size:13px}.win-fx .win-hand{font-size:14px;color:#fff;margin-top:3px}
 @keyframes winnerIn{from{opacity:0;transform:translate(-50%,-45%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
@@ -67,8 +67,6 @@ body.in-game .s1{top:-28px}body.in-game .s2{top:-28px}
 
 /* v0.8: chips stay clear of the community cards */
 body.in-game .pot{top:14%;z-index:3;min-width:110px}
-body.in-game .pot-chips{margin-top:2px;height:19px;align-items:center}
-body.in-game .pot-chip{width:18px;height:18px;flex:0 0 18px}
 body.in-game .community{top:45%;z-index:4}
 body.in-game .sound-setting{display:flex;align-items:center;gap:15px;margin-top:12px;color:#f0c783}
 body.in-game .sound-setting input{width:180px;accent-color:#e4b66e}
@@ -434,6 +432,8 @@ body.rivl-modal-open{overflow:hidden}
  #roomGame .rivl-pvp-seat.shown-right .rivl-shown,#roomGame .rivl-pvp-seat.shown-left .rivl-shown{top:50%;bottom:auto;transform:translateY(-50%)}
  #roomGame .rivl-pvp-seat.shown-right .rivl-shown{left:calc(100% + 4px)}
  #roomGame .rivl-pvp-seat.shown-left .rivl-shown{left:auto;right:calc(100% + 4px)}
+ /* The top-centre seat sits just above the board, so its cards go beside the pill instead of onto the board. */
+ #roomGame .rivl-pvp-seat.shown-below:not(.shown-left):not(.shown-right) .rivl-shown{top:50%;left:calc(100% + 4px);transform:translateY(-50%)}
 }
 /* Leave room above the felt so top seats never sit on the rim label. */
 #roomGame .rivl-pvp-scene .skyline{margin-bottom:30px}
@@ -570,14 +570,17 @@ body.rivl-modal-open{overflow:hidden}
 .rivl-welcome-dialog p strong{display:block;margin-top:12px;color:#efc77f}
 .rivl-welcome-dialog .gold{width:100%;min-height:48px}
 .rivl-welcome-skip{margin-top:12px;width:100%;border:0;background:transparent;color:#c8bba5;text-decoration:underline;cursor:pointer;padding:12px}
-.rivl-support-panel,.rivl-privacy-panel{max-width:780px;margin:18px 0;padding:24px}
+.rivl-support-panel{max-width:780px;margin:18px 0;padding:24px}
 .rivl-support-panel form{display:grid;gap:12px;margin-top:20px}
 .rivl-support-panel label{font-weight:600;color:#e9c383}
 .rivl-support-panel :is(select,textarea){width:100%;background:#141414;border:1px solid #816338;border-radius:8px;padding:12px;color:#eee;font:inherit}
 .rivl-support-panel textarea{resize:vertical}
-.rivl-privacy-panel h3:not(:first-child){margin-top:24px}
-.rivl-privacy-panel p{line-height:1.7}
-@media(max-width:600px){.rivl-welcome-dialog{padding:28px 20px}.rivl-support-panel,.rivl-privacy-panel{padding:16px}}
+.rivl-support-panel a:not(.outline){color:var(--gold)}
+.rivl-legal-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.rivl-legal-links .outline{text-decoration:none;display:inline-block}
+.rivl-welcome-legal{margin:14px 0 0;font-size:12px;line-height:1.5;color:#c8bba5;text-align:center}
+.rivl-welcome-legal a{color:var(--gold)}
+@media(max-width:600px){.rivl-welcome-dialog{padding:28px 20px}.rivl-support-panel{padding:16px}}
 /* Ranked leagues */
 :root{--prospect:#d08a4e;--challenger:#cfd6de;--elite:#efbd70;--master:#5b9bff;--grandmaster:#b07cf0;--champion:#ff5a5f}
 .league-prospect{--league:var(--prospect)}.league-challenger{--league:var(--challenger)}.league-elite{--league:var(--elite)}.league-master{--league:var(--master)}.league-grandmaster{--league:var(--grandmaster)}.league-champion{--league:var(--champion)}
@@ -707,3 +710,1242 @@ body.in-game #roomGame .game-panel:not(.collapsed):has(.room-chat){flex-basis:18
 .ranked-tracker .rt-head{justify-content:flex-start;padding:8px 95px 8px 8px}
 .ranked-tracker .rivl-avatar-edit .rivl-avatar-plus{left:auto;right:0;bottom:0;transform:translate(22%,22%)}
 @media(max-width:600px){.ranked-tracker .rt-head{justify-content:flex-start;padding:10px 0 65px}}
+
+
+/* Cairo table room: live DOM elements, not a flattened gameplay screenshot.
+   Shared by bot practice and multiplayer; seat and action layouts stay intact. */
+body.in-game .table-scene,
+.rivl-pvp-scene{
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse 40% 22% at 72% 19%,rgba(255,187,95,.55),transparent 80%),
+    linear-gradient(180deg,#321d22 0%,#a25435 21%,#dc9653 33%,#31282c 35%,#142b33 43%,#1b2529 47%,#3d2418 48%,#120e0e 100%);
+}
+body.in-game .table-scene::before,
+.rivl-pvp-scene::before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 3% 8% at 72% 27%,#ffe0a1 0%,#f6b66b 48%,transparent 55%),
+    repeating-linear-gradient(90deg,transparent 0 11%,rgba(12,10,15,.42) 11.3% 11.6%,transparent 12% 19%),
+    linear-gradient(90deg,rgba(12,8,7,.8),transparent 24% 76%,rgba(12,8,7,.8)),
+    repeating-linear-gradient(0deg,transparent 0 16px,rgba(242,162,78,.09) 17px 18px,transparent 19px 36px);
+  opacity:.8;
+}
+body.in-game .table-scene::after,
+.rivl-pvp-scene::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:29%;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(90deg,#24150e 0 2px,#44281a 3px 75px,#18100e 76px 79px),
+             linear-gradient(180deg,transparent,#160d09);
+  opacity:.32;
+}
+body.in-game .poker-table,
+.rivl-pvp-table{
+  background:
+    radial-gradient(ellipse at 50% 50%,rgba(66,44,31,.45),transparent 75%),
+    repeating-radial-gradient(ellipse at 50% 50%,transparent 0 20px,rgba(177,112,49,.018) 21px 22px),
+    #181312;
+  border-color:#1b110d;
+  box-shadow:inset 0 0 0 2px #d79b51,inset 0 0 0 8px #22140f,inset 0 0 0 10px #98612c,
+    inset 0 0 30px #090705,0 0 0 2px #9c682f,0 0 0 8px #1a100c,
+    0 0 0 10px #ad7137,0 9px 0 #3a2010,0 13px 0 #bd8038,0 19px 0 #20110a,
+    0 25px 32px rgba(0,0,0,.75),0 0 45px rgba(233,143,56,.2);
+}
+body.in-game .poker-table::before,
+.rivl-pvp-table::before{
+  content:"";position:absolute;inset:5%;border:1px solid rgba(199,133,62,.34);
+  border-radius:50%;pointer-events:none;
+}
+body.in-game .poker-table::after,
+.rivl-pvp-table::after{
+  content:"♠  R I V L  ♠";position:absolute;left:50%;top:15%;transform:translateX(-50%);
+  color:rgba(207,143,74,.35);font-size:clamp(9px,1.3vw,17px);letter-spacing:.2em;
+  font-weight:800;white-space:nowrap;pointer-events:none;
+}
+body.in-game .skyline{color:#f5c782;text-shadow:0 2px 8px #000;position:relative}
+body.in-game .poker-table .community,
+.rivl-pvp-table .community{position:relative;z-index:2}
+@media(max-width:650px){
+ body.in-game .poker-table::after,.rivl-pvp-table::after{top:12%;font-size:9px}
+}
+/* Bot thinking: a breathing gold ring on the seat plus three bouncing dots while the bot decides. */
+.think-dots{display:none;align-items:center;gap:3px;flex-shrink:0;height:15px;padding:0 6px;border-radius:8px;background:#2a1f12;border:1px solid #d4a34c}
+.think-dots b{width:5px;height:5px;border-radius:50%;background:#f1c983;animation:think-dot 1.2s ease-in-out infinite}
+.think-dots b:nth-child(2){animation-delay:.15s}.think-dots b:nth-child(3){animation-delay:.3s}
+.seat.is-thinking .think-dots{display:inline-flex}
+.seat.is-thinking{animation:think-ring 1.6s ease-in-out infinite}
+.seat.is-thinking .avatar{animation:think-avatar 1.6s ease-in-out infinite}
+@keyframes think-dot{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-3px);opacity:1}}
+@keyframes think-ring{0%,100%{box-shadow:0 0 0 2px #d4a34c,0 0 6px #d4a34c55}50%{box-shadow:0 0 0 2px #ffdc7d,0 0 18px #e5ad58bb}}
+@keyframes think-avatar{0%,100%{border-color:#d4a34c}50%{border-color:#ffe39a}}
+@media (prefers-reduced-motion:reduce){.seat.is-thinking,.seat.is-thinking .avatar,.think-dots b{animation:none!important}.seat.is-thinking{box-shadow:0 0 0 2px #ffdc7d,0 0 12px #e5ad58}.think-dots b{opacity:1}}
+
+/* Login screen (login.js) and Google sign-in in the account panel. */
+.login-step{display:grid;gap:12px;justify-items:center}
+.login-step[hidden],[data-google-slot][hidden]{display:none}
+.login-step label{display:grid;gap:8px;width:100%;text-align:left;font-weight:600;color:#e9c383}
+.login-step input{width:100%;background:#141414;border:1px solid #816338;border-radius:8px;padding:12px;color:#eee;font:inherit}
+.login-step .gold,.login-step .login-alt{width:100%;min-height:48px}
+.login-step .rivl-welcome-skip{margin-top:0}
+.login-google{min-height:44px;display:flex;justify-content:center;margin-bottom:4px}
+.login-status{min-height:1.4em;margin:14px 0 0!important;font-size:14px!important;color:#e9c383!important}
+.account-google{margin:0 0 14px}.account-google .google-button{margin:8px 0;min-height:44px}
+.account-or{margin-top:6px}
+
+/* Bot practice seats go clockwise in turn order: s1 sits to your left (screen left, just above your seat),
+   then up the left rail, across the top and down the right rail, so the action and the dealer and blind
+   buttons travel around the table instead of jumping between sides. */
+@media (min-width:601px){
+ body.in-game #table .poker-table[data-player-count="9"] .s1{top:calc(100% - 12px);left:22%}
+ body.in-game #table .poker-table[data-player-count="9"] .s2{top:68%;left:0%}
+ body.in-game #table .poker-table[data-player-count="9"] .s3{top:29%;left:0%}
+ body.in-game #table .poker-table[data-player-count="9"] .s4{top:-24px;left:22%}
+ body.in-game #table .poker-table[data-player-count="9"] .s5{top:-24px;left:78%}
+ body.in-game #table .poker-table[data-player-count="9"] .s6{top:29%;left:100%}
+ body.in-game #table .poker-table[data-player-count="9"] .s7{top:68%;left:100%}
+ body.in-game #table .poker-table[data-player-count="9"] .s8{top:calc(100% - 12px);left:78%}
+ body.in-game #table .poker-table[data-player-count="6"] .s1{top:75%;left:7%}
+ body.in-game #table .poker-table[data-player-count="6"] .s2{top:23%;left:7%}
+ body.in-game #table .poker-table[data-player-count="6"] .s3{top:-24px;left:50%}
+ body.in-game #table .poker-table[data-player-count="6"] .s4{top:23%;left:93%}
+ body.in-game #table .poker-table[data-player-count="6"] .s5{top:75%;left:93%}
+}
+@media (max-width:600px){
+ body.in-game #table .poker-table:is([data-player-count="9"],[data-player-count="6"]) .seat{top:auto;bottom:auto;left:auto;right:auto;transform:none}
+ body.in-game #table .poker-table[data-player-count="9"] .s1{top:79%;left:-12%}
+ body.in-game #table .poker-table[data-player-count="9"] .s2{top:60%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s3{top:27%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s4{top:8%;left:-14%}
+ body.in-game #table .poker-table[data-player-count="9"] .s5{top:8%;right:-14%}
+ body.in-game #table .poker-table[data-player-count="9"] .s6{top:27%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s7{top:60%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="9"] .s8{top:79%;right:-12%}
+ body.in-game #table .poker-table[data-player-count="6"] .s1{top:60%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s2{top:27%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s3{top:-16px;left:50%;transform:translateX(-50%)}
+ body.in-game #table .poker-table[data-player-count="6"] .s4{top:27%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="6"] .s5{top:60%;right:-18%}
+}
+/* Small and big blind chips sit on the opposite side of the avatar from the dealer "D". */
+.is-sb>.avatar,.is-bb>.avatar{position:relative}
+.is-sb>.avatar::before,.is-bb>.avatar::before{position:absolute;left:-6px;bottom:-3px;min-width:17px;height:15px;padding:0 2px;border-radius:8px;font:900 8px/15px Inter,Arial,sans-serif;text-align:center;box-shadow:0 1px 3px #000a}
+.is-sb>.avatar::before{content:'SB';background:#2c5fa8;color:#fff;border:1px solid #9cc1f5}
+.is-bb>.avatar::before{content:'BB';background:#b8862f;color:#160e04;border:1px solid #f6d48e}
+/* Bot game time limit picker */
+.time-limit{display:inline-flex;flex-wrap:wrap;gap:8px;margin:0 0 18px 12px;padding:8px 10px 8px 15px;vertical-align:middle}
+.time-limit>span{margin-right:4px}
+.time-limit button{padding:6px 11px;border:1px solid #76512c;border-radius:6px;background:transparent;color:#e7c390;font-size:12px;font-weight:700;letter-spacing:.06em;cursor:pointer}
+.time-limit button[aria-pressed="true"]{background:#e9b977;border-color:#e9b977;color:#17110b}
+@media(max-width:600px){.time-limit{margin-left:0}}
+#clock.time-up{color:#e66a6a}
+/* Quick save */
+.gamebar-actions{display:flex;gap:8px;align-items:center}
+.paused-fx{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:16px;background:#000b}
+.paused-fx[hidden]{display:none}
+.paused-card{display:grid;gap:12px;max-width:360px;padding:24px;border:1px solid #dfb55d;border-radius:16px;background:linear-gradient(125deg,#1a130b,#090909);box-shadow:0 0 34px #e6ae4355;text-align:center;color:#f5d28b}
+.paused-card strong{font-size:20px;letter-spacing:.12em}
+.paused-card p{margin:0;color:#d8cfc2;font-size:14px;line-height:1.45}
+.resume-banner{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0 0 22px;padding:14px 18px;border:1px solid #dfb55d;border-radius:10px;background:#18130e}
+.resume-banner[hidden]{display:none}
+.resume-banner>div{display:grid;gap:3px;flex:1 1 220px}
+.resume-banner strong{color:#f5d28b;letter-spacing:.1em;font-size:14px}
+.resume-banner span{color:#d8cfc2;font-size:13px}
+@media(max-width:600px){.gamebar-actions{gap:4px}#save{padding:8px 7px}}
+/* Folded players turn grey until the next deal. */
+.seat.is-folded,.myseat.is-folded,#roomGame .rivl-pvp-seat.is-folded{filter:grayscale(1) brightness(.75);opacity:.6}
+/* Discard pile: folded hands slide in face down beside the pot. */
+.muck-pile{position:absolute;top:24%;left:calc(50% - 96px);width:30px;height:42px;pointer-events:none;z-index:4}
+.muck-card{position:absolute;left:50%;top:50%;width:24px;height:35px;border-radius:4px;background:repeating-linear-gradient(45deg,#2c2118 0 3px,#17110c 3px 6px);border:1px solid #b88a3e;box-shadow:0 2px 5px #000b;transform:translate(-50%,-50%) translateX(calc(var(--i,0)*2px)) rotate(calc(var(--i,0)*13deg - 16deg))}
+.muck-flyer{position:absolute;left:50%;top:50%;margin:0;z-index:3}
+.muck-flyer.card{width:30px;height:44px;font-size:15px;padding:3px}
+/* Stack in big blinds, centred under each seat's avatar. */
+.bb-count{position:absolute;top:calc(100% + 1px);transform:translateX(-50%);padding:0 5px;height:14px;border-radius:7px;background:#1b140c;color:#f6d48e;border:1px solid #b8862f;font:800 9px/12px Inter,Arial,sans-serif;font-style:normal;letter-spacing:.02em;white-space:nowrap;pointer-events:none;z-index:1;box-shadow:0 1px 3px #000a}
+@media(max-width:600px){
+ body.in-game .seat{overflow:visible}
+ body.in-game .seat>span:not(.rivl-shown){min-width:0;overflow:hidden;text-overflow:ellipsis}
+ body.in-game .muck-pile{top:56%;left:calc(50% - 15px)}
+ body.in-game .poker-table[data-player-count="6"] .muck-pile{top:9%}
+ body.in-game #table .poker-table[data-player-count="9"] :is(.s1,.s8)>.bb-count{top:auto;bottom:calc(100% + 1px)}
+ .bb-count{height:12px;padding:0 4px;font-size:8px;line-height:10px}
+}
+
+/* Global ranked leaderboard: exactly six aligned columns, no wrapping of ranks. */
+#leaderboard .online-row{
+  display:grid!important;
+  grid-template-columns:48px minmax(160px,2.5fr) minmax(110px,1.4fr) minmax(65px,.65fr) minmax(75px,.7fr) minmax(60px,.6fr)!important;
+  gap:12px;
+  align-items:center;
+  min-width:0;
+  font-size:14px;
+}
+#leaderboard .online-row span{display:block!important;min-width:0;overflow-wrap:normal;word-break:normal}
+#leaderboard .online-row span:first-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+#leaderboard .online-row span:nth-child(n+4){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+#leaderboard .online-row.head{font-size:11px}
+@media(max-width:680px){
+  #leaderboard .panel.ladder{overflow-x:auto}
+  #leaderboard .online-row{min-width:570px}
+}
+
+
+/* Cairo v2: dedicated scenic artwork instead of the flat sunset gradient.
+   The gameplay elements remain independent HTML, clickable and untransformed. */
+body.in-game .table-scene,
+.rivl-pvp-scene{
+  background:#1b1418 center center/cover no-repeat!important;
+  isolation:isolate;
+}
+body.in-game .table-scene::before,
+body.in-game .table-scene::after,
+.rivl-pvp-scene::before,
+.rivl-pvp-scene::after{content:none!important}
+body.in-game .poker-table,
+.rivl-pvp-table{
+  background:
+    radial-gradient(ellipse at 50% 40%,rgba(100,72,45,.22),transparent 62%),
+    repeating-radial-gradient(ellipse at center,transparent 0 26px,rgba(217,158,81,.035) 27px 28px),
+    linear-gradient(145deg,#282021 0%,#171419 52%,#0c1015 100%)!important;
+  border:clamp(7px,1.3vh,14px) solid #24150e!important;
+  box-shadow:
+    inset 0 0 0 2px #d8ae69,inset 0 0 0 8px #42281a,inset 0 0 0 10px #b07d42,
+    inset 0 0 40px #050405,0 0 0 2px #e0b36d,0 0 0 8px #25150f,
+    0 0 0 11px #986536,0 8px 0 #402415,0 12px 0 #d5a05a,
+    0 20px 0 #1b100c,0 28px 38px #000c,0 0 45px #edb36b33!important;
+}
+body.in-game .poker-table::before,
+.rivl-pvp-table::before{
+  content:""!important;position:absolute;inset:4.5%;border-radius:50%;
+  border:2px solid #d6a26477;box-shadow:0 0 0 5px #151015aa,inset 0 0 16px #c18c4422;
+  pointer-events:none;
+}
+body.in-game .poker-table::after,
+.rivl-pvp-table::after{opacity:.5}
+body.in-game .skyline,.rivl-pvp-scene .skyline{
+  color:#f5d6a1;text-shadow:0 2px 9px #000,0 0 18px #f5b75e;
+}
+@media(max-width:600px){
+ body.in-game .table-scene,.rivl-pvp-scene{background-position:center center!important}
+}
+
+
+/* Cairo image registration — use the uploaded photographic Cairo table without stretching.
+   Do not reposition cards or seats by changing the existing table geometry. */
+body.in-game .table-scene,
+.rivl-pvp-scene {
+  background-color:#130e0d!important;
+  background-image:var(--table-bg,url("assets/CAIRO%20BACKGROUND%20TEST%203.png"))!important;
+  background-repeat:no-repeat!important;
+  background-position:center center!important;
+  /* Fit within the scene and never enlarge a 1536px-wide source beyond 1:1 CSS pixels.
+     This prioritizes original texture detail over filling every edge of a wide room. */
+  background-size:min(100%, 1536px) auto!important;
+  image-rendering:auto;
+}
+@media (max-width: 900px) {
+  body.in-game .table-scene,
+  .rivl-pvp-scene {
+    /* On narrow screens show the full scene rather than magnifying/cropping. */
+    background-size:contain!important;
+  }
+}
+/* The scenery is an image, but every card, seat and pot stays interactive HTML. */
+body.in-game .table-scene::before,
+body.in-game .table-scene::after,
+.rivl-pvp-scene::before,
+.rivl-pvp-scene::after { content:none!important; }
+/* Do not stretch or overwrite the original poker-table dimensions:
+   seat and board positions are defined relative to this box. */
+body.in-game .table-scene .poker-table,
+.rivl-pvp-scene .rivl-pvp-table {
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+body.in-game .table-scene .poker-table::before,
+body.in-game .table-scene .poker-table::after,
+.rivl-pvp-scene .rivl-pvp-table::before,
+.rivl-pvp-scene .rivl-pvp-table::after { content:none!important; }
+body.in-game .table-scene .skyline,
+.rivl-pvp-scene .skyline { visibility:hidden; }
+
+/* Desktop Cairo photo framing: fill the available scene horizontally AND
+   vertically without cropping the skyline or near leather rail. This intentionally
+   widens the photographic table, not the actual interactive game geometry.
+   Narrow/mobile layouts retain their existing contain treatment. */
+@media (min-width:901px) {
+  body.in-game .table-scene,
+  .rivl-pvp-scene {
+    background-size:100% 100%!important;
+    background-position:center center!important;
+  }
+}
+
+/* Table Themes: photo previews for the selectable table backgrounds (table-themes.js). */
+.theme-preview.theme-photo{background-size:cover;background-position:center 20%;border-color:#80572b}
+.table-theme button{width:100%;margin-top:6px;padding:10px}
+.table-theme button:disabled{cursor:default;color:var(--gold);border-color:#e4b66e}
+
+/* Collapsible sidebar (screen-modes.js): desktop only, since phones already use the icon rail. */
+.sidebar-toggle{position:absolute;top:32px;right:12px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin:0;padding:0;background:transparent;border:1px solid #392818;border-radius:8px;color:var(--gold);cursor:pointer}
+.sidebar-toggle:hover{border-color:#bc8846}
+.sidebar-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+@media(min-width:851px){
+  html.sidebar-collapsed .sidebar{width:75px;padding:26px 8px}
+  html.sidebar-collapsed .brand{margin:0 0 12px;font-size:25px;text-align:center}
+  html.sidebar-collapsed .brand span,html.sidebar-collapsed .nav{font-size:0}
+  html.sidebar-collapsed .nav{padding:16px;text-align:center}
+  html.sidebar-collapsed .nav:first-letter{font-size:20px}
+  html.sidebar-collapsed .season,html.sidebar-collapsed .sidefoot{display:none}
+  html.sidebar-collapsed .sidebar-toggle{position:static;margin:0 auto 22px}
+  html.sidebar-collapsed .sidebar-toggle svg{transform:rotate(180deg)}
+}
+@media(max-width:850px){.sidebar-toggle{display:none}}
+
+/* Full screen table (screen-modes.js): only the table, the match info and the action controls. */
+.fs-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.fs-toggle svg{width:17px;height:17px;flex:0 0 17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#rooms:not(.rivl-match-mode) #roomFocus{display:none}
+body.table-focus .sidebar,body.table-focus main>header{display:none}
+body.table-focus.in-game main{height:100dvh}
+body.table-focus #rooms.rivl-match-mode{height:100dvh}
+@media(max-width:600px){
+  .fs-toggle{padding-left:9px;padding-right:9px}
+  .fs-toggle .fs-label{display:none}
+}
+#rooms.rivl-match-mode .room-topline #roomFocus{min-height:34px;padding:6px 12px;font-size:12px}
+@media(max-width:600px){#rooms.rivl-match-mode .room-topline #roomFocus{min-height:30px;padding:4px 9px}}
+
+
+/* Desktop seat badges: symmetric exterior positions for bot and multiplayer.
+   The photo, table hit targets, community cards and action controls do not move.
+   Keep the original compact phone/tablet arrangements unchanged. */
+@media (min-width:901px) {
+  body.in-game #table .poker-table[data-player-count] .seat,
+  #roomGame .rivl-pvp-table[data-player-count] .rivl-pvp-seat {
+    right:auto!important;bottom:auto!important;
+    transform:translate(-50%,-50%)!important;
+    z-index:7;
+  }
+  /* Bot: 3 seats, paired across the far edge. */
+  body.in-game #table .poker-table[data-player-count="3"] .s1{top:-23%!important;left:28%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s2{top:-23%!important;left:72%!important}
+  /* Bot: 6 seats, one at the head and two mirrored pairs beyond the rim. */
+  body.in-game #table .poker-table[data-player-count="6"] .s1{top:77%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s2{top:25%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3{top:-23%!important;left:50%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s4{top:25%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s5{top:77%!important;left:123%!important}
+  /* Bot: 9 seats, four mirrored pairs. */
+  body.in-game #table .poker-table[data-player-count="9"] .s1{top:112%!important;left:27%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s2{top:73%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s3{top:25%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s4{top:-23%!important;left:27%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s5{top:-23%!important;left:73%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s6{top:25%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s7{top:73%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s8{top:112%!important;left:73%!important}
+  /* Online room: symmetric head, side pairs and foot positions by seat count. */
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s1{top:-23%!important;left:28%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s2{top:-23%!important;left:72%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s3{top:25%!important;left:-23%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s3,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s4{top:25%!important;left:123%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1{top:-23%!important;left:50%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s4,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s5,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s5{top:73%!important;left:123%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s5,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s5,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s6,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s6{top:73%!important;left:-23%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s6,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s7,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s7{top:111%!important;left:50%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s8{top:111%!important;left:73%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s7{left:27%!important}
+  /* Keep the local player's own tag near the front rail and above controls. */
+  body.in-game #table .myseat,
+  #roomGame .rivl-pvp-myseat{z-index:8}
+}
+
+/* Live pot display: only visual chips remain on the felt. Equity is the
+   percentage of chips contributed this hand, NOT hand-win probability. */
+.rivl-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+body.in-game #table .pot,
+#roomGame .rivl-pvp-table .pot{top:28%!important;left:50%!important;min-width:0!important;transform:translateX(-50%)!important;z-index:5;pointer-events:none}
+body.in-game #table .community,
+#roomGame .rivl-pvp-board{top:47%!important;left:50%!important;transform:translateX(-50%)!important;z-index:5}
+body.in-game #table .community .card.back,
+#roomGame .rivl-pvp-board .card.back{background:linear-gradient(145deg,#111216,#20170f)!important;border:1px solid #c18b3c!important;box-shadow:inset 0 0 0 2px #1c1510,inset 0 0 0 3px #72532a,0 3px 8px #0009;color:#e2ae55!important;border-radius:5px}
+.rivl-pot-stats{min-width:0;background:linear-gradient(135deg,#21170e,#100f0e);border:1px solid #a77a3d;border-radius:10px;color:#f3d39d;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px;box-sizing:border-box;text-align:left}
+.rivl-pot-stats-label{font-size:10px;font-weight:800;letter-spacing:.07em;color:#e8b96b;white-space:nowrap}
+.rivl-pot-stats-value{display:flex;align-items:center;gap:8px;font-size:23px;color:#fff}
+.rivl-pot-stats-chip{width:20px;height:20px;border-radius:50%;border:3px dashed #f3ece0;background:#7a1424;box-shadow:inset 0 0 0 3px #5a0e1a;flex:0 0 auto}
+.rivl-pot-stats-divider{height:1px;background:#6c4c27;margin:2px 0}
+.rivl-pot-stats-percent{font-size:21px;color:#fff}
+@media (min-width:1101px){
+ body.in-game #table .actions{grid-template-columns:repeat(3,minmax(95px,160px)) minmax(255px,390px) minmax(140px,180px)!important}
+ #roomGame .rivl-bet-actions{grid-template-columns:repeat(3,minmax(80px,1fr)) minmax(210px,2.2fr) minmax(140px,1fr)!important;max-width:1190px}
+ #roomGame #roomAllin{display:none}
+}
+@media (max-width:1100px){
+ body.in-game #table .actions{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(210px,2fr)!important;flex-wrap:wrap}
+ body.in-game #table .actions .rivl-pot-stats{grid-column:1/-1;min-height:72px}
+ #roomGame .rivl-bet-actions .rivl-pot-stats{width:100%;grid-column:1/-1}
+ .rivl-pot-stats{flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px}
+ .rivl-pot-stats-divider{height:24px;width:1px;margin:0 5px}
+}
+@media (max-width:750px){
+ body.in-game #table .actions{grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-template-rows:auto auto auto!important;flex-basis:auto!important;min-height:0!important}
+ body.in-game #table .actions .raise{grid-column:1/-1}
+ body.in-game #table .actions .rivl-pot-stats{grid-column:1/-1}
+ #roomGame .rivl-bet-actions .rivl-pot-stats{grid-column:1/-1}
+ body.in-game #table .pot, #roomGame .rivl-pvp-table .pot{top:29%!important}
+ body.in-game #table .community, #roomGame .rivl-pvp-board{top:46%!important}
+}
+/* On desktop, align the five other six-seat player pills in balanced pairs
+   along the illustrated rail, rather than in the far scenery. */
+@media (min-width:901px){
+ body.in-game #table .poker-table[data-player-count="6"] .s1{top:-2%!important;left:50%!important}
+ body.in-game #table .poker-table[data-player-count="6"] .s2{top:27%!important;left:7%!important}
+ body.in-game #table .poker-table[data-player-count="6"] .s4{top:27%!important;left:93%!important}
+ body.in-game #table .poker-table[data-player-count="6"] .s3{top:77%!important;left:7%!important}
+ body.in-game #table .poker-table[data-player-count="6"] .s5{top:77%!important;left:93%!important}
+}
+
+/* Cairo table layout. On desktop the artwork stretches to fill the scene, so the table box is pinned to the
+   painted orange rim (7-93% across, 43-84% down the image) and every seat is placed on that rim, mirrored
+   left to right. This keeps seats, board and pot on the painting at any window size, in full screen and with
+   the sidebar collapsed. Seat slots run clockwise from the hero's left, the order both seat lists use. */
+@media(min-width:901px){
+  body.in-game #table .table-scene,#roomGame .rivl-pvp-scene{position:relative}
+  body.in-game #table .table-scene .poker-table,#roomGame .rivl-pvp-scene .rivl-pvp-table{
+    position:absolute!important;left:7%!important;top:43%!important;width:86%!important;height:41%!important;
+    aspect-ratio:auto!important;margin:0!important;
+  }
+  #roomGame .rivl-pvp-table[data-player-count="2"] .s1{left:50.0%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s1,#roomGame .rivl-pvp-table[data-player-count="3"] .s1{left:24.4%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s2,#roomGame .rivl-pvp-table[data-player-count="3"] .s2{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s2{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s3{left:99.4%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s2{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s3{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s4{left:99.4%!important;top:51.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s1,#roomGame .rivl-pvp-table[data-player-count="6"] .s1{left:4.1%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s2,#roomGame .rivl-pvp-table[data-player-count="6"] .s2{left:5.2%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3,#roomGame .rivl-pvp-table[data-player-count="6"] .s3{left:50.0%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s4,#roomGame .rivl-pvp-table[data-player-count="6"] .s4{left:94.8%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s5,#roomGame .rivl-pvp-table[data-player-count="6"] .s5{left:95.9%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1{left:4.1%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s2{left:5.2%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s3{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s4{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s5{left:94.8%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s6{left:95.9%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1{left:23.3%!important;top:102.4%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s3{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s4{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s5{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s6{left:99.4%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s7{left:76.7%!important;top:102.4%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s1,#roomGame .rivl-pvp-table[data-player-count="9"] .s1{left:23.3%!important;top:102.4%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s2,#roomGame .rivl-pvp-table[data-player-count="9"] .s2{left:4.1%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s3,#roomGame .rivl-pvp-table[data-player-count="9"] .s3{left:5.2%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s4,#roomGame .rivl-pvp-table[data-player-count="9"] .s4{left:24.4%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s5,#roomGame .rivl-pvp-table[data-player-count="9"] .s5{left:75.6%!important;top:1.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s6,#roomGame .rivl-pvp-table[data-player-count="9"] .s6{left:94.8%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s7,#roomGame .rivl-pvp-table[data-player-count="9"] .s7{left:95.9%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s8,#roomGame .rivl-pvp-table[data-player-count="9"] .s8{left:76.7%!important;top:102.4%!important}
+  body.in-game #table .myseat,#roomGame .rivl-pvp-myseat{left:50%!important;top:100%!important;bottom:auto!important;transform:translate(-50%,-50%)!important}
+}
+/* Board in the middle of the felt, the pot's chips just left of the five cards and the muck pile mirrored on
+   the right. --board-card and --board-gap set the card size, so the pot and muck can sit beside the cards. */
+body.in-game #table .poker-table,#roomGame .rivl-pvp-table{--board-card:clamp(24px,4.6vh,43px);--board-gap:5px}
+body.in-game #table .community,#roomGame .rivl-pvp-board{top:46%!important;left:50%!important;transform:translate(-50%,-50%)!important;width:auto!important;right:auto!important;gap:var(--board-gap)!important}
+body.in-game #table .community .card,#roomGame .rivl-pvp-board .card{width:var(--board-card)!important;height:calc(var(--board-card)*1.47)!important}
+body.in-game #table .pot,#roomGame .rivl-pvp-table .pot{top:46%!important;left:auto!important;right:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 12px)!important;transform:translateY(-50%)!important}
+body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 12px)!important;transform:translateY(-50%)}
+@media(max-width:900px){
+  body.in-game #table .poker-table,#roomGame .rivl-pvp-table{--board-card:28px;--board-gap:3px}
+  body.in-game #table .community,#roomGame .rivl-pvp-board,
+  body.in-game #table .pot,#roomGame .rivl-pvp-table .pot,body.in-game #table .muck-pile{top:calc(46% + var(--board-card)*.735)!important}
+  body.in-game #table .pot-chips,#roomGame .pot-chips{font-size:12px}
+  body.in-game #table .pot,#roomGame .rivl-pvp-table .pot{right:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
+  body.in-game #table .muck-pile{left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 6px)!important}
+}
+/* Phones: the pot total / equity panel sits in the action area, and at full size it took ~75px of height
+   from the table, which squashed the seats, board and hero seat together. Keep it to one slim line. */
+@media(max-width:750px){
+  body.in-game #table .actions{grid-template-rows:40px 92px 22px!important}
+  body.in-game #table .raise .amount-row input,body.in-game #table .raise .amount-row button{height:28px}
+  body.in-game #table .actions .rivl-pot-stats,#roomGame .rivl-bet-actions .rivl-pot-stats{min-height:0!important;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-radius:7px}
+  .rivl-pot-stats .rivl-pot-stats-label{font-size:9px}
+  .rivl-pot-stats .rivl-pot-stats-value{font-size:14px;gap:5px}
+  .rivl-pot-stats .rivl-pot-stats-chip{width:13px;height:13px;border-width:2px;box-shadow:inset 0 0 0 2px #5a0e1a}
+  .rivl-pot-stats .rivl-pot-stats-percent{font-size:14px}
+  .rivl-pot-stats .rivl-pot-stats-divider{height:14px;width:1px;margin:0 4px}
+}
+/* Phones: during a bot game the page header (title and name button) is hidden, like in full screen, so the
+   table keeps enough height for 9 seats, the board and your seat. The sidebar and table bar stay. */
+@media(max-width:600px){body.in-game main>header{display:none}}
+
+/* Phone bot table. The betting controls shrink to two short rows (the raise box drops its label and slider,
+   and the pot total line moves to the top of the table), and the freed height goes to the table. The Cairo
+   artwork is drawn a little larger than the scene's width and taller than its natural shape, so the painted
+   table grows, and the table box is pinned to the painted orange rim (7-93% across, 42-84% down the image).
+   Every seat then sits on an oval just outside that rim, mirrored left to right, with your seat below it. */
+@media(max-width:600px){
+  body.in-game #table{position:relative}
+  body.in-game #table .actions{flex:0 0 auto!important;min-height:0!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-template-rows:34px 30px!important;gap:4px!important;padding:4px 8px!important}
+  body.in-game #table .actions>button{padding:0 4px;font-size:12px;min-height:0}
+  body.in-game #table .raise{grid-column:1/-1;grid-row:2;display:grid!important;grid-template-columns:120px minmax(0,1fr);gap:4px!important;padding:0!important;border:0;height:auto;min-width:0}
+  body.in-game #table .raise>label,body.in-game #table .raise>input[type=range]{display:none}
+  body.in-game #table .raise .amount-row{grid-template-columns:30px minmax(0,1fr) 30px;gap:3px}
+  body.in-game #table .raise .amount-row input,body.in-game #table .raise .amount-row button{height:30px}
+  body.in-game #table .raise .amount-row input{font-size:15px;padding:2px 6px}
+  body.in-game #table .raise .amount-row button{font-size:18px}
+  body.in-game #table .raise .quick-bets{gap:3px}
+  body.in-game #table .raise .quick-bets button{height:30px;padding:0 2px!important;font-size:9px}
+  body.in-game #table .actions .rivl-pot-stats{position:absolute;z-index:6;top:calc(var(--phone-gamebar) + 4px);left:50%;transform:translateX(-50%);width:auto!important;padding:0 9px!important;height:20px;background:#0b0908cc;pointer-events:none}
+  body.in-game #table .gamebar{--phone-gamebar:52px;flex:0 0 52px;height:52px}
+  body.in-game #table{--phone-gamebar:52px}
+  body.in-game #table .bottom-toggle{flex-basis:30px;height:30px}
+  body.in-game #table .bottom-toggle button{height:26px;padding:3px 16px;font-size:11px}
+  body.in-game #table .demo-notice{flex-basis:18px;padding:2px;font-size:10px}
+
+  body.in-game #table .table-scene{--scene-w:calc(100vw - 75px);--bg-w:106%;--bg-h:min(94%,var(--scene-w)*1.4);position:relative;padding:0!important;background-size:var(--bg-w) var(--bg-h)!important;background-position:50% 75%!important}
+  body.table-focus.in-game #table .table-scene{--scene-w:100vw}
+}
+@media(max-width:520px){
+  body:not(.table-focus).in-game #table .table-scene{--scene-w:calc(100vw - 54px)}
+}
+@media(max-width:600px){
+  body.in-game #table .table-scene .poker-table{position:absolute!important;margin:0!important;aspect-ratio:auto!important;
+    left:calc(50% - var(--bg-w)*.43)!important;width:calc(var(--bg-w)*.86)!important;
+    top:calc((100% - var(--bg-h))*.75 + var(--bg-h)*.42)!important;height:calc(var(--bg-h)*.42)!important}
+  body.in-game #table .poker-table[data-player-count] .seat{right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:7;
+    max-width:none;padding:2px 6px 2px 2px;gap:4px;font-size:9px;line-height:1.15;border-radius:16px}
+  body.in-game #table .poker-table[data-player-count] .seat>span{white-space:normal;width:max-content;max-width:54px}
+  body.in-game #table .poker-table[data-player-count] .seat>.bb-count{top:calc(100% + 1px)!important;bottom:auto!important}
+  body.in-game #table .seat .think-dots{position:absolute;top:-7px;right:2px;height:10px;padding:0 3px;gap:2px}
+  body.in-game #table .seat .think-dots b{width:3px;height:3px}
+  body.in-game #table .myseat{left:50%!important;top:calc(100% + 24px)!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:8}
+  body.in-game #table .poker-table{--board-card:24px;--board-gap:2px}
+  body.in-game #table .community{top:50%!important}
+  body.in-game #table .pot{top:calc(50% - var(--board-card)*.735 - 14px)!important;left:50%!important;right:auto!important;transform:translate(-50%,-50%)!important}
+  body.in-game #table .pot-chips{font-size:11px}
+  /* The hand result and decision grade float in the sky above the top seats, clear of the ring. */
+  body.in-game #table .win-fx{top:calc(-14% - 46px)!important}
+  body.in-game #table .grade-fx{bottom:auto!important;top:calc(-14% - 136px)}
+  body.in-game #table .muck-pile{top:calc(50% + var(--board-card)*.735 + 26px)!important;left:50%!important;transform:translate(-50%,-50%)!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s1{left:28%!important;top:-12%!important}
+  body.in-game #table .poker-table[data-player-count="3"] .s2{left:72%!important;top:-12%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s1{left:13%!important;top:72%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s2{left:14%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3{left:50%!important;top:-14%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s4{left:86%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s5{left:87%!important;top:72%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s1{left:14%!important;top:86%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s2{left:11%!important;top:56%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s3{left:14%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s4{left:31%!important;top:-14%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s5{left:69%!important;top:-14%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s6{left:86%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s7{left:89%!important;top:56%!important}
+  body.in-game #table .poker-table[data-player-count="9"] .s8{left:86%!important;top:86%!important}
+}
+
+/* Casino chips in the pot: white, maroon, gold and black, drawn as a loose pile of overlapping chips seen from
+   a low angle (chips.js places them). Everything is in em, so the pile scales with the pot's font-size. */
+.pot-chips{position:relative;display:block!important;width:5.4em;height:2.9em;margin:0!important;font-size:21px;pointer-events:none}
+/* Each chip is a short cylinder: the element is the striped side, ::after is the top face (edge inserts, face,
+   a fine gold or dark ring and a centre inlay), lifted by the chip's thickness. */
+.pile-chip{position:absolute;width:1.3em;height:.66em;margin:-.26em 0 0 -.65em;border-radius:50%;transform:rotate(var(--r,0deg));
+  --face:#f2eee6;--inlay:#fbf9f4;--stripe:#7a1424;--line:#b9a98a;--edge:#d6cfc1;
+  background:linear-gradient(90deg,#00000070,#0000 28% 72%,#00000070),repeating-linear-gradient(90deg,var(--edge) 0 .17em,var(--stripe) .17em .25em);
+  box-shadow:0 .04em .05em #000d,0 .1em .2em #0008}
+.pile-chip::after,.flying-chip,.rivl-pot-stats-chip{
+  background:linear-gradient(165deg,#ffffff38,#fff0 42%,#0000 60%,#00000030),
+    radial-gradient(closest-side,var(--inlay) 0 48%,var(--line) 49% 52%,var(--face) 53% 66%,#0000 67%),
+    radial-gradient(closest-side,#0000 0 92%,#00000059 96%,#0000 100%),
+    repeating-conic-gradient(from 8deg,var(--stripe) 0 14deg,var(--face) 14deg 60deg)}
+.pile-chip::after{content:'';position:absolute;left:0;right:0;top:-.12em;height:100%;border-radius:50%;box-shadow:inset 0 0 0 .025em #00000047}
+.pile-chip.chip-maroon,.flying-chip:nth-child(4n+2),.rivl-pot-stats-chip{--face:#6e1020;--inlay:#801a2c;--stripe:#f1ebe0;--line:#c9a35a;--edge:#4f0a16}
+.pile-chip.chip-gold,.flying-chip:nth-child(4n+3){--face:#c99a3f;--inlay:#dcb45f;--stripe:#17130f;--line:#7c5a1f;--edge:#8f6a28}
+.pile-chip.chip-black,.flying-chip:nth-child(4n+4){--face:#191818;--inlay:#242222;--stripe:#cfa24a;--line:#8a6a32;--edge:#0c0c0c}
+.flying-chip{--face:#f2eee6;--inlay:#fbf9f4;--stripe:#7a1424;--line:#b9a98a;border:0;box-shadow:0 2px 0 #0007,0 4px 7px #0009}
+.rivl-pot-stats .rivl-pot-stats-chip,.rivl-pot-stats-chip{border:0!important;box-shadow:0 1px 0 #3a0710,0 2px 4px #000a!important}
+
+/* Cards. Faces are crisp ivory with a serif rank and small suit in the corner; every face-down card (the
+   unturned board cards and the discard pile) shares one back: a fine gold lattice inside a gold frame with a
+   spade. The board and discard pile are tilted back a little with a cast shadow, so they lie on the felt. */
+body.in-game #table .poker-table,#roomGame .rivl-pvp-table{perspective:1400px;perspective-origin:50% 46%}
+body.in-game #table .community,#roomGame .rivl-pvp-board,body.in-game #table .muck-pile{rotate:x 18deg;transform-origin:50% 60%}
+#table .card:not(.back),#roomGame .card:not(.back),.bot-shown .card{
+  background:linear-gradient(160deg,#fffefb 0%,#f6f2e9 55%,#ebe5d8 100%)!important;color:#151515;border:1px solid #c9c0ad!important;border-radius:5px;
+  font-family:Georgia,'Times New Roman',serif;
+  box-shadow:inset 0 0 0 1px #fff,0 1px 0 #a99f8b,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important}
+#table .card.red-card,#roomGame .card.red,.bot-shown .card.red-card{color:#b0142c!important}
+#table .rivl-clean-card>strong,#roomGame .card:not(.back)>strong{display:flex;flex-direction:column;align-items:center;font-weight:700;letter-spacing:-.04em;line-height:.95}
+#table .rivl-clean-card>strong>small,#roomGame .card:not(.back)>strong>small{display:block;color:inherit;font-size:.72em;font-weight:400;letter-spacing:0;margin-top:.05em}
+#table .rivl-clean-card>span,#roomGame .card:not(.back)>.rivl-card-center{font-family:Georgia,'Times New Roman',serif;font-size:1.25em}
+#table .card.back,#roomGame .card.back,.muck-card{
+  background:repeating-linear-gradient(45deg,#c9963f26 0 1px,#0000 1px 4px),repeating-linear-gradient(-45deg,#c9963f26 0 1px,#0000 1px 4px),linear-gradient(150deg,#1d1a17,#0e0d0c 55%,#1c140c)!important;
+  border:1px solid #c18b3c!important;border-radius:5px!important;color:#e2ae55!important;display:grid!important;place-items:center;padding:0!important;font-family:Georgia,'Times New Roman',serif;
+  box-shadow:inset 0 0 0 2px #110e0b,inset 0 0 0 3px #8a6630,0 1px 0 #5a4120,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important}
+.muck-card::after{content:'♠';font-size:13px;line-height:1;color:#e2ae55;text-shadow:0 1px 1px #000}
+
+/* Player POV v2 — use the existing real hole cards and real turn clock,
+   rather than cloning them. Desktop only; no poker logic or mobile layout changes.
+   No new element is placed over the action controls. */
+@media(min-width:901px){
+ body.in-game #table{position:relative}
+ body.in-game #table .table-scene{isolation:isolate}
+ body.in-game #table .poker-table>.myseat{
+   position:absolute!important;left:50%!important;top:calc(100% + 19px)!important;
+   bottom:auto!important;right:auto!important;transform:translate(-50%,-50%)!important;
+   width:260px!important;height:118px!important;min-width:0!important;
+   background:none!important;border:0!important;box-shadow:none!important;
+   padding:0!important;margin:0!important;display:block!important;
+   pointer-events:none!important;overflow:visible!important;z-index:15!important
+ }
+ body.in-game #table .poker-table>.myseat>.avatar,
+ body.in-game #table .poker-table>.myseat>div:not(.holecards){display:none!important}
+ body.in-game #table .poker-table>.myseat>.holecards{
+   position:absolute!important;left:50%!important;top:0!important;bottom:auto!important;
+   transform:translateX(-50%)!important;display:flex!important;justify-content:center!important;
+   align-items:center!important;gap:10px!important;width:max-content!important;
+   max-width:none!important;visibility:visible!important;pointer-events:none!important
+ }
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:104px!important;height:138px!important;min-width:104px!important;min-height:138px!important;
+   max-width:104px!important;max-height:138px!important;box-sizing:border-box!important;
+   font-size:35px!important;line-height:1.1!important;padding:10px!important;
+   transform:none!important;rotate:none!important;position:relative!important;
+   border-radius:8px!important
+ }
+ body.in-game #table .poker-table>.myseat>.turn{
+   position:absolute!important;left:-86px!important;right:auto!important;
+   top:54px!important;bottom:auto!important;transform:translate(-50%,-50%)!important;
+   width:90px!important;height:90px!important;display:grid!important;place-items:center!important;
+   visibility:visible!important;border:7px solid #d4a654!important;border-radius:50%!important;
+   background:#0c0b0a!important;color:#f3cb80!important;font-size:36px!important;
+   font-weight:800!important;box-shadow:0 0 0 4px #16100a,0 4px 16px #000b!important;
+   font-variant-numeric:tabular-nums
+ }
+ body.in-game #table>.rivl-pov-balance{
+   position:absolute;right:clamp(28px,15%,230px);bottom:clamp(185px,22%,260px);
+   z-index:13;display:flex;align-items:center;gap:13px;padding:12px 20px;
+   border:1px solid #b38a4b;border-radius:12px;background:#100e0ceF;
+   color:#f0c675;pointer-events:none;box-shadow:0 4px 16px #0009
+ }
+ body.in-game #table .rivl-pov-chip-stack{
+   display:grid;place-items:center;width:48px;height:50px;border-radius:45%;
+   color:#f1c56f;font-size:24px;border:2px solid #b68b48;
+   background:repeating-linear-gradient(0deg,#1a1714 0 7px,#bd914b 7px 10px)
+ }
+ body.in-game #table .rivl-pov-balance>div{display:flex;flex-direction:column;gap:4px}
+ body.in-game #table .rivl-pov-label{font-size:12px;letter-spacing:.07em;font-weight:800}
+ body.in-game #table .rivl-pov-balance strong{font-size:27px;font-variant-numeric:tabular-nums}
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+  width:82px!important;height:110px!important;min-width:82px!important;min-height:110px!important;
+  max-width:82px!important;max-height:110px!important;font-size:27px!important}
+ body.in-game #table .poker-table>.myseat>.turn{left:-58px!important;width:70px!important;height:70px!important;font-size:28px!important}
+ body.in-game #table>.rivl-pov-balance{right:6%;padding:8px 12px}
+ body.in-game #table .rivl-pov-balance strong{font-size:20px}
+}
+@media(max-width:900px){body.in-game #table>.rivl-pov-balance{display:none!important}}
+
+/* POV v2 refinement: symmetric cards, centered live clock, and
+   a matching balance column inside the existing pot statistics panel. */
+@media(min-width:901px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:92px!important;height:124px!important;min-width:92px!important;min-height:124px!important;
+   max-width:92px!important;max-height:124px!important;font-size:31px!important}
+ body.in-game #table .poker-table>.myseat>.turn{
+   left:-68px!important;top:62px!important;width:80px!important;height:80px!important;
+   font-size:32px!important;box-sizing:border-box!important}
+ body.in-game #table .rivl-pov-pot-balance-row{
+   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:8px}
+ body.in-game #table .rivl-pov-stat{min-width:0}
+ body.in-game #table .rivl-pov-balance-stat{
+   border-left:1px solid #6c4c27;padding-left:9px}
+ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   display:flex;align-items:center;gap:6px;font-size:clamp(15px,1.35vw,23px)}
+ body.in-game #table .rivl-pov-chip-icon{
+   display:inline-grid;place-items:center;flex:0 0 20px;width:20px;height:20px;
+   border-radius:50%;border:2px solid #d3a451;color:#edc475;font-size:12px;
+   background:repeating-linear-gradient(0deg,#17120c 0 3px,#ac7d3e 3px 5px)}
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.holecards .card{
+   width:76px!important;height:102px!important;min-width:76px!important;min-height:102px!important;
+   max-width:76px!important;max-height:102px!important;font-size:25px!important}
+ body.in-game #table .poker-table>.myseat>.turn{
+   left:-52px!important;top:51px!important;width:66px!important;height:66px!important;font-size:26px!important}
+}
+@media(max-width:900px){
+ body.in-game #table .rivl-pov-balance-stat{display:none!important}
+ body.in-game #table .rivl-pov-pot-balance-row{display:contents}
+}
+
+/* QA refinement: restore the player's live BB badge beside the two POV cards,
+   and keep the balance number inside its shared pot statistics panel. */
+@media(min-width:901px){
+ body.in-game #table .poker-table>.myseat>.bb-count{
+   position:absolute!important;left:calc(50% + 116px)!important;
+   top:calc(50% + 15px)!important;bottom:auto!important;right:auto!important;
+   transform:none!important;display:inline-flex!important;align-items:center!important;
+   justify-content:center!important;width:max-content!important;min-width:42px;
+   height:20px!important;padding:0 7px!important;z-index:22!important;
+   visibility:visible!important;font-size:11px!important;line-height:18px!important;
+   border-radius:10px!important;background:#1b140c!important;
+   border:1px solid #b8862f!important;color:#f6d48e!important;
+ }
+ body.in-game #table .actions .rivl-pot-stats{
+   min-width:0!important;box-sizing:border-box!important;overflow:hidden!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row{
+   grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr)!important;
+   gap:5px!important;width:100%!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-balance-stat{
+   padding-left:7px!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   font-size:clamp(14px,1.22vw,20px)!important;gap:4px!important;
+   white-space:nowrap!important;min-width:0!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value strong{
+   font-size:inherit!important;min-width:0!important;font-variant-numeric:tabular-nums!important;
+ }
+ body.in-game #table .actions .rivl-pov-chip-icon{
+   width:17px!important;height:17px!important;flex:0 0 17px!important;font-size:10px!important;
+ }
+}
+@media(min-width:901px) and (max-width:1200px){
+ body.in-game #table .poker-table>.myseat>.bb-count{
+   left:calc(50% + 94px)!important;top:calc(50% + 12px)!important;
+ }
+ body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value{
+   font-size:14px!important;gap:3px!important;
+ }
+}
+
+/* Cairo table chips — appearance only. Preserve chip elements, counts, positions,
+   stacking geometry, win-sweep animations, sound and game logic. */
+body.in-game #table .pile-chip,
+#roomGame .pile-chip{
+  --face:#eee7d8;--inlay:#f9f5eb;--stripe:#8f2632;--line:#bd9b5e;--edge:#d4c9b6;
+  background:
+    linear-gradient(90deg,#0009 0%,#ffffff24 15%,#0000 36% 65%,#0008 100%),
+    repeating-linear-gradient(90deg,var(--edge) 0 .13em,var(--stripe) .13em .205em,var(--edge) .205em .265em);
+  box-shadow:0 .045em .035em #000c,0 .13em .19em #0009,inset 0 -.045em .035em #0007;
+}
+body.in-game #table .pile-chip::after,
+#roomGame .pile-chip::after,
+body.in-game #table .flying-chip,
+#roomGame .flying-chip{
+  background:
+    radial-gradient(ellipse at 32% 24%,#ffffff80,transparent 37%),
+    radial-gradient(closest-side,#0000 0 31%,#d4b577 32% 35%,#0000 36%),
+    radial-gradient(closest-side,var(--inlay) 0 46%,var(--line) 47% 51%,var(--face) 52% 69%,transparent 70%),
+    repeating-conic-gradient(from 6deg,var(--stripe) 0 11deg,var(--face) 11deg 46deg,var(--stripe) 46deg 51deg,var(--face) 51deg 60deg);
+}
+body.in-game #table .pile-chip::after,
+#roomGame .pile-chip::after{
+  box-shadow:inset 0 .025em .055em #fff8,inset 0 -.055em .075em #0006,0 -.018em .025em #0006;
+}
+body.in-game #table .pile-chip.chip-maroon,
+#roomGame .pile-chip.chip-maroon{
+  --face:#711d2a;--inlay:#8e2938;--stripe:#f3e7d1;--line:#d4ad65;--edge:#4c111b;
+}
+body.in-game #table .pile-chip.chip-gold,
+#roomGame .pile-chip.chip-gold{
+  --face:#c29a53;--inlay:#e3bb73;--stripe:#241b15;--line:#80602d;--edge:#8b652e;
+}
+body.in-game #table .pile-chip.chip-black,
+#roomGame .pile-chip.chip-black{
+  --face:#252322;--inlay:#393532;--stripe:#d8b471;--line:#ad8246;--edge:#11100f;
+}
+body.in-game #table .flying-chip,
+#roomGame .flying-chip{
+  box-shadow:inset 0 1px 2px #fff6,inset 0 -2px 2px #0006,0 2px 1px #0008,0 5px 8px #0009;
+}
+
+/* Photoreal-inspired Cairo clay chips: cosmetic only; retain existing stack/flight geometry. */
+body.in-game #table .pile-chip,
+#roomGame .pile-chip{
+  --face:#e7dfd0;--inlay:#f0e8d9;--stripe:#302b27;--line:#b7a587;--edge:#b9ae9c;
+  background:
+    linear-gradient(180deg,#ffffff20 0%,#0000 24%,#0007 79%,#000b 100%),
+    repeating-linear-gradient(90deg,var(--edge) 0 .115em,var(--stripe) .115em .15em,var(--edge) .15em .29em);
+  box-shadow:0 .025em .025em #fff4,inset 0 -.065em .07em #0008,0 .085em .08em #000c,0 .2em .23em #0007;
+}
+body.in-game #table .pile-chip::after,
+#roomGame .pile-chip::after{
+  background:
+    radial-gradient(ellipse at 34% 20%,#fff8 0%,#fff0 45%),
+    radial-gradient(closest-side,#25201c 0 10%,#0000 11%),
+    radial-gradient(closest-side,var(--inlay) 0 37%,#8f806c 38% 40%,var(--face) 41% 57%,var(--line) 58% 60%,#0000 61%),
+    repeating-conic-gradient(from 10deg,var(--stripe) 0 8deg,var(--face) 8deg 44deg,var(--stripe) 44deg 52deg,var(--face) 52deg 60deg);
+  box-shadow:inset 0 .025em .04em #fff9,inset 0 -.06em .08em #0008,0 -.02em .035em #0007;
+}
+body.in-game #table .pile-chip.chip-maroon,#roomGame .pile-chip.chip-maroon{
+  --face:#772e37;--inlay:#953e48;--stripe:#e7dccb;--line:#c6a775;--edge:#55202a;
+}
+body.in-game #table .pile-chip.chip-gold,#roomGame .pile-chip.chip-gold{
+  --face:#c2a06b;--inlay:#e0bc80;--stripe:#413127;--line:#856a43;--edge:#8d7049;
+}
+body.in-game #table .pile-chip.chip-black,#roomGame .pile-chip.chip-black{
+  --face:#393635;--inlay:#4b4744;--stripe:#d7c6a8;--line:#ab9877;--edge:#211f1e;
+}
+/* Balance indicator: understated dark clay medallion, without gold horizontal stripes. */
+body.in-game #table .actions .rivl-pov-chip-icon{
+  background:radial-gradient(circle at 32% 24%,#797571,#383635 48%,#1d1c1c 80%)!important;
+  border:1px solid #8f8981!important;
+  box-shadow:inset 0 1px 2px #fff5,inset 0 -2px 3px #000a,0 2px 3px #0008!important;
+  color:#e2d8c7!important;
+}
+
+/* Gold RIVL spade on the balance chip, without bringing back the gold stripes. */
+body.in-game #table .actions .rivl-pov-chip-icon{color:#edbb62!important;text-shadow:0 0 3px #c38a35a6!important}
+
+/* Balance chip: visibly RIVL gold on every table theme and preview. */
+body.in-game #table .actions .rivl-pov-balance-stat .rivl-pov-chip-icon,
+#table .rivl-pov-balance-stat .rivl-pov-chip-icon{
+  color:#f2bd5b!important;
+  -webkit-text-fill-color:#f2bd5b!important;
+  background:radial-gradient(circle at 35% 25%,#493017 0%,#24180d 58%,#110e0b 100%)!important;
+  border:2px solid #dba84f!important;
+  box-shadow:inset 0 1px 2px #ffdd8055,0 0 0 1px #3b260e,0 2px 4px #0009!important;
+  text-shadow:0 0 4px #e9a83c99!important;
+}
+
+/* Raise only the far-edge player nameplates on desktop. X positions, table,
+   cards, clocks, betting UI and mobile geometry remain untouched. */
+@media (min-width:901px){
+  body.in-game #table .poker-table[data-player-count="3"] .s1,
+  body.in-game #table .poker-table[data-player-count="3"] .s2{top:-21%!important}
+  body.in-game #table .poker-table[data-player-count="6"] .s3,
+  body.in-game #table .poker-table[data-player-count="9"] .s4,
+  body.in-game #table .poker-table[data-player-count="9"] .s5{top:-23%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s1,
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s2{top:-31%!important}
+}
+
+/* Full-width game-panel toggle: the entire footer strip is the real button.
+   Applies to bot tables and online/private rooms at all viewport sizes. */
+body.in-game .bottom-toggle,
+body.in-game #roomGame .rivl-room-panel-toggle{
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  padding:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+body.in-game .bottom-toggle > button,
+body.in-game #roomGame .rivl-room-panel-toggle > button{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  height:100%!important;
+  min-height:34px!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  cursor:pointer!important;
+  border-radius:7px!important;
+  background:#16120e!important;
+  border:1px solid #725331!important;
+  color:#e3bb7b!important;
+}
+body.in-game .bottom-toggle > button:hover,
+body.in-game #roomGame .rivl-room-panel-toggle > button:hover{
+  background:#261b10!important;
+  border-color:#c49a5a!important;
+}
+
+/* Decision clock: keeps the new round POV clock, but on your turn its ring drains from green to red
+   as the seconds run out, like the online room clock. --turn-left is set by paintTurn() in script.js. */
+@property --turn-left{syntax:'<percentage>';inherits:false;initial-value:100%}
+body.in-game #table .poker-table>.myseat>.turn.is-live{
+  border-color:transparent!important;color:#f7d291!important;
+  background:linear-gradient(#0c0b0a,#0c0b0a) padding-box,
+    conic-gradient(#dc5555 calc(100% - var(--turn-left)),#52bd76 0) border-box!important;
+  transition:--turn-left 1s linear
+}
+
+/* Phones and tablets: the same POV layout as desktop, sized to fit under the table. Your seat pill (avatar,
+   name, chips) gives way to two larger hole cards with the round clock on their left and your BB count on
+   their right. They sit in the strip below the rim where the seat pill was, so the table keeps its size. */
+@media(max-width:900px){
+  body.in-game #table .poker-table>.myseat{
+    width:auto!important;height:auto!important;min-width:0!important;padding:0!important;
+    background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;
+    display:block!important;pointer-events:none!important;overflow:visible!important}
+  body.in-game #table .poker-table>.myseat>.avatar,
+  body.in-game #table .poker-table>.myseat>div:not(.holecards){display:none!important}
+  body.in-game #table .poker-table>.myseat>.holecards{display:flex!important;gap:5px!important;position:relative;z-index:1}
+  body.in-game #table .poker-table>.myseat>.holecards .card{
+    width:44px!important;height:60px!important;font-size:18px!important;padding:3px 4px!important;
+    border-radius:5px!important;box-sizing:border-box!important}
+  body.in-game #table .poker-table>.myseat>.turn{
+    position:absolute!important;right:calc(100% + 10px);top:50%;transform:translateY(-50%);
+    width:46px;height:46px;box-sizing:border-box;padding:0;display:grid;place-items:center;
+    border:4px solid #d4a654;border-radius:50%;background:#0c0b0a;color:#f3cb80;
+    font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px #16100a,0 3px 10px #000b}
+  body.in-game #table .poker-table>.myseat>.bb-count{
+    position:absolute!important;left:calc(100% + 8px)!important;right:auto!important;top:50%!important;bottom:auto!important;
+    transform:translateY(-50%)!important;white-space:nowrap}
+  /* Balance joins the pot total and equity on the slim line at the top of the table. */
+  body.in-game #table .actions .rivl-pov-balance-stat{display:flex!important}
+  body.in-game #table .actions .rivl-pov-stat{display:flex;align-items:center;gap:5px}
+  body.in-game #table .actions .rivl-pov-balance-stat{border-left:1px solid #6c4c27;padding-left:6px}
+  body.in-game #table .actions .rivl-pov-chip-icon{
+    display:inline-grid;place-items:center;width:14px;height:14px;flex:0 0 14px;border-radius:50%;font-size:9px;line-height:1}
+}
+@media(max-width:600px){
+  /* Your seat sits a little lower than the old pill so the bigger cards clear the bottom seats. */
+  body.in-game #table .poker-table>.myseat{top:calc(100% + 30px)!important}
+}
+@media(max-width:600px){
+  /* Short labels so pot, balance and equity fit on the one slim line above the table. */
+  body.in-game #table .actions .rivl-pot-stats{max-width:calc(100% - 12px);gap:5px!important;padding:0 7px!important}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-label{font-size:0!important;letter-spacing:.04em}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-label::after{font-size:8px}
+  body.in-game #table .actions .rivl-pov-stat:not(.rivl-pov-balance-stat) .rivl-pot-stats-label::after{content:'POT'}
+  body.in-game #table .actions .rivl-pov-balance-stat .rivl-pot-stats-label::after{content:'BALANCE'}
+  body.in-game #table .actions .rivl-pot-stats>.rivl-pot-stats-label::after{content:'EQUITY'}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-value,
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-percent{font-size:12px!important}
+  body.in-game #table .actions .rivl-pot-stats .rivl-pot-stats-divider{margin:0 1px}
+}
+@media(min-width:601px) and (max-width:900px){
+  /* Tablets: drop your cards onto the front rim, below the bottom seats. */
+  body.in-game #table .poker-table>.myseat{top:calc(100% + 48px)!important}
+}
+/* Test: lower the shared board group slightly from 46% to 49% of felt height.
+   Preserve card sizing, pot/muck spacing, animations, mobile layout and game logic. */
+@media (min-width:901px){
+  body.in-game #table .community,
+  body.in-game #table .pot,
+  body.in-game #table .muck-pile,
+  #roomGame .rivl-pvp-board,
+  #roomGame .rivl-pvp-table .pot{top:49%!important}
+}
+
+/* Match approved table reference: larger five-card board, realistic burn stack,
+   and pot chips aligned alongside it. Desktop only; hero cards untouched. */
+@media (min-width:901px){
+  body.in-game #table .poker-table,
+  #roomGame .rivl-pvp-table{
+    --board-card:clamp(45px,7.2vh,68px);
+    --board-gap:6px;
+  }
+  body.in-game #table .community,
+  body.in-game #table .pot,
+  body.in-game #table .muck-pile,
+  #roomGame .rivl-pvp-board,
+  #roomGame .rivl-pvp-table .pot{top:49%!important}
+  body.in-game #table .muck-pile .card,
+  body.in-game #table .muck-pile .card.back{
+    width:var(--board-card)!important;
+    height:calc(var(--board-card)*1.47)!important;
+  }
+}
+
+/* Reference refinement: move only table-board group slightly toward far rail.
+   Muck/burn cards match the community cards in size, not just their container. */
+@media (min-width:901px){
+  body.in-game #table .community,
+  body.in-game #table .pot,
+  body.in-game #table .muck-pile,
+  #roomGame .rivl-pvp-board,
+  #roomGame .rivl-pvp-table .pot{top:45.5%!important}
+  body.in-game #table .muck-pile{
+    width:var(--board-card)!important;
+    height:calc(var(--board-card)*1.47)!important;
+  }
+  body.in-game #table .muck-pile .muck-card,
+  body.in-game #table .muck-pile .muck-flyer.card{
+    width:var(--board-card)!important;
+    height:calc(var(--board-card)*1.47)!important;
+    box-sizing:border-box!important;
+  }
+  body.in-game #table .muck-pile .muck-card::after{
+    font-size:clamp(18px,2.8vh,26px)!important;
+  }
+}
+
+/* Match face-down community cards to the burn-pile card-back pattern.
+   Visual-only: preserve card dimensions, positioning, flip behavior and mobile. */
+body.in-game #table .community .card.back,
+body.in-game #roomGame .rivl-pvp-board .card.back{
+  background:
+    repeating-linear-gradient(45deg,#c9963f26 0 1px,transparent 1px 4px),
+    repeating-linear-gradient(-45deg,#c9963f26 0 1px,transparent 1px 4px),
+    linear-gradient(150deg,#1d1a17,#0e0d0c 55%,#1c140c)!important;
+  box-shadow:inset 0 0 0 2px #110e0b,inset 0 0 0 3px #8a6630,0 1px 0 #5a4120,0 3px 4px -1px #000b,0 9px 12px -6px #000a!important;
+}
+
+/* Larger winner result with revealed showdown hole cards; visual only. */
+#table .win-fx{min-width:min(330px,80vw);max-width:min(460px,90vw);padding:20px 30px;border-radius:18px}
+#table .win-fx strong{font-size:clamp(24px,2.4vw,34px)}
+#table .win-fx .win-hand{font-size:clamp(17px,1.6vw,23px);margin-top:7px}
+.rivl-winner-cards{display:flex;justify-content:center;align-items:center;gap:9px;margin:12px auto 8px}
+.rivl-winner-cards .card{position:relative!important;inset:auto!important;transform:none!important;width:clamp(48px,5vw,70px)!important;height:clamp(68px,7vw,98px)!important;font-size:18px!important}
+.rivl-room-win-fx{display:none;position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);z-index:35;pointer-events:none;text-align:center;min-width:270px;max-width:90%;box-sizing:border-box;padding:18px 24px;border:1px solid #dfb55d;border-radius:17px;background:linear-gradient(125deg,#1a130bf5,#090909f5);box-shadow:0 0 34px #e6ae4380;color:#f5d28b}
+.rivl-room-win-fx.visible{display:block;animation:winnerIn .35s ease-out}
+.rivl-room-win-fx strong{display:block;font-size:clamp(23px,2.4vw,32px)}
+.rivl-room-win-fx .rivl-win-hand{font-size:clamp(16px,1.5vw,21px);margin-top:6px;color:white}
+@media(max-width:650px){#table .win-fx{padding:12px 14px;min-width:220px}.rivl-room-win-fx{padding:12px 16px;min-width:210px}.rivl-winner-cards .card{width:43px!important;height:61px!important}}
+
+/* Cairo victory presentation: centered, premium gold, and large enough to celebrate a hand. */
+body.in-game #table .poker-table .win-fx,
+#roomGame .rivl-pvp-table .rivl-room-win-fx{
+  top:50%!important;left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  box-sizing:border-box!important;
+  width:max-content!important;min-width:min(390px,86vw)!important;
+  max-width:min(540px,90vw)!important;
+  padding:24px 32px 22px!important;
+  border:2px solid #e5b65c!important;
+  border-radius:22px!important;
+  background:radial-gradient(ellipse at 50% 0%,#62421e 0%,#26190e 38%,#0c0b0a 90%)!important;
+  box-shadow:0 0 0 2px #080605,0 0 0 4px #a67735,0 12px 45px #000d,0 0 55px #c98d3b80,inset 0 1px 18px #f0b85c29!important;
+  color:#ffda8a!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  font-size:clamp(29px,3.3vw,43px)!important;
+  font-weight:900!important;letter-spacing:.075em!important;
+  line-height:1.12!important;
+  text-shadow:0 2px 0 #40200a,0 0 24px #f0ad56a6!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  margin-top:11px!important;
+  font-size:clamp(19px,1.9vw,25px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em!important;color:#fff2d0!important;
+}
+body.in-game #table .win-fx small{margin-top:13px!important;font-size:clamp(13px,1.15vw,16px)!important;color:#f8d59d!important}
+body.in-game #table .win-fx.visible,
+#roomGame .rivl-room-win-fx.visible{animation:rivlVictoryEntrance .42s cubic-bezier(.2,.85,.2,1) both!important}
+@keyframes rivlVictoryEntrance{
+  from{opacity:0;transform:translate(-50%,-46%) scale(.88)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:650px){
+  body.in-game #table .poker-table .win-fx,
+  #roomGame .rivl-pvp-table .rivl-room-win-fx{
+    min-width:min(260px,88vw)!important;max-width:90vw!important;
+    padding:14px 16px!important;border-radius:16px!important;
+  }
+  body.in-game #table .win-fx strong,
+  #roomGame .rivl-room-win-fx strong{font-size:clamp(22px,5vw,29px)!important}
+}
+
+/* Symmetric Cairo winner presentation — showdown cards only, matching table card faces. */
+body.in-game #table .win-fx,
+#roomGame .rivl-room-win-fx{
+  text-align:center!important;
+  font-family:inherit!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  display:block!important;
+  font-family:inherit!important;
+  font-size:clamp(25px,2.7vw,37px)!important;
+  font-weight:800!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  color:#f3cb77!important;
+  white-space:normal!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards,
+#roomGame .rivl-room-win-fx .rivl-winner-cards{
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  gap:12px!important;margin:18px auto 14px!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards .card,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  position:relative!important;inset:auto!important;transform:none!important;
+  width:clamp(58px,5.5vw,78px)!important;
+  height:clamp(84px,7.7vw,110px)!important;
+  border:1px solid #d2bc8b!important;border-radius:7px!important;
+  box-shadow:0 4px 10px #0009!important;
+  font-family:inherit!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  margin:8px 0 0!important;
+  font-family:inherit!important;
+  font-size:clamp(15px,1.4vw,19px)!important;
+  font-weight:650!important;letter-spacing:.04em!important;
+  text-transform:uppercase!important;color:#f4deb0!important;
+}
+body.in-game #table .win-fx small,
+#roomGame .rivl-room-win-fx .rivl-victory-gain{
+  display:block!important;margin:10px auto 0!important;
+  font-family:inherit!important;font-size:clamp(14px,1.25vw,18px)!important;
+  font-weight:700!important;letter-spacing:.025em!important;color:#eec376!important;
+}
+@media(max-width:650px){
+ body.in-game #table .win-fx .rivl-winner-cards .card,
+ #roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  width:50px!important;height:72px!important;
+ }
+}
+
+/* Match the widely tracked gold TEXAS HOLD'EM heading across victory copy.
+   Keep playing cards on the game's original face typography. */
+body.in-game #table .win-fx,
+#roomGame .rivl-room-win-fx{
+  font-family:Inter,Arial,sans-serif!important;
+  letter-spacing:.18em!important;
+}
+body.in-game #table .win-fx strong,
+#roomGame .rivl-room-win-fx strong{
+  font-family:Inter,Arial,sans-serif!important;
+  font-weight:750!important;
+  letter-spacing:.19em!important;
+  text-shadow:0 1px 9px #c18a3c38!important;
+}
+body.in-game #table .win-fx .win-hand,
+#roomGame .rivl-room-win-fx .rivl-win-hand{
+  font-family:Inter,Arial,sans-serif!important;
+  font-weight:450!important;
+  letter-spacing:.2em!important;
+}
+body.in-game #table .win-fx small,
+#roomGame .rivl-room-win-fx .rivl-victory-gain{
+  font-family:Inter,Arial,sans-serif!important;
+  font-weight:450!important;
+  letter-spacing:.16em!important;
+}
+body.in-game #table .win-fx .rivl-winner-cards .card,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card{
+  font-family:Georgia,'Times New Roman',serif!important;
+  letter-spacing:normal!important;
+}
+
+/* The winner banner's headline styles target its <strong> and <small>, which the revealed cards also use for the
+   rank and corner suit. Put those back to the table's card typography. */
+body.in-game #table .win-fx .rivl-winner-cards .card strong,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card strong{
+  display:flex!important;flex-direction:column!important;align-items:center!important;align-self:flex-start!important;
+  margin:0!important;font-family:Georgia,'Times New Roman',serif!important;font-size:clamp(15px,1.5vw,21px)!important;
+  font-weight:700!important;letter-spacing:-.04em!important;line-height:.95!important;text-transform:none!important;
+  text-shadow:none!important;color:inherit!important;white-space:nowrap!important}
+body.in-game #table .win-fx .rivl-winner-cards .card strong small,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card strong small{
+  display:block!important;margin:.05em 0 0!important;font-family:inherit!important;font-size:.72em!important;
+  font-weight:400!important;letter-spacing:0!important;color:inherit!important}
+body.in-game #table .win-fx .rivl-winner-cards .card>span,
+#roomGame .rivl-room-win-fx .rivl-winner-cards .card>.rivl-card-center{font-size:clamp(28px,2.8vw,40px)!important}
+/* Daily puzzle */
+.pz-spot b,.pz-result b{float:none}
+.puzzle-home{border-color:#8a6a3a;background:linear-gradient(90deg,#1d150c,#120f0c)}
+.puzzle-home .gold{width:auto;margin-top:0;flex:0 0 auto}
+.pz-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 14px}
+.pz-title{margin:0;color:#d8cfc2;letter-spacing:.04em}
+.pz-nav{display:flex;gap:8px}
+.pz-nav button[disabled]{opacity:.4}
+.pz-practice{margin:0 0 12px;color:#f5d28b;font-size:13px}
+.pz-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+.pz-layout .panel{margin-top:0}
+.pz-felt{border-radius:14px;padding:16px;background:radial-gradient(ellipse at 50% 40%,#1f6a43,#0f3a24 70%,#0a2618);border:2px solid #5a3d22;box-shadow:inset 0 0 30px #0008;text-align:center}
+.pz-street{display:flex;justify-content:space-between;color:#e8f2ea;font-size:12px;letter-spacing:.14em;font-weight:700}
+.pz-street b{color:#ffdda0;font-size:14px;margin-left:6px}
+.pz-board,.pz-hand{display:flex;justify-content:center;gap:8px;margin:16px 0 4px}
+.pz-hand{margin:6px 0}
+.pz-card{width:52px;height:74px;border-radius:6px;background:#f6f1e8;color:#161616;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-family:Georgia,serif;box-shadow:0 3px 8px #0007;flex:0 0 auto}
+.pz-card b{font-size:24px;line-height:1}.pz-card i{font-style:normal;font-size:24px;line-height:1.1}
+.pz-card.red{color:#c0182a}
+.pz-card.back{background:repeating-linear-gradient(45deg,#3a1c12 0 6px,#4c2617 6px 12px);border:2px solid #6b4b2c;opacity:.55}
+.pz-hand .pz-card{width:60px;height:84px}.pz-hand .pz-card b,.pz-hand .pz-card i{font-size:28px}
+.pz-you{margin-top:14px;padding-top:10px;border-top:1px dashed #ffffff30;color:#d5e6da}
+.pz-you small{font-size:11px;letter-spacing:.12em}
+.pz-story{margin:16px 0 0;padding-left:20px;display:grid;gap:7px;color:#e9e2d6;font-size:14px;line-height:1.45}
+.pz-story li:last-child{color:#fff;font-weight:700}
+.pz-mini{display:inline-block;padding:0 4px;border-radius:3px;background:#f6f1e8;color:#161616;font-weight:700;font-size:13px;line-height:1.35}
+.pz-mini.red{color:#c0182a}
+.pz-q{margin:18px 0 10px;color:var(--gold);letter-spacing:.12em;font-size:14px}
+.pz-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pz-choice{min-height:52px;border-radius:8px;border:1px solid #8a6a3a;background:#1b1611;color:#fff;font-weight:800;font-size:15px;cursor:pointer;padding:8px}
+.pz-choice:hover:not([disabled]){background:linear-gradient(#ffdda0,#c68d46);color:#170f06}
+.pz-choice[disabled]{cursor:default;opacity:.55}
+.pz-choice.best{opacity:1;border-color:#5fd18a;box-shadow:0 0 0 2px #5fd18a55}
+.pz-choice.picked{opacity:1;background:#2a2118;border-width:2px;border-color:#efbd70}
+.pz-status{min-height:1em;margin:10px 0 0}
+.pz-verdict{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:10px;background:#1a1a1a}
+.pz-verdict.good{background:#12301f;border:1px solid #2f8a55}.pz-verdict.ok{background:#2a2412;border:1px solid #8a7a2f}.pz-verdict.bad{background:#321414;border:1px solid #8a2f2f}
+.pz-glyph{font-size:28px;font-weight:900;min-width:44px;text-align:center;color:#ffdda0}
+.pz-verdict div{display:grid;gap:3px}.pz-verdict strong{letter-spacing:.1em}.pz-verdict span{color:#e9e2d6;font-size:14px}
+.pz-why{color:#d8cfc2;font-size:14px;line-height:1.5}
+.pz-options{display:grid;gap:10px}
+.pz-option{padding:10px 12px;border-radius:8px;border:1px solid #3a2d20;background:#15120f}
+.pz-option.best{border-color:#2f8a55}
+.pz-option-top{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:14px}
+.pz-option em{font-style:normal;font-size:11px;color:#f5d28b;margin-left:6px;letter-spacing:.06em}
+.pz-grade{color:#e9e2d6;font-weight:600;white-space:nowrap}
+.pz-bar{height:6px;border-radius:3px;background:#2a2420;margin:8px 0 4px;overflow:hidden}.pz-bar span{display:block;height:100%;background:linear-gradient(90deg,#c68d46,#ffdda0)}
+.pz-option.best .pz-bar span{background:linear-gradient(90deg,#2f8a55,#5fd18a)}
+.pz-option small{color:#bfb6a8;font-size:12px}
+.pz-count{color:#bfb6a8;font-size:13px}
+.pz-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px;text-align:center}
+.pz-stats[hidden]{display:none}
+.pz-stats div{padding:10px 4px;border-radius:8px;background:#1b1611;display:grid;gap:2px}
+.pz-stats b{font-size:24px;color:var(--gold)}.pz-stats small{font-size:10px;letter-spacing:.1em;color:#d8cfc2}
+.pz-signin{font-size:13px;color:#d8cfc2}.pz-signin a{color:var(--gold)}
+.pz-verdict .pz-best-name{display:inline;color:#fff;font-weight:800}
+#pzShare{width:100%;margin-top:10px}
+.pz-next{color:#bfb6a8;font-size:13px;text-align:center;margin-bottom:0}
+@media(max-width:900px){.pz-layout{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .puzzle-home .gold{width:100%}
+  .pz-card{width:44px;height:62px}.pz-card b,.pz-card i{font-size:20px}
+  .pz-hand .pz-card{width:52px;height:72px}.pz-hand .pz-card b,.pz-hand .pz-card i{font-size:24px}
+  .pz-board{gap:6px}
+  .pz-choice{font-size:13px;min-height:56px}
+}

@@ -4,6 +4,7 @@
 import worker,{Room,Directory} from './worker/rooms.js';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
+import {PUZZLE_START} from './worker/puzzles.js';
 
 function fakeState(){
   const store=new Map(),sockets=[];let alarm=null;
@@ -59,6 +60,61 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// Side pots: unmatched all-in bets must be refunded, never lost or counted as winnings.
+{
+  const {room,hostWs}=await setup(0,3);
+  await say(room,hostWs,{type:'startMatch'});
+  const g=room.room.game;
+  g.board=['2S','3H','4D','8C','9S'];
+  g.hands={0:['AS','AH'],1:['KS','KH'],2:['QS','QH']};
+  const amounts=[100,200,500];
+  for(let i=0;i<3;i++){g.players[i].stack=1000-amounts[i];g.players[i].contribution=amounts[i];g.players[i].bet=amounts[i];g.players[i].allIn=false;g.players[i].folded=false}
+  g.pot=amounts.reduce((a,b)=>a+b,0);
+  const total=chips(g);
+  room.finishHand();
+  assert.equal(chips(g),total,'unmatched bets cannot make chips disappear');
+  assert.deepEqual(g.players.map(p=>p.stack),[1200,1000,800],'main and side pots go to eligible winners; uncalled 300 is returned');
+  assert.equal(g.pot,0);
+  checks++;
+}
+
+// Deterministic hand-ranking and tied-showdown edge cases.
+{
+  const {room,hostWs}=await setup(0,3);
+  await say(room,hostWs,{type:'startMatch'});
+  const val=cards=>room.handValue(cards);
+  assert.equal(val(['AS','2H','3D','4C','5S'])[0],4,'wheel is a straight');
+  assert.equal(val(['AS','2H','3D','4C','5S'])[1],5,'wheel is five-high');
+  assert.ok(room.compare(val(['TS','JS','QS','KS','AS']),val(['9S','TS','JS','QS','KS']))>0,'higher straight flush wins');
+  assert.ok(room.compare(val(['AS','AH','AD','AC','2S']),val(['KS','KH','KD','KC','AS']))>0,'higher quads win');
+  assert.ok(room.compare(val(['AS','AH','AD','KS','KH']),val(['QS','QH','QD','AS','AH']))>0,'full house compares trips first');
+  assert.ok(room.compare(val(['AS','KS','QS','JS','9S']),val(['AH','KH','QH','JH','8H']))>0,'flush kickers break ties');
+  const g=room.room.game;
+  g.board=['AS','KS','QS','JS','TS'];
+  g.hands={0:['2H','3D'],1:['4H','5D'],2:['6H','7D']};
+  const amounts=[101,101,101];
+  for(let i=0;i<3;i++){g.players[i].stack=1000-amounts[i];g.players[i].contribution=amounts[i];g.players[i].bet=amounts[i];g.players[i].folded=false}
+  g.pot=303;
+  const total=chips(g);
+  room.finishHand();
+  assert.equal(chips(g),total,'tied showdown conserves chips');
+  assert.deepEqual(g.players.map(p=>p.stack),[1000,1000,1000],'three-way board tie splits equally');
+  assert.equal(g.winners.length,3);
+  checks++;
+}
+
+// Raises use five-chip increments; a genuine all-in remains legal.
+{
+  const {room,hostWs}=await setup(0,2);
+  await say(room,hostWs,{type:'startMatch'});
+  const g=room.room.game,seat=g.turn,p=g.players.find(x=>x.seat===seat),l=room.legal(seat);
+  const invalid=l.raiseToMin+1;
+  if(invalid<l.raiseToMax){assert.throws(()=>room.applyAction(seat,'raise',invalid),/increments of 5/);assert.equal(p.contribution,p.bet,'invalid raise does not move chips')}
+  const valid=Math.ceil(l.raiseToMin/5)*5;
+  if(valid<=l.raiseToMax){room.applyAction(seat,'raise',valid);assert.equal(p.bet,valid)}
+  checks++;
+}
+
 // 2. Showdown reveals every non-folded hand to everyone.
 {
   const {room,players,hostWs}=await setup(0,2);
@@ -66,6 +122,24 @@ for(let match=0;match<60;match++){
   while(room.room.game.phase!=='showdown'){const g=room.room.game;const me=players.find(p=>room.room.members[p.token].seat===g.turn);await say(room,me.ws,{type:'action',action:room.legal(g.turn).check?'check':'call'})}
   const view=players[1].ws.last('state').state.game;
   assert.equal(Object.keys(view.shown).length,2);assert.match(view.result,/with/);
+  checks++;
+}
+
+// 2b. A bot that wins because everyone folded shows its cards; a person who wins that way keeps theirs hidden.
+{
+  const {room,players,hostWs}=await setup(1,1);
+  await say(room,hostWs,{type:'startMatch'});
+  const hostSeat=room.room.members[players[0].token].seat;
+  while(room.room.game.phase!=='showdown'){const g=room.room.game;room.applyAction(g.turn,g.turn===hostSeat?'fold':room.legal(g.turn).check?'check':'call')}
+  const g=room.room.game,bot=g.players.find(p=>p.bot),view=room.publicState(players[0].token).game;
+  assert.deepEqual(view.shown,{[bot.seat]:g.hands[bot.seat]});assert.match(view.result,/everyone folded/);
+}
+{
+  const {room,players,hostWs}=await setup(0,2);
+  await say(room,hostWs,{type:'startMatch'});
+  room.applyAction(room.room.game.turn,'fold');
+  assert.equal(room.room.game.phase,'showdown');
+  assert.deepEqual(room.publicState(players[0].token).game.shown,{},'a person who wins uncontested is not shown');
   checks++;
 }
 
@@ -126,6 +200,30 @@ for(let match=0;match<60;match++){
   let raises=0;
   for(let n=0;n<20;n++){const {room,hostWs}=await setup(5,1);await say(room,hostWs,{type:'startMatch'});const orig=room.applyAction.bind(room);room.applyAction=(s,a,x)=>{if(a==='raise')raises++;return orig(s,a,x)};for(let i=0;i<40&&!room.matchOver();i++){const g=room.room.game;if(g.phase==='showdown')g.nextHandAt=0;else g.deadline=0;await room.alarm()}}
   assert.ok(raises>10,'bots raised '+raises+' times');
+  checks++;
+}
+
+// 8. Bots think for a random 2–5 seconds before every move instead of acting at once.
+{
+  const {room,state,hostWs}=await setup(3,1);await say(room,hostWs,{type:'startMatch'});
+  const delays=new Set(),moves=[],orig=room.applyAction.bind(room);
+  room.applyAction=(s,a,x)=>{moves.push(s);return orig(s,a,x)};
+  for(let i=0;i<30&&!room.matchOver();i++){
+    const g=room.room.game;
+    if(g.phase==='showdown'){g.nextHandAt=0;await room.alarm();continue}
+    if(g.turn===0){await say(room,hostWs,{type:'action',action:room.legal(0).check?'check':'call'});continue}
+    const seat=g.turn,left=g.deadline-Date.now();
+    assert.ok(g.players.find(p=>p.seat===seat).bot,'only a bot can hold the turn here');
+    assert.ok(g.botThinking&&left>1900&&left<=5000,'bot think time is 2–5 seconds, got '+left+'ms');
+    assert.ok(state.alarm<=g.deadline,'an alarm is set for the bot\'s move');
+    delays.add(Math.round(left/250));
+    await room.alarm();
+    assert.equal(room.room.game.turn,seat,'an early alarm does not let the bot act before its time');
+    const before=moves.length;
+    room.room.game.deadline=Date.now();await room.alarm();
+    assert.equal(moves[before],seat,'the bot moves once its time is up');
+  }
+  assert.ok(delays.size>2,'think times vary from move to move');
   checks++;
 }
 
@@ -377,3 +475,198 @@ console.log('PASS: '+checks+' room server checks');
   assert.equal(reconnect.last('state').state.chat[0].name,'Host');
   checks++;
 }
+
+// Google sign-in: the Worker verifies the ID token (signature, issuer, audience, expiry) before the Directory
+// signs in, links or creates an account. Each Google sign-in gets its own device key; sign-out ends only that one.
+{
+  const {resetGoogleKeys}=await import('./worker/google.js');
+  const CLIENT='test-client.apps.googleusercontent.com';
+  const pair=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
+  const other=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
+  const jwk=await crypto.subtle.exportKey('jwk',pair.publicKey);
+  const realFetch=globalThis.fetch;let certFetches=0;
+  globalThis.fetch=async url=>{if(String(url).startsWith('https://www.googleapis.com/oauth2/v3/certs')){certFetches++;return Response.json({keys:[{...jwk,kid:'k1',alg:'RS256',use:'sig'}]},{headers:{'Cache-Control':'public, max-age=3600'}})}return realFetch(url)};
+  resetGoogleKeys();
+  const enc=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
+  const token=async(claims={},{key=pair.privateKey,kid='k1'}={})=>{
+    const now=Math.floor(Date.now()/1000);
+    const body=enc({alg:'RS256',kid,typ:'JWT'})+'.'+enc({iss:'https://accounts.google.com',aud:CLIENT,sub:'g-111',email:'a@example.com',given_name:'Ann',iat:now,exp:now+3600,...claims});
+    return body+'.'+Buffer.from(await crypto.subtle.sign('RSASSA-PKCS1-v1_5',key,new TextEncoder().encode(body))).toString('base64url');
+  };
+  const unset=makeEnv();
+  assert.equal((await api(unset,'/api/config')).data.googleClientId,'','no client ID: the page hides the Google button');
+  assert.equal((await api(unset,'/api/google',{credential:await token()})).status,503);
+  const env=makeEnv({GOOGLE_CLIENT_ID:CLIENT});
+  assert.equal((await api(env,'/api/config')).data.googleClientId,CLIENT);
+  for(const [claims,opts,why] of [[{aud:'someone-else'},{},'wrong audience'],[{iss:'https://evil.example'},{},'wrong issuer'],[{exp:Math.floor(Date.now()/1000)-600},{},'expired'],[{},{key:other.privateKey},'bad signature'],[{},{kid:'nope'},'unknown key']])
+    assert.equal((await api(env,'/api/google',{credential:await token(claims,opts)})).status,401,why);
+  assert.equal((await api(env,'/api/google',{credential:'not.a.token'})).status,401);
+  // First sign-in asks for a name; the same token then creates the account.
+  const first=(await api(env,'/api/google',{credential:await token()})).data;
+  assert.deepEqual(first,{needsName:true});
+  assert.equal((await api(env,'/api/google',{credential:await token(),name:'x'})).status,400);
+  const made=(await api(env,'/api/google',{credential:await token(),name:'Gina'})).data;
+  assert.ok(made.created&&made.key&&made.account.google&&made.account.name==='Gina');
+  assert.equal((await api(env,'/api/me',{key:made.key})).data.account.name,'Gina','the Google device key works like a sign-in code');
+  // Signing in again (another device) returns a different key; both stay valid until signed out.
+  const again=(await api(env,'/api/google',{credential:await token()})).data;
+  assert.ok(!again.needsName&&again.account.id===made.account.id&&again.key!==made.key);
+  await api(env,'/api/signout',{key:again.key});
+  assert.equal((await api(env,'/api/me',{key:again.key})).status,401,'signed-out device key stops working');
+  assert.equal((await api(env,'/api/me',{key:made.key})).status,200,'other devices stay signed in');
+  // A sign-in-code account can connect Google; that Google account then signs in to it.
+  const coder=(await api(env,'/api/accounts',{name:'Hank'})).data;
+  assert.equal(coder.account.google,false);
+  const linked=(await api(env,'/api/google',{credential:await token({sub:'g-222'}),key:coder.key})).data;
+  assert.ok(linked.account.google&&linked.key===coder.key,'linking keeps the sign-in code');
+  assert.equal((await api(env,'/api/google',{credential:await token({sub:'g-222'})})).data.account.name,'Hank');
+  assert.equal((await api(env,'/api/google',{credential:await token({sub:'g-111'}),key:coder.key})).status,409,'one Google account per RIVL account');
+  assert.equal((await api(env,'/api/signout',{key:coder.key})).status,200);
+  assert.equal((await api(env,'/api/me',{key:coder.key})).status,200,'sign-out never deletes a sign-in code');
+  assert.equal(certFetches,2,'Google keys are cached (the one refetch was for the unknown key id)');
+  assert.equal((await api(env,'/api/leaderboard')).data.players.some(p=>'google' in p),false,'others never see how a player signs in');
+  globalThis.fetch=realFetch;
+  checks++;
+}
+
+// Dealer, small blind and big blind move one live seat clockwise each hand, skip busted seats, follow the
+// heads-up rule, and reach the browser in every snapshot.
+{
+  const {room,hostWs}=await setup(8,1);
+  await say(room,hostWs,{type:'startMatch'});
+  const seen=[];
+  for(let h=0;h<9;h++){
+    const g=room.room.game,live=g.players.map(p=>p.seat);
+    const nextLive=s=>live[(live.indexOf(s)+1)%live.length];
+    assert.equal(g.sbSeat,nextLive(g.dealer),'small blind sits left of the dealer');
+    assert.equal(g.bbSeat,nextLive(g.sbSeat),'big blind sits left of the small blind');
+    assert.equal(g.turn,nextLive(g.bbSeat),'preflop action starts left of the big blind');
+    const snap=room.publicState(room.room.hostToken).game;
+    assert.deepEqual([snap.dealer,snap.sbSeat,snap.bbSeat],[g.dealer,g.sbSeat,g.bbSeat],'buttons are sent to players');
+    seen.push(g.dealer);
+    if(h===3)g.players.find(p=>p.seat===nextLive(g.dealer)).stack=0; // the next dealer busts this hand
+    room.startHand();
+  }
+  assert.deepEqual(seen.slice(0,4),[0,1,2,3]);
+  assert.equal(seen[4],5,'a busted seat is skipped by the button');
+  // Heads-up: the dealer posts the small blind and acts first preflop.
+  const duel=await setup(1,1);
+  await say(duel.room,duel.hostWs,{type:'startMatch'});
+  for(let h=0;h<3;h++){
+    const g=duel.room.room.game;
+    assert.equal(g.sbSeat,g.dealer,'heads-up dealer is the small blind');
+    assert.notEqual(g.bbSeat,g.dealer);
+    if(g.turn!==g.dealer)assert.ok(g.players.find(p=>p.seat===g.dealer).allIn,'heads-up dealer acts first preflop');
+    const before=g.dealer;duel.room.startHand();
+    assert.notEqual(duel.room.room.game.dealer,before,'heads-up button alternates');
+  }
+  checks++;
+}
+
+// Anonymous bug reports: sent from support to support, nothing about the player in the email, input checked.
+{
+  const {buildEmail}=await import('./worker/bug-report.js');
+  const sent=[];
+  class EmailMessage{constructor(from,to,raw){Object.assign(this,{from,to,raw})}}
+  const env=makeEnv({BUG_REPORT_FROM:'support@rivlpoker.com',BUG_REPORT_TO:'support@rivlpoker.com',EmailMessage,BUG_REPORT_EMAIL:{send:async m=>{sent.push(m)}}});
+  assert.equal((await api(env,'/api/bug-report',{category:'Gameplay',details:'short'})).status,400,'too short');
+  assert.equal((await api(env,'/api/bug-report',{category:'Gameplay',details:'x'.repeat(3001)})).status,400,'too long');
+  const ok=await api(env,'/api/bug-report',{category:'Ranked / Elo',details:'Pot went to the wrong player ♠ after a split',browser:'TestBrowser\r\nBcc: x@evil.test',key:'secret-key'});
+  assert.equal(ok.status,200);assert.equal(sent.length,1);
+  const m=sent[0];
+  assert.equal(m.from,'support@rivlpoker.com');assert.equal(m.to,'support@rivlpoker.com');
+  const [head,body]=m.raw.split('\r\n\r\n');
+  assert.match(head,/^From: "RIVL Bug Reports" <support@rivlpoker\.com>\r\nTo: <support@rivlpoker\.com>\r\nSubject: RIVL bug: Ranked \/ Elo\r\n/);
+  assert.match(head,/Message-ID: <[0-9a-f-]+@rivlpoker\.com>/);
+  assert.ok(!/Bcc|evil/i.test(head),'typed text cannot add headers');
+  const text=new TextDecoder().decode(Uint8Array.from(atob(body.replace(/\r\n/g,'')),c=>c.charCodeAt(0)));
+  assert.ok(text.includes('Pot went to the wrong player ♠ after a split'),'unicode survives');
+  assert.ok(!text.includes('secret-key'),'nothing but the report is sent');
+  assert.equal((await api(env,'/api/bug-report',{category:'Bcc: x',details:'something broke here'})).status,200);
+  assert.match(sent[1].raw,/Subject: RIVL bug: Other\r\n/,'unknown categories become Other');
+  assert.ok(!buildEmail({from:'a@b.c',to:'a@b.c',category:'Other',details:'x'.repeat(200),browser:''}).split('\r\n').some(l=>l.length>998),'lines stay within mail limits');
+  const off=makeEnv();
+  assert.equal((await api(off,'/api/bug-report',{category:'Other',details:'something broke here'})).status,503,'no email binding');
+  const failing=makeEnv({EmailMessage,BUG_REPORT_EMAIL:{send:async()=>{throw Error('not verified')}}});
+  assert.equal((await api(failing,'/api/bug-report',{category:'Other',details:'something broke here'})).status,502);
+  checks++;
+}
+
+// 20. Capacity: the Ranked queue counts a seat as soon as it hands out a table, joins skip the ladder rank,
+// leaderboards are served from one copy, ties share a rank, photos go to each socket once, and photo reports work.
+{
+  const env=makeEnv(),d=env.DIRECTORY.get('global'),call=async(path,body)=>(await d.fetch('https://dir'+path,{method:'POST',body:JSON.stringify(body||{})})).json();
+  await call('/lobby/upsert',{code:'AAAAAA',host:'Ann',humans:1,players:1,ranked:true,size:3});
+  await call('/lobby/upsert',{code:'BBBBBB',host:'Bob',humans:2,players:2,ranked:true,size:6});
+  assert.equal((await call('/lobby/claim',{size:3})).code,'AAAAAA');
+  assert.equal((await call('/lobby/claim',{size:3})).code,'AAAAAA','the first claim already counted its seat');
+  assert.equal((await call('/lobby/claim',{size:3})).code,null,'a table counted full is not handed out again');
+  assert.equal((await call('/lobby/claim',{size:6,skip:['BBBBBB']})).code,null,'a table that refused a join is skipped');
+  assert.equal((await call('/lobby/claim',{size:9})).code,null,'sizes never mix');
+
+  const acc=[];for(const n of ['Ann','Bob','Cat','Dan'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  const dir=env.DIRECTORY.instances.get('global');
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1700,acc[0].account.id);
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1600,acc[1].account.id);
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1600,acc[2].account.id);
+  dir.sql.exec('UPDATE accounts SET rgames=1,rr=? WHERE id=?',1500,acc[3].account.id);
+  assert.deepEqual((await call('/leaderboard')).players.map(p=>p.rank),[1,2,2,4],'tied ratings share a rank');
+  assert.equal((await call('/accounts/me',{key:acc[1].key})).account.rank,2,'your own page still shows your rank');
+  assert.equal((await call('/verify',{key:acc[1].key})).account.rank,null,'sitting down at a table skips the rank count');
+  dir.sql.exec('UPDATE accounts SET rr=? WHERE id=?',1800,acc[3].account.id);
+  assert.equal((await call('/leaderboard')).players[0].name,'Ann','the leaderboard is served from a short-lived copy');
+  await call('/results',{matchId:'m-cap',players:[]});
+  assert.equal((await call('/leaderboard')).players[0].name,'Dan','a rated result refreshes the leaderboard');
+
+  const photo='data:image/jpeg;base64,'+'A'.repeat(4000);
+  assert.ok((await api(env,'/api/avatar',{key:acc[0].key,avatar:photo})).data.account,'saving a photo works');
+  const room=(await api(env,'/api/rooms',{key:acc[0].key})).data,joined=(await api(env,'/api/rooms/'+room.code+'/join',{key:acc[1].key})).data;
+  const r=roomOf(env,room.code),host=await sit(env,room.code,room.token);
+  assert.equal(host.last('state').state.seats[0].avatar,photo,'a new socket gets the photos');
+  const before=host.messages.length;await say(r,host,{type:'startMatch'});
+  assert.ok(host.messages.length>before&&r.room.game,'the match started');
+  assert.equal(host.last('state').state.seats[0].avatar,undefined,'later updates leave unchanged photos out');
+  assert.equal(host.last('state').state.seats[1].avatar,'B','letter avatars are always sent');
+  const guest=await sit(env,room.code,joined.token);
+  assert.equal(guest.last('state').state.seats[0].avatar,photo,'each socket gets the photos once');
+  const report=await api(env,'/api/report-avatar',{key:acc[1].key,targetId:acc[0].account.id,reason:'Not a real photo'});
+  assert.equal(report.status,200,report.data.error);
+  assert.equal((await api(env,'/api/avatar',{key:acc[0].key,avatar:photo})).status,403,'a reported player waits for review');
+  checks++;
+}
+
+// Daily puzzle: today's spot hides its answer; an answer is saved once per day, builds a streak and fills the split.
+{
+  const env=makeEnv(),today=new Date().toISOString().slice(0,10);
+  const pz=(await api(env,'/api/puzzle')).data;
+  assert.equal(pz.day,today);assert.ok(pz.number>=1&&pz.hero.length===2&&pz.board.length>=3&&pz.story.length>=2);
+  assert.ok(!('best' in pz)&&!('grades' in pz)&&!('eq' in pz),'the answer is not sent before answering');
+  const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  assert.equal((await api(env,'/api/puzzle?day='+tomorrow)).status,404,'no peeking at tomorrow');
+  assert.equal((await api(env,'/api/puzzle?day=2020-01-01')).status,404);
+  assert.equal((await api(env,'/api/puzzle/answer',{day:today,choice:'shove'})).status,400);
+  const anon=(await api(env,'/api/puzzle/answer',{day:today,choice:'fold'})).data;
+  assert.ok(!anon.saved&&anon.best&&anon.grades.fold.label,'signed-out players get the grades but are not counted');
+  const ann=(await api(env,'/api/accounts',{name:'Puzzler'})).data;
+  assert.equal((await api(env,'/api/puzzle/me',{key:ann.key,day:today})).data.choice,null);
+  const first=(await api(env,'/api/puzzle/answer',{key:ann.key,day:today,choice:'call'})).data;
+  assert.ok(first.saved);assert.equal(first.counts.call,1);assert.equal(first.stats.streak,1);assert.equal(first.stats.played,1);
+  assert.equal(first.stats.correct,first.best==='call'?1:0);
+  const again=(await api(env,'/api/puzzle/answer',{key:ann.key,day:today,choice:'fold'})).data;
+  assert.equal(again.choice,'call','the first answer of the day stands');assert.equal(again.counts.fold,0);
+  const me=(await api(env,'/api/puzzle/me',{key:ann.key,day:today})).data;
+  assert.equal(me.choice,'call');assert.ok(me.grades&&me.best,'a returning player sees their result');
+  // Streaks count back over consecutive days and survive until today's puzzle is answered.
+  const d=env.DIRECTORY.instances.get('global'),ago=n=>new Date(Date.now()-n*86400000).toISOString().slice(0,10);
+  for(const n of [1,2,4])d.sql.exec('INSERT INTO puzzle_answers(account,day,choice,correct,t) VALUES (?,?,?,?,?)',ann.account.id,ago(n),'fold',1,0);
+  assert.equal(d.puzzleStats(ann.account.id).streak,3,'today plus the two days before; the gap ends it');
+  d.sql.exec('DELETE FROM puzzle_answers WHERE day=?',today);
+  assert.equal(d.puzzleStats(ann.account.id).streak,2,'an unanswered today does not break the streak yet');
+  if(ago(1)>=PUZZLE_START){
+    const past=(await api(env,'/api/puzzle/answer',{key:ann.key,day:ago(1),choice:'call'})).data;
+    assert.ok(!past.saved&&past.grades,'earlier days replay without saving');
+  }
+  checks++;
+}
+
+console.log('PASS: '+checks+' room server checks');

@@ -32,6 +32,8 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Who | Task | Branch | Files touched | Status |
 |---|---|---|---|---|
 | Claude | Multiplayer infrastructure test | (none, test only) | none | Done, see log |
+| Claude | Stricter decision grading (preflop charts, tighter thresholds) | `claude/decision-grading-accuracy-cnnv3r` | rating.js, worker/grading.js, tests.js, README.md | PR open |
+| Claude | Launch notices: Terms of Use, public privacy page, Support notices, 18+ line | `claude/support-launch-notices-a26yoz` | index.html, style.css, welcome-support.js, privacy.html, terms.html, legal.css, scripts/build-site.mjs | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -53,3 +55,33 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Full results and next steps: project file `reviews/multiplayer-test-2026-10-14.md`.
 
 <!-- ChatGPT: add your first entry below this line, using the same format. -->
+
+### 2026-10-15 02:40 UTC · Claude
+- Bots now take a random 2–5 seconds on every decision, in bot practice (`script.js`) and online rooms (`worker/rooms.js`). The bot whose turn it is gets a pulsing gold ring and three bouncing dots, and the status line names who is thinking.
+- Online rooms: the server starts a bot's think clock on its turn (`g.botThinking`, `g.deadline`) and the room alarm makes the move when it runs out. Each bot move is now its own alarm and save, so bot-heavy rooms use a few more storage writes per hand than before.
+
+### 2026-10-15 03:30 UTC · Claude
+- Login screen on load (`login.js`, replaces the welcome popup): Continue with Google, use a sign-in code, or play bots as a guest. Signed-in players skip it.
+- Google sign-in: the Worker verifies the ID token (`worker/google.js`), then the Directory signs in the Google-linked account, links Google to the signed-in code account, or creates one after asking for a name. Each Google sign-in gets its own device key in a new `sessions` table; `/api/signout` ends only that one. Only Google's `sub` id is stored, no email.
+- Needs `GOOGLE_CLIENT_ID` in `wrangler.toml` (public value); without it the Google button stays hidden.
+
+### 2026-10-15 04:10 UTC · Claude
+- Decision grading is stricter (branch `claude/decision-grading-accuracy-cnnv3r`). Preflop is now graded against standard opening/defending charts by seat instead of equity vs random hands; postflop "Best" needs the top EV option within 1% of the pot (was 2%, plus a floor that lifted small losses to Good).
+- Opponent ranges now react to the board and bet size, so overbet shoves with one pair no longer grade as Best. Bots use the same model, so they shove less.
+- `rating.js` analyze() reads `sbSeat`/`bbSeat` (player indexes) when present; `worker/grading.js` now passes them. Server grading samples 600 runouts (was 300).
+
+### 2026-10-15 04:10 UTC · Claude
+- Bot practice setup has a time limit picker (Off, 5, 10, 15 minutes; remembered per browser). Off is the default and counts time played. Timed games climb the five blind levels evenly over the limit; when time runs out the current hand plays out and the match ends on the normal results screen.
+- The raise bar resets to the minimum legal raise at every new decision, in bot practice (`script.js`) and online rooms (`rooms.js`).
+- Bot table board cards are centred (`.community` box was wider than its cards and left-aligned them).
+
+### 2026-10-15 04:15 UTC · Claude
+- Bot practice has a SAVE button next to LEAVE TABLE. It pauses everything (match clock, decision timer, bots) and stores the game in this browser (`localStorage` key `rivlBotSave`). The Play screen shows a "Saved bot game" card with Resume and Discard; starting a new bot game asks before discarding a save. Resuming clears the save. Saves are per device, not on the account.
+
+### 2026-10-15 04:55 UTC · Claude
+- Folded hands now slide into a face-down discard pile by the pot and leave the seat; folded players turn grey until the next deal; every seat shows its stack in big blinds under the avatar. Applies to bot practice, rooms and Ranked. New shared file `muck.js` (added to the build list); touched script.js, rooms.js, index.html, style.css.
+
+### 2026-10-15 07:40 UTC · Claude
+- Added a FULL SCREEN button to the match top bar (bot practice, online rooms and Ranked) and a collapse arrow for the desktop sidebar. Both live in `screen-modes.js`; styles are at the end of `style.css`.
+- Full screen hides the sidebar and page header and uses the browser's real full screen where allowed (iPhone falls back to the same table-only view). Esc, the button, or leaving the match turns it off. The sidebar choice is saved per device.
+- When the scene gets bigger on desktop (full screen or collapsed sidebar), the seat box is sized as a fraction of the scene so it stays on the painted Cairo rail. The normal layout is unchanged.
