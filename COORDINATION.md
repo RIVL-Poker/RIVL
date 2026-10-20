@@ -33,6 +33,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 |---|---|---|---|---|
 | Claude | Multiplayer infrastructure test | (none, test only) | none | Done, see log |
 | Claude | Stricter decision grading (preflop charts, tighter thresholds) | `claude/decision-grading-accuracy-cnnv3r` | rating.js, worker/grading.js, tests.js, README.md | PR open |
+| Claude | Launch notices: Terms of Use, public privacy page, Support notices, 18+ line | `claude/support-launch-notices-a26yoz` | index.html, style.css, welcome-support.js, privacy.html, terms.html, legal.css, scripts/build-site.mjs | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log

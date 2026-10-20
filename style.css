@@ -568,14 +568,17 @@ body.rivl-modal-open{overflow:hidden}
 .rivl-welcome-dialog p strong{display:block;margin-top:12px;color:#efc77f}
 .rivl-welcome-dialog .gold{width:100%;min-height:48px}
 .rivl-welcome-skip{margin-top:12px;width:100%;border:0;background:transparent;color:#c8bba5;text-decoration:underline;cursor:pointer;padding:12px}
-.rivl-support-panel,.rivl-privacy-panel{max-width:780px;margin:18px 0;padding:24px}
+.rivl-support-panel{max-width:780px;margin:18px 0;padding:24px}
 .rivl-support-panel form{display:grid;gap:12px;margin-top:20px}
 .rivl-support-panel label{font-weight:600;color:#e9c383}
 .rivl-support-panel :is(select,textarea){width:100%;background:#141414;border:1px solid #816338;border-radius:8px;padding:12px;color:#eee;font:inherit}
 .rivl-support-panel textarea{resize:vertical}
-.rivl-privacy-panel h3:not(:first-child){margin-top:24px}
-.rivl-privacy-panel p{line-height:1.7}
-@media(max-width:600px){.rivl-welcome-dialog{padding:28px 20px}.rivl-support-panel,.rivl-privacy-panel{padding:16px}}
+.rivl-support-panel a:not(.outline){color:var(--gold)}
+.rivl-legal-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.rivl-legal-links .outline{text-decoration:none;display:inline-block}
+.rivl-welcome-legal{margin:14px 0 0;font-size:12px;line-height:1.5;color:#c8bba5;text-align:center}
+.rivl-welcome-legal a{color:var(--gold)}
+@media(max-width:600px){.rivl-welcome-dialog{padding:28px 20px}.rivl-support-panel{padding:16px}}
 /* Ranked leagues */
 :root{--prospect:#d08a4e;--challenger:#cfd6de;--elite:#efbd70;--master:#5b9bff;--grandmaster:#b07cf0;--champion:#ff5a5f}
 .league-prospect{--league:var(--prospect)}.league-challenger{--league:var(--challenger)}.league-elite{--league:var(--elite)}.league-master{--league:var(--master)}.league-grandmaster{--league:var(--grandmaster)}.league-champion{--league:var(--champion)}
