@@ -17,7 +17,8 @@ export function puzzleFor(day,now=Date.now()){
 // What a player sees before answering: the spot and the three choices, nothing that gives the answer away.
 export function publicPuzzle({day,number,p,today},now=Date.now()){
   return {day,number,today,nextIn:Date.parse(utcDay(now)+'T00:00:00Z')+DAY_MS-now,
-    street:p.street,position:p.position,villain:p.villain,hero:p.hero,board:p.board,pot:p.pot+p.bet,bet:p.bet,stack:p.stack,bb:100,story:p.story,
+    street:p.street,position:p.position,villain:p.villain,heroPos:p.heroPos||'',villainPos:p.villainPos||'',difficulty:p.difficulty||'',hero:p.hero,board:p.board,
+    pot:p.pot+(p.heroBet||0)+p.bet,heroBet:p.heroBet||0,bet:p.bet,stack:p.stack,bb:100,story:p.story,
     choices:[{key:'fold',label:'Fold'},{key:'call',label:p.callLabel},...(p.grades.raise?[{key:'raise',label:p.raiseLabel}]:[])]};
 }
-export function reveal({p}){return {best:p.best,eq:p.eq,need:p.need,grades:p.grades}}
+export function reveal({p}){return {best:p.best,eq:p.eq,need:p.need,grades:p.grades,why:p.why||null}}
