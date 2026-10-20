@@ -26,21 +26,38 @@
   const shiftDay=(day,n)=>new Date(Date.parse(day+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);
   const status=t=>{$('pzStatus').textContent=t||''};
 
+  const POS={BTN:'button',CO:'cutoff',BB:'big blind'};
+  // "Flop K♦ 3♦ Q♦: the big blind bets…" becomes a street tag, the new cards and what happened.
+  function storyItem(t,i,all){
+    const m=t.match(/^(Flop|Turn|River) ([^:]+): (.*)$/);
+    const tag=m?m[1].toUpperCase():'PREFLOP',cards=m?m[2].split(' ').map(c=>storyLine(c)).join(''):'',text=m?m[3]:t;
+    return `<li class="${i===all.length-1?'now':''}"><span class="pz-tag">${tag}</span>${cards?`<span class="pz-story-cards">${cards}</span>`:''}<span class="pz-story-text">${storyLine(cap(text))}</span></li>`;
+  }
+  const cap=t=>t[0].toUpperCase()+t.slice(1);
   function renderSpot(){
-    const p=puzzle;
+    const p=puzzle,raise=p.heroBet>0;
     $('pzTitle').textContent=`#${p.number} · ${dateLabel(p.day)}`;
+    $('pzDifficulty').hidden=!p.difficulty;$('pzDifficulty').textContent=(p.difficulty||'').toUpperCase();$('pzDifficulty').dataset.level=(p.difficulty||'').toLowerCase();
     $('pzStreet').textContent=p.street.toUpperCase();
     $('pzPot').textContent=bb(p.pot);
-    $('pzBoard').innerHTML=p.board.map(card).join('')+'<span class="pz-card back"></span>'.repeat(5-p.board.length);
+    $('pzBoard').innerHTML=p.board.map((c,i)=>card(c).replace('class="pz-card',`style="--i:${i}" class="pz-card deal`)).join('')+'<span class="pz-card back"></span>'.repeat(5-p.board.length);
     $('pzHand').innerHTML=p.hero.map(card).join('');
-    $('pzStack').textContent=`Stack ${bb(p.stack)} · ${p.position==='IP'?'in position':'out of position'}`;
-    $('pzStory').innerHTML=p.story.map(t=>`<li>${storyLine(t)}</li>`).join('');
-    $('pzChoices').innerHTML=p.choices.map(c=>`<button type="button" class="pz-choice" data-choice="${c.key}">${esc(c.label)}</button>`).join('');
+    $('pzVillainPos').textContent=p.villainPos||'';$('pzVillainPos').title=POS[p.villainPos]||'';
+    $('pzHeroPos').textContent=p.heroPos||'';$('pzHeroPos').title=POS[p.heroPos]||'';
+    $('pzVillainBet').innerHTML=`<span class="pz-chip"></span>${raise?'Raises to':'Bets'} ${bb(p.bet)}`;
+    $('pzHeroBet').hidden=!raise;$('pzHeroBet').innerHTML=raise?`<span class="pz-chip"></span>You bet ${bb(p.heroBet)}`:'';
+    $('pzStack').textContent=`${bb(p.stack-p.heroBet)} behind`;
+    $('pzStory').innerHTML=p.story.map(storyItem).join('');
+    const keys={fold:'F',call:'C',raise:'R'};
+    $('pzChoices').innerHTML=p.choices.map(c=>`<button type="button" class="pz-choice" data-choice="${c.key}"><span>${esc(c.label)}</span><kbd>${keys[c.key]}</kbd></button>`).join('');
     $('pzChoices').querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>answer(b.dataset.choice));
     $('pzPrev').disabled=p.number<=1;
     $('pzNext').hidden=p.today;$('pzBackToday').hidden=p.today;
     $('pzPractice').hidden=p.today;
+    $('pzShareStatus').textContent='';
   }
+  const gclass=label=>'g-'+String(label).toLowerCase();
+  const signed=x=>x>0?`+${x}`:x<0?`−${-x}`:'0';
   function renderResult(){
     const p=puzzle,r=result,box=$('pzResult');
     $('pzSpot').classList.toggle('answered',!!r);
@@ -49,13 +66,19 @@
     const mine=r.grades[r.choice],right=r.choice===r.best,ok=GOOD.has(mine.label);
     $('pzChoices').querySelectorAll('[data-choice]').forEach(b=>{b.disabled=true;b.classList.toggle('picked',b.dataset.choice===r.choice);b.classList.toggle('best',b.dataset.choice===r.best)});
     const bestLabel=p.choices.find(c=>c.key===r.best).label;
-    $('pzVerdict').className='pz-verdict '+(right?'good':ok?'ok':'bad');
+    $('pzVerdict').className=`pz-verdict ${gclass(mine.label)} ${right?'good':ok?'ok':'bad'}`;
     $('pzVerdict').innerHTML=`<span class="pz-glyph">${esc(mine.glyph)}</span><div><strong>${esc(mine.label.toUpperCase())}</strong><span>${right?'You found the best play.':`The best play was <span class="pz-best-name">${esc(bestLabel)}</span>. Yours gave up about ${mine.lossBB} BB.`}</span></div>`;
-    $('pzWhy').textContent=`Against the hands they would bet like this, you had about ${Math.round(r.eq*100)}% equity. Calling needed ${Math.round(r.need*100)}% to break even${r.best==='raise'?', and raising gets more from the hands that call.':r.best==='fold'?', so folding saves chips.':', so calling wins chips over time.'}`;
+    const w=r.why;
+    $('pzWhy').innerHTML=w?[['YOUR HAND',w.hand],['THEIR BET',w.range],['THE PLAY',w.lesson]].map(([h,t])=>`<div><h4>${h}</h4><p>${esc(t)}</p></div>`).join('')
+      :`<div><h4>THE PLAY</h4><p>Against the hands they would bet like this, you had about ${Math.round(r.eq*100)}% equity. Calling needed ${Math.round(r.need*100)}% to break even.</p></div>`;
     const counts=r.counts,total=counts?Object.values(counts).reduce((a,b)=>a+b,0):0;
     $('pzOptions').innerHTML=p.choices.map(c=>{
       const g=r.grades[c.key],share=total?Math.round(100*(counts[c.key]||0)/total):null;
-      return `<div class="pz-option${c.key===r.best?' best':''}${c.key===r.choice?' mine':''}"><div class="pz-option-top"><span>${esc(c.label)}${c.key===r.choice?' <em>your pick</em>':''}</span><span class="pz-grade">${esc(g.glyph)} ${esc(g.label)}${g.lossBB?` · −${g.lossBB} BB`:''}</span></div>${share===null?'':`<div class="pz-bar"><span style="width:${share}%"></span></div><small>${share}% of players</small>`}</div>`;
+      return `<div class="pz-option ${gclass(g.label)}${c.key===r.best?' best':''}${c.key===r.choice?' mine':''}">
+        <div class="pz-option-top"><span class="pz-option-name">${esc(c.label)}${c.key===r.choice?' <em>YOUR PICK</em>':''}</span><span class="pz-grade"><b>${esc(g.glyph)}</b>${esc(g.label)}</span></div>
+        ${g.ev!=null?`<div class="pz-option-ev">${c.key==='fold'?'<span>0 BB</span> the baseline':`<span>${signed(g.ev)} BB</span> on average compared with folding`}${g.lossBB?` · gives up ${g.lossBB} BB`:''}</div>`:g.lossBB?`<div class="pz-option-ev">Gives up ${g.lossBB} BB</div>`:''}
+        ${g.note?`<p class="pz-option-note">${esc(g.note)}</p>`:''}
+        ${share===null?'':`<div class="pz-bar"><span style="width:${share}%"></span></div><small>${share}% of players chose this</small>`}</div>`;
     }).join('');
     $('pzCount').textContent=total?`${total.toLocaleString()} signed-in ${total===1?'player has':'players have'} answered${p.today?' today':''}.`:p.today?'You are among the first to answer today.':'';
     const s=r.stats;
@@ -107,8 +130,8 @@
   }
   async function share(){
     const r=result,g=r.grades[r.choice];
-    const text=`RIVL Daily Puzzle #${puzzle.number}\n${g.glyph} ${g.label}${r.stats?.streak?` · streak ${r.stats.streak}`:''}\n${SITE}`;
-    try{if(navigator.share&&matchMedia('(pointer:coarse)').matches){await navigator.share({text});return}await navigator.clipboard.writeText(text);status('Result copied. Paste it anywhere.')}catch{status('Could not copy. '+text.replace(/\n/g,' · '))}
+    const text=`RIVL Daily Puzzle #${puzzle.number}${puzzle.difficulty?` (${puzzle.difficulty})`:''}\n${g.glyph} ${g.label}${r.stats?.streak?` · streak ${r.stats.streak}`:''}\n${SITE}`;
+    try{if(navigator.share&&matchMedia('(pointer:coarse)').matches){await navigator.share({text});return}await navigator.clipboard.writeText(text);$('pzShareStatus').textContent='Result copied. Paste it anywhere.'}catch{$('pzShareStatus').textContent='Could not copy. '+text.replace(/\n/g,' · ')}
   }
   $('pzShare').onclick=share;
   $('pzPrev').onclick=()=>puzzle&&load(shiftDay(puzzle.day,-1));
@@ -116,5 +139,14 @@
   $('pzBackToday').onclick=()=>load();
   $('pzSignIn').querySelector('a')?.addEventListener('click',e=>{e.preventDefault();if(typeof show==='function')show('profile')});
   $('openPuzzle')?.addEventListener('click',()=>{if(typeof show==='function')show('puzzle')});
+  // Desktop shortcuts while the puzzle page is open: F fold, C call, R raise.
+  document.addEventListener('keydown',e=>{
+    if(!$('puzzle').classList.contains('active')||e.metaKey||e.ctrlKey||e.altKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+    const choice={f:'fold',c:'call',r:'raise'}[e.key.toLowerCase()];
+    if(choice&&puzzle&&!result&&puzzle.choices.some(c=>c.key===choice)){e.preventDefault();answer(choice)}
+  });
+  // Signing in or out elsewhere on the site: reload the puzzle the next time its page opens, so the streak follows the account.
+  let loadedFor=account()?.key||null;
+  document.querySelectorAll('[data-view="puzzle"],#openPuzzle').forEach(b=>b.addEventListener('click',()=>{const k=account()?.key||null;if(k!==loadedFor){loadedFor=k;load()}}));
   load();
 })();

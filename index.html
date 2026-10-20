@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=daily-puzzle-20261020">
+    <link rel="stylesheet" href="style.css?v=daily-puzzle-2-20261020">
     <script src="screen-modes.js"></script>
 </head>
 
@@ -248,9 +248,12 @@
                 <div class="pz-layout">
                     <div class="panel pz-spot" id="pzSpot">
                         <div class="pz-felt">
-                            <div class="pz-street"><span id="pzStreet">FLOP</span><span>POT <b id="pzPot">–</b></span></div>
-                            <div class="pz-board" id="pzBoard"></div>
-                            <div class="pz-you"><small>YOUR HAND</small><div class="pz-hand" id="pzHand"></div><small id="pzStack"></small></div>
+                            <div class="pz-tags"><span id="pzDifficulty" class="pz-diff" hidden></span><span>HEADS-UP · 100 BB DEEP</span></div>
+                            <div class="pz-seat pz-villain"><div class="pz-hidden-cards"><span class="pz-card back sm"></span><span class="pz-card back sm"></span></div><div class="pz-seat-tag"><span class="pz-pos" id="pzVillainPos">BB</span><span>Opponent</span></div></div>
+                            <div class="pz-bet" id="pzVillainBet"></div>
+                            <div class="pz-center"><div class="pz-street" id="pzStreet">FLOP</div><div class="pz-board" id="pzBoard"></div><div class="pz-pot">POT <b id="pzPot">–</b></div></div>
+                            <div class="pz-bet pz-hero-bet" id="pzHeroBet" hidden></div>
+                            <div class="pz-seat pz-me"><div class="pz-hand" id="pzHand"></div><div class="pz-seat-tag"><span class="pz-pos" id="pzHeroPos">BTN</span><span>You · <span id="pzStack"></span></span></div></div>
                         </div>
                         <ol class="pz-story" id="pzStory"></ol>
                         <h3 class="pz-q">WHAT’S YOUR MOVE?</h3>
@@ -259,12 +262,14 @@
                     </div>
                     <div class="panel pz-result" id="pzResult" hidden aria-live="polite">
                         <div id="pzVerdict" class="pz-verdict"></div>
-                        <p id="pzWhy" class="pz-why"></p>
+                        <div id="pzWhy" class="pz-why"></div>
+                        <h3 class="pz-sub">EVERY OPTION</h3>
                         <div id="pzOptions" class="pz-options"></div>
                         <p id="pzCount" class="pz-count"></p>
                         <div id="pzStats" class="pz-stats" hidden><div><b id="pzStreak">0</b><small>DAY STREAK</small></div><div><b id="pzPlayed">0</b><small>PLAYED</small></div><div><b id="pzCorrect">–</b><small>BEST PLAY FOUND</small></div></div>
                         <p id="pzSignIn" class="pz-signin" hidden><a href="#">Sign in</a> to keep a streak and be counted in how others answered.</p>
                         <button type="button" class="gold" id="pzShare" hidden>SHARE RESULT</button>
+                        <p id="pzShareStatus" class="pz-share-status" role="status"></p>
                         <p id="pzNextIn" class="pz-next"></p>
                     </div>
                 </div>

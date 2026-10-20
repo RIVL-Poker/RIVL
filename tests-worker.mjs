@@ -647,6 +647,8 @@ console.log('PASS: '+checks+' room server checks');
   assert.equal((await api(env,'/api/puzzle/answer',{day:today,choice:'shove'})).status,400);
   const anon=(await api(env,'/api/puzzle/answer',{day:today,choice:'fold'})).data;
   assert.ok(!anon.saved&&anon.best&&anon.grades.fold.label,'signed-out players get the grades but are not counted');
+  assert.ok(anon.why?.hand&&anon.why.range&&anon.why.lesson&&Number.isFinite(anon.grades.call.ev)&&anon.grades.call.note,'answers come with the explanation, EVs and notes');
+  assert.ok(!('why' in pz),'no explanation before answering');
   const ann=(await api(env,'/api/accounts',{name:'Puzzler'})).data;
   assert.equal((await api(env,'/api/puzzle/me',{key:ann.key,day:today})).data.choice,null);
   const first=(await api(env,'/api/puzzle/answer',{key:ann.key,day:today,choice:'call'})).data;
