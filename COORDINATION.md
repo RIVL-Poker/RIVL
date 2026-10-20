@@ -93,3 +93,9 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 ### 2026-10-20 22:20 UTC · Claude
 - Invite friends to a casual room: the room lobby (after Create Room) has an Invite Friends panel, online friends first, until the match starts. Invites are stored in the directory (`invites` table, one per pair, 15-minute expiry) and reach the friend in the reply to their presence heartbeat, now every 60 seconds. The friend gets a JOIN / NO THANKS pop-up on any page.
 - New endpoints: `/api/friends/invite` {key,id,code} and `/api/friends/dismiss-invite` {key,from}; `/api/presence` now returns `invites`.
+
+### 2026-10-20 23:20 UTC · Claude
+- Online tables (rooms, Ranked, freeroll) now show your hand like bot practice: two large hole cards, the round clock on their left (shows "–" when it isn't your turn) and your BB count on their right, in place of the small seat pill.
+- Dealer, SB and BB badges moved off every avatar into the BB count tag under the seat, in both modes, so profile pictures show in full.
+- Fixed online seat spots: 9-player desktop seats were pushed off the rim by old head-first rules; phones and portrait tablets now use the bot practice table and seat ring.
+- Known, same in both modes: on 9-player desktop the bottom-left seat sits partly behind your clock.
