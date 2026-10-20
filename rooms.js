@@ -4,7 +4,7 @@
   const stored=key=>{try{return localStorage.getItem(key)}catch{return null}};
   const API=window.RIVL_ROOM_API||stored('rivlRoomApi')||(/^https?:$/.test(location.protocol)?location.origin:'');
   const SESSION='rivlRoomSession';
-  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false,clockOffset=0,retry=0,retryTimer=null,pingTimer=null;
+  let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false,clockOffset=0,retry=0,retryTimer=null,pingTimer=null,roomWinKey='',roomWinTimer=null;
   const saveSession=()=>{try{localStorage.setItem(SESSION,JSON.stringify({code:roomCode,token}))}catch{}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION)}catch{}};
   const suit={S:'♠',H:'♥',D:'♦',C:'♣'};
@@ -246,7 +246,9 @@
       renderRoomPanel();
       // Large showdown banner. Use only publicly revealed cards from the server.
       const winnerOverlay=$('rivlRoomWinFx')||(()=>{const el=document.createElement('div');el.id='rivlRoomWinFx';el.className='rivl-room-win-fx';el.setAttribute('aria-live','polite');$('roomPokerTable').append(el);return el})();
-      if(g.phase==='showdown'&&g.result&&!g.matchOver){
+      // It shows once per hand and steps aside after a few seconds so the board and every revealed hand stay visible.
+      const winKey=roomCode+':'+g.handNumber;
+      if(g.phase==='showdown'&&g.result&&!g.matchOver){if(winKey!==roomWinKey){roomWinKey=winKey;clearTimeout(roomWinTimer);roomWinTimer=setTimeout(()=>winnerOverlay.classList.remove('visible'),WIN_BANNER_MS);
         const winner=g.winners?.length===1?g.winners[0]:null;
         const winnerCards=winner?g.shown?.[winner.seat]:null;
         winnerOverlay.replaceChildren();
@@ -256,8 +258,8 @@
         if(Array.isArray(winnerCards)&&winnerCards.length===2){const cards=document.createElement('div');cards.className='rivl-winner-cards';winnerCards.forEach(code=>cards.append(cardNode(code)));winnerOverlay.append(cards)}
         winnerOverlay.append(hand);
         if(winner&&Number.isFinite(Number(winner.amount))){const gain=document.createElement('small');gain.className='rivl-victory-gain';gain.textContent=winner.name+' +'+Number(winner.amount).toLocaleString();winnerOverlay.append(gain)}
-        winnerOverlay.classList.add('visible');
-      }else winnerOverlay.classList.remove('visible');
+        winnerOverlay.classList.add('visible');}
+      }else{roomWinKey='';clearTimeout(roomWinTimer);winnerOverlay.classList.remove('visible')}
       $('roomWinner').textContent=g.result||'';
       $('roomNext').hidden=!(g.matchOver&&(host||snapshot.ranked));
       $('roomNext').textContent=snapshot.ranked?'FIND NEXT RANKED MATCH':'BACK TO LOBBY';

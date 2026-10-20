@@ -124,6 +124,24 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// 2b. A bot that wins because everyone folded shows its cards; a person who wins that way keeps theirs hidden.
+{
+  const {room,players,hostWs}=await setup(1,1);
+  await say(room,hostWs,{type:'startMatch'});
+  const hostSeat=room.room.members[players[0].token].seat;
+  while(room.room.game.phase!=='showdown'){const g=room.room.game;room.applyAction(g.turn,g.turn===hostSeat?'fold':room.legal(g.turn).check?'check':'call')}
+  const g=room.room.game,bot=g.players.find(p=>p.bot),view=room.publicState(players[0].token).game;
+  assert.deepEqual(view.shown,{[bot.seat]:g.hands[bot.seat]});assert.match(view.result,/everyone folded/);
+}
+{
+  const {room,players,hostWs}=await setup(0,2);
+  await say(room,hostWs,{type:'startMatch'});
+  room.applyAction(room.room.game.turn,'fold');
+  assert.equal(room.room.game.phase,'showdown');
+  assert.deepEqual(room.publicState(players[0].token).game.shown,{},'a person who wins uncontested is not shown');
+  checks++;
+}
+
 // 3. Reconnecting with the saved token restores the seat; an unknown token is refused.
 {
   const {room,state,players}=await setup(1,2);
