@@ -432,6 +432,7 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+
 // Ranked result delivery survives a temporary Directory outage and retries on alarm.
 {
   const {room,state,hostWs}=await setup(0,2);
@@ -450,6 +451,7 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+console.log('PASS: '+checks+' room server checks');
 
 // Chat: private and ranked players can exchange authenticated messages; reconnect sees history.
 {
