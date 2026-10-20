@@ -436,7 +436,7 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('roomBotPicker').hidden)closeBotPicker()});
   document.querySelectorAll('[data-level]').forEach(button=>button.onclick=()=>{send({type:'addBot',seat:selectedSeat,level:button.dataset.level});closeBotPicker()});
   // The Freeroll page seats players at their tournament table with a token the tournament hands out.
-  window.rivlRooms={enter(code,seatToken){if(token&&socket){socket.onclose=null;socket.close()}roomCode=code;token=seatToken;snapshot=null;saveSession();show('rooms');status('Joining your freeroll table…');connect()},code:()=>roomCode};
+  window.rivlRooms={enter(code,seatToken){if(token&&socket){socket.onclose=null;socket.close()}roomCode=code;token=seatToken;snapshot=null;saveSession();show('rooms');status('Joining your freeroll table…');connect()},code:()=>roomCode,freeroll:()=>!!snapshot?.tourney};
   // Resume a saved seat after a refresh or a closed tab.
   try{const saved=JSON.parse(stored(SESSION)||'null');if(API&&saved?.code&&saved?.token){roomCode=saved.code;token=saved.token;show('rooms');status('Rejoining room '+roomCode+'…');connect()}}catch{}
 })();

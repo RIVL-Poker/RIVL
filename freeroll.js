@@ -1,4 +1,4 @@
-/* RIVL nightly freeroll page: a free tournament every night at 9 PM Eastern for up to 40 signed-in players.
+/* RIVL nightly freeroll page: a free tournament every night at 9 PM Central for up to 40 signed-in players.
    Sign up from an hour before, get taken to your table at the start, follow the blind clock and standings,
    and see the month's points race. The tables themselves are the normal online table screen (rooms.js). */
 (()=>{
@@ -38,7 +38,11 @@
         const wait=data.startAt-now();if(wait<6*3600000)startCheck=setTimeout(load,Math.max(3000,wait+4000));
       }
       const view=document.querySelector('.view.active')?.id;
-      if(mine&&data.status==='running'&&mine.place==null&&!inRoom()&&(view==='freeroll'||view==='play')&&autoNight!==data.night&&!seating){autoNight=data.night;takeSeat(true)}
+      if(mine&&data.status==='running'&&mine.place==null&&!inRoom()&&autoNight!==data.night&&!seating){
+        autoNight=data.night;
+        // Players waiting on the Freeroll or Play page go straight to their table; anyone in a bot game or elsewhere gets a notice first.
+        if(view==='freeroll'||view==='play')takeSeat(true);else notice(true);
+      }else if(mine&&data.status==='running'&&mine.place==null&&inRoom()&&!window.rivlRooms?.freeroll?.()&&autoNight!==data.night){autoNight=data.night;notice(false)}
     }catch(e){if(!data)status(e.message)}
     render();schedule();
   }
@@ -72,9 +76,9 @@
 
   function hero(){
     const a=account(),d=data,mine=me(),st=d.status;
-    // Eastern-time players see "Tonight at 9:00 PM"; everyone else sees the Eastern time and their own.
-    const eastern=new Date(d.startAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit',timeZone:'America/New_York'}),local=time(d.startAt)===eastern;
-    let badge='TONIGHT',title=local?`Tonight at ${eastern}`:`${eastern} Eastern`,sub=`Every night at 9:00 PM Eastern · ${d.cap} players max · free to play`,count='',countLabel='',primary=null,secondary=null;
+    // Central-time players see "Tonight at 9:00 PM"; everyone else sees the Central time and their own.
+    const central=new Date(d.startAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'}),local=time(d.startAt)===central;
+    let badge='TONIGHT',title=local?`Tonight at ${central}`:`${central} Central`,sub=`Every night at 9:00 PM Central · ${d.cap} players max · free to play`,count='',countLabel='',primary=null,secondary=null;
     const regOpen=st==='registering'||d.lateReg;
     if(st==='scheduled'){countLabel='STARTS IN';count=clock(d.startAt-now());primary={text:`SIGN-UP OPENS AT ${time(d.regOpensAt)}`,disabled:true}}
     else if(st==='registering'){countLabel='STARTS IN';count=clock(d.startAt-now());badge=mine?'YOU’RE IN':'SIGN-UP OPEN'}
@@ -145,6 +149,27 @@
     hero();facts();standings();resultCard();
   }
   // Messages from the table: a move to another table, a knock-out, or the final result.
+  // A notice that works on every page, so registered players can play bots (or anything else) while they wait.
+  let noticeTimer=null;
+  function notice(auto){
+    let el=$('frlNotice');
+    if(!el){el=document.createElement('div');el.id='frlNotice';el.className='frl-notice';el.setAttribute('role','alert');document.body.append(el)}
+    clearInterval(noticeTimer);
+    const inBots=document.body.classList.contains('in-game');
+    let left=15;
+    const go=()=>{clearInterval(noticeTimer);el.remove();
+      // A bot game ends when the player heads to the freeroll, as it does with the table's own Leave button.
+      if(document.body.classList.contains('in-game')){try{stop();window.hideMatchResult?.()}catch{}}
+      takeSeat(false)};
+    const paint=()=>{
+      el.innerHTML=`<strong>★ Your freeroll table is ready</strong><span>${auto?`Taking you there in ${left}s.${inBots?' Your bot game will end.':''}`:'Leave this table when you’re ready to join.'}</span>`;
+      const b=document.createElement('button');b.type='button';b.className='gold';b.textContent='GO TO MY TABLE';b.onclick=go;
+      const x=document.createElement('button');x.type='button';x.className='outline';x.textContent=auto?'NOT YET':'LATER';x.onclick=()=>{clearInterval(noticeTimer);el.remove()};
+      const row=document.createElement('div');row.append(b,x);el.append(row);
+    };
+    paint();
+    if(auto)noticeTimer=setInterval(()=>{if(--left<=0)go();else el.querySelector('span').textContent=`Taking you there in ${left}s.${inBots?' Your bot game will end.':''}`},1000);
+  }
   function handle(message){
     show('freeroll');
     if(message.kind==='moved'){status(message.table?`Table balancing: you're moving to table ${message.table}.`:'Finding your new seat…',true);takeSeat(true);return}

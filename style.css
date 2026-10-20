@@ -2111,3 +2111,8 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
   .frl-actions{flex-direction:column}.frl-actions .gold,.frl-actions .outline{width:100%;min-width:0}
   .frl-facts b{font-size:17px}
 }
+.frl-notice{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:80;width:min(460px,calc(100% - 32px));display:grid;gap:6px;padding:16px 18px;border-radius:12px;border:1px solid var(--gold);background:#120e0af7;box-shadow:0 14px 50px #000,0 0 24px #e6ae4340}
+.frl-notice strong{color:var(--gold);font-size:16px}
+.frl-notice span{color:#e9e2d6;font-size:13px}
+.frl-notice div{display:flex;gap:10px;margin-top:6px}
+.frl-notice .gold{flex:1;margin:0}
