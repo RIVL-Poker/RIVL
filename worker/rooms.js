@@ -9,7 +9,7 @@ import {cleanReport,sendBugReport,BUG_MAX_CHARS} from './bug-report.js';
 import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
-const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=13000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
+const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=11000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
 // Bots take a fresh random 2–5 seconds on every decision, so play reads like a person thinking.
 // The cap sits just under 5 seconds so alarm and network delay never push a move past 5.
 const botThinkMs=()=>BOT_THINK_MIN_MS+Math.floor(Math.random()*(BOT_THINK_MAX_MS-BOT_THINK_MIN_MS));
