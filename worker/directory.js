@@ -42,6 +42,9 @@ export class Directory {
     this.sql.exec('CREATE INDEX IF NOT EXISTS avatar_reports_target ON avatar_reports(target,status)');
     // Ladder rank and the leaderboard read only ranked players by rating, so they never scan the whole accounts table.
     this.sql.exec('CREATE INDEX IF NOT EXISTS accounts_ranked ON accounts(rr) WHERE rgames>0');
+    // Daily puzzle: one answer per account per UTC day (the first one counts), for streaks and the how-others-answered split.
+    this.sql.exec('CREATE TABLE IF NOT EXISTS puzzle_answers(account TEXT NOT NULL,day TEXT NOT NULL,choice TEXT NOT NULL,correct INTEGER NOT NULL,t INTEGER NOT NULL,PRIMARY KEY(account,day))');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS puzzle_answers_day ON puzzle_answers(day,choice)');
     // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
     this.boards=new Map();
   }
@@ -111,6 +114,20 @@ export class Directory {
     this.sql.exec('INSERT INTO accounts(id,name,key_hash,created,elo_offset,google_sub) VALUES (?,?,?,?,1500,?)',id,clean,await sha256(randomKey()),Date.now(),sub);
     this.sql.exec('UPDATE usage SET accounts=accounts+1 WHERE day=?',day());
     return this.reply({account:this.selfAccount(this.one('SELECT * FROM accounts WHERE id=?',id)),key:await this.newSession(id),created:true});
+  }
+  puzzleCounts(d){
+    const counts={fold:0,call:0,raise:0};
+    for(const r of this.rows('SELECT choice,COUNT(*) AS n FROM puzzle_answers WHERE day=? GROUP BY choice',d))counts[r.choice]=r.n;
+    return counts;
+  }
+  // Streak: consecutive days answered, ending today, or yesterday when today's puzzle is still open.
+  puzzleStats(account){
+    const days=this.rows('SELECT day FROM puzzle_answers WHERE account=? ORDER BY day DESC LIMIT 1000',account).map(r=>r.day);
+    const t=this.one('SELECT COUNT(*) AS played,COALESCE(SUM(correct),0) AS correct FROM puzzle_answers WHERE account=?',account);
+    let streak=0,expect=day();
+    if(days[0]!==expect)expect=new Date(Date.parse(expect+'T00:00:00Z')-86400000).toISOString().slice(0,10);
+    for(const d of days){if(d!==expect)break;streak++;expect=new Date(Date.parse(d+'T00:00:00Z')-86400000).toISOString().slice(0,10)}
+    return {streak,played:t.played,correct:t.correct};
   }
   reply(body,status=200){return Response.json(body,{status})}
   async fetch(request){
@@ -210,6 +227,22 @@ export class Directory {
         return this.reply({ok:true});
       }
       if(path==='/lobby/remove'){this.sql.exec('DELETE FROM lobby WHERE code=?',String(body.code));return this.reply({ok:true})}
+      // The Worker has already checked the day is today and the choice is one of the puzzle's options.
+      if(path==='/puzzle/answer'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in again to save your answer.'},401);
+        if(body.day!==day()||!['fold','call','raise'].includes(body.choice))return this.reply({error:'That puzzle is closed.'},400);
+        this.sql.exec('INSERT OR IGNORE INTO puzzle_answers(account,day,choice,correct,t) VALUES (?,?,?,?,?)',a.id,body.day,body.choice,body.correct?1:0,Date.now());
+        const mine=this.one('SELECT choice FROM puzzle_answers WHERE account=? AND day=?',a.id,body.day);
+        return this.reply({choice:mine.choice,counts:this.puzzleCounts(body.day),stats:this.puzzleStats(a.id)});
+      }
+      if(path==='/puzzle/me'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in again.'},401);
+        const mine=this.one('SELECT choice FROM puzzle_answers WHERE account=? AND day=?',a.id,String(body.day||''));
+        return this.reply({choice:mine?.choice||null,counts:mine?this.puzzleCounts(body.day):null,stats:this.puzzleStats(a.id)});
+      }
+      if(path==='/puzzle/counts')return this.reply({counts:this.puzzleCounts(url.searchParams.get('day')||day())});
       if(path==='/usage/room'||path==='/usage/hand'){
         const s=this.status(),column=path==='/usage/room'?'rooms':'hands';
         // A new room or match is refused once the day's budget is used; hands in running matches get extra headroom.

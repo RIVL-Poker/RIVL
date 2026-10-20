@@ -1883,3 +1883,69 @@ body.in-game #table .win-fx .rivl-winner-cards .card strong small,
   font-weight:400!important;letter-spacing:0!important;color:inherit!important}
 body.in-game #table .win-fx .rivl-winner-cards .card>span,
 #roomGame .rivl-room-win-fx .rivl-winner-cards .card>.rivl-card-center{font-size:clamp(28px,2.8vw,40px)!important}
+/* Daily puzzle */
+.pz-spot b,.pz-result b{float:none}
+.puzzle-home{border-color:#8a6a3a;background:linear-gradient(90deg,#1d150c,#120f0c)}
+.puzzle-home .gold{width:auto;margin-top:0;flex:0 0 auto}
+.pz-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 14px}
+.pz-title{margin:0;color:#d8cfc2;letter-spacing:.04em}
+.pz-nav{display:flex;gap:8px}
+.pz-nav button[disabled]{opacity:.4}
+.pz-practice{margin:0 0 12px;color:#f5d28b;font-size:13px}
+.pz-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+.pz-layout .panel{margin-top:0}
+.pz-felt{border-radius:14px;padding:16px;background:radial-gradient(ellipse at 50% 40%,#1f6a43,#0f3a24 70%,#0a2618);border:2px solid #5a3d22;box-shadow:inset 0 0 30px #0008;text-align:center}
+.pz-street{display:flex;justify-content:space-between;color:#e8f2ea;font-size:12px;letter-spacing:.14em;font-weight:700}
+.pz-street b{color:#ffdda0;font-size:14px;margin-left:6px}
+.pz-board,.pz-hand{display:flex;justify-content:center;gap:8px;margin:16px 0 4px}
+.pz-hand{margin:6px 0}
+.pz-card{width:52px;height:74px;border-radius:6px;background:#f6f1e8;color:#161616;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-family:Georgia,serif;box-shadow:0 3px 8px #0007;flex:0 0 auto}
+.pz-card b{font-size:24px;line-height:1}.pz-card i{font-style:normal;font-size:24px;line-height:1.1}
+.pz-card.red{color:#c0182a}
+.pz-card.back{background:repeating-linear-gradient(45deg,#3a1c12 0 6px,#4c2617 6px 12px);border:2px solid #6b4b2c;opacity:.55}
+.pz-hand .pz-card{width:60px;height:84px}.pz-hand .pz-card b,.pz-hand .pz-card i{font-size:28px}
+.pz-you{margin-top:14px;padding-top:10px;border-top:1px dashed #ffffff30;color:#d5e6da}
+.pz-you small{font-size:11px;letter-spacing:.12em}
+.pz-story{margin:16px 0 0;padding-left:20px;display:grid;gap:7px;color:#e9e2d6;font-size:14px;line-height:1.45}
+.pz-story li:last-child{color:#fff;font-weight:700}
+.pz-mini{display:inline-block;padding:0 4px;border-radius:3px;background:#f6f1e8;color:#161616;font-weight:700;font-size:13px;line-height:1.35}
+.pz-mini.red{color:#c0182a}
+.pz-q{margin:18px 0 10px;color:var(--gold);letter-spacing:.12em;font-size:14px}
+.pz-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pz-choice{min-height:52px;border-radius:8px;border:1px solid #8a6a3a;background:#1b1611;color:#fff;font-weight:800;font-size:15px;cursor:pointer;padding:8px}
+.pz-choice:hover:not([disabled]){background:linear-gradient(#ffdda0,#c68d46);color:#170f06}
+.pz-choice[disabled]{cursor:default;opacity:.55}
+.pz-choice.best{opacity:1;border-color:#5fd18a;box-shadow:0 0 0 2px #5fd18a55}
+.pz-choice.picked{opacity:1;background:#2a2118;border-width:2px;border-color:#efbd70}
+.pz-status{min-height:1em;margin:10px 0 0}
+.pz-verdict{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:10px;background:#1a1a1a}
+.pz-verdict.good{background:#12301f;border:1px solid #2f8a55}.pz-verdict.ok{background:#2a2412;border:1px solid #8a7a2f}.pz-verdict.bad{background:#321414;border:1px solid #8a2f2f}
+.pz-glyph{font-size:28px;font-weight:900;min-width:44px;text-align:center;color:#ffdda0}
+.pz-verdict div{display:grid;gap:3px}.pz-verdict strong{letter-spacing:.1em}.pz-verdict span{color:#e9e2d6;font-size:14px}
+.pz-why{color:#d8cfc2;font-size:14px;line-height:1.5}
+.pz-options{display:grid;gap:10px}
+.pz-option{padding:10px 12px;border-radius:8px;border:1px solid #3a2d20;background:#15120f}
+.pz-option.best{border-color:#2f8a55}
+.pz-option-top{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:14px}
+.pz-option em{font-style:normal;font-size:11px;color:#f5d28b;margin-left:6px;letter-spacing:.06em}
+.pz-grade{color:#e9e2d6;font-weight:600;white-space:nowrap}
+.pz-bar{height:6px;border-radius:3px;background:#2a2420;margin:8px 0 4px;overflow:hidden}.pz-bar span{display:block;height:100%;background:linear-gradient(90deg,#c68d46,#ffdda0)}
+.pz-option.best .pz-bar span{background:linear-gradient(90deg,#2f8a55,#5fd18a)}
+.pz-option small{color:#bfb6a8;font-size:12px}
+.pz-count{color:#bfb6a8;font-size:13px}
+.pz-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px;text-align:center}
+.pz-stats[hidden]{display:none}
+.pz-stats div{padding:10px 4px;border-radius:8px;background:#1b1611;display:grid;gap:2px}
+.pz-stats b{font-size:24px;color:var(--gold)}.pz-stats small{font-size:10px;letter-spacing:.1em;color:#d8cfc2}
+.pz-signin{font-size:13px;color:#d8cfc2}.pz-signin a{color:var(--gold)}
+.pz-verdict .pz-best-name{display:inline;color:#fff;font-weight:800}
+#pzShare{width:100%;margin-top:10px}
+.pz-next{color:#bfb6a8;font-size:13px;text-align:center;margin-bottom:0}
+@media(max-width:900px){.pz-layout{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .puzzle-home .gold{width:100%}
+  .pz-card{width:44px;height:62px}.pz-card b,.pz-card i{font-size:20px}
+  .pz-hand .pz-card{width:52px;height:72px}.pz-hand .pz-card b,.pz-hand .pz-card i{font-size:24px}
+  .pz-board{gap:6px}
+  .pz-choice{font-size:13px;min-height:56px}
+}

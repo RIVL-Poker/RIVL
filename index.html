@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=support-notices-20261020">
+    <link rel="stylesheet" href="style.css?v=daily-puzzle-20261020">
     <script src="screen-modes.js"></script>
 </head>
 
@@ -15,7 +15,7 @@
     <div id="app">
         <aside class="sidebar">
             <div class="brand">♠ <span>RIVL</span></div>
-            <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav"
+            <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav" data-view="puzzle">◆ &nbsp; Daily Puzzle</button><button class="nav"
                     data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp;
                     Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button><button class="nav" data-view="support">? &nbsp; Support</button></nav>
             <div class="season"><small id="sideTier">ELO</small>
@@ -36,6 +36,7 @@
                     <h1>PLAY. IMPROVE.<br><em>CLIMB.</em></h1>
                     <p>Every decision is graded like a chess move. No real money.</p>
                 </div>
+                <div id="puzzleHome" class="resume-banner puzzle-home"><div><strong>◆ DAILY PUZZLE</strong><span id="puzzleHomeInfo">One poker decision a day, graded like a chess move.</span></div><button class="gold" id="openPuzzle" type="button">SOLVE TODAY’S PUZZLE</button></div>
                 <div id="resumeBanner" class="resume-banner" hidden><div><strong>SAVED BOT GAME</strong><span id="resumeInfo"></span></div><button class="gold" id="resumeSaved" type="button">RESUME GAME</button><button class="outline" id="discardSaved" type="button">DISCARD</button></div>
                                 <div id="modeSelect" class="rivl-menu-step">
                     <div class="section-title"><h2>CHOOSE YOUR GAME</h2></div>
@@ -239,6 +240,35 @@
                 <p class="demo-notice" id="status"></p>
                 <div id="matchResult" class="match-result" hidden></div>
             </section>
+            <section id="puzzle" class="view content-view">
+                <h1>DAILY PUZZLE</h1>
+                <div class="pz-head"><p id="pzTitle" class="pz-title">One decision a day, the same for everyone.</p>
+                    <div class="pz-nav"><button type="button" class="outline" id="pzPrev">← EARLIER</button><button type="button" class="outline" id="pzNext" hidden>LATER →</button><button type="button" class="outline" id="pzBackToday" hidden>TODAY</button></div></div>
+                <p id="pzPractice" class="pz-practice" hidden>Replaying an earlier puzzle. It doesn't count toward your streak.</p>
+                <div class="pz-layout">
+                    <div class="panel pz-spot" id="pzSpot">
+                        <div class="pz-felt">
+                            <div class="pz-street"><span id="pzStreet">FLOP</span><span>POT <b id="pzPot">–</b></span></div>
+                            <div class="pz-board" id="pzBoard"></div>
+                            <div class="pz-you"><small>YOUR HAND</small><div class="pz-hand" id="pzHand"></div><small id="pzStack"></small></div>
+                        </div>
+                        <ol class="pz-story" id="pzStory"></ol>
+                        <h3 class="pz-q">WHAT’S YOUR MOVE?</h3>
+                        <div class="pz-choices" id="pzChoices"></div>
+                        <p id="pzStatus" class="muted pz-status" role="status"></p>
+                    </div>
+                    <div class="panel pz-result" id="pzResult" hidden aria-live="polite">
+                        <div id="pzVerdict" class="pz-verdict"></div>
+                        <p id="pzWhy" class="pz-why"></p>
+                        <div id="pzOptions" class="pz-options"></div>
+                        <p id="pzCount" class="pz-count"></p>
+                        <div id="pzStats" class="pz-stats" hidden><div><b id="pzStreak">0</b><small>DAY STREAK</small></div><div><b id="pzPlayed">0</b><small>PLAYED</small></div><div><b id="pzCorrect">–</b><small>BEST PLAY FOUND</small></div></div>
+                        <p id="pzSignIn" class="pz-signin" hidden><a href="#">Sign in</a> to keep a streak and be counted in how others answered.</p>
+                        <button type="button" class="gold" id="pzShare" hidden>SHARE RESULT</button>
+                        <p id="pzNextIn" class="pz-next"></p>
+                    </div>
+                </div>
+            </section>
             <section id="profile" class="view content-view">
                 <h1>YOUR PROFILE</h1>
                 <article class="panel ranked-tracker" aria-labelledby="rtTitle">
@@ -404,6 +434,7 @@
     <script src="ladder-ui.js"></script>
     <script src="rooms.js"></script>
     <script src="table-themes.js"></script>
+    <script src="puzzle.js"></script>
 </body>
 
 </html>

@@ -4,6 +4,7 @@
 import worker,{Room,Directory} from './worker/rooms.js';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
+import {PUZZLE_START} from './worker/puzzles.js';
 
 function fakeState(){
   const store=new Map(),sockets=[];let alarm=null;
@@ -629,6 +630,40 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const report=await api(env,'/api/report-avatar',{key:acc[1].key,targetId:acc[0].account.id,reason:'Not a real photo'});
   assert.equal(report.status,200,report.data.error);
   assert.equal((await api(env,'/api/avatar',{key:acc[0].key,avatar:photo})).status,403,'a reported player waits for review');
+  checks++;
+}
+
+// Daily puzzle: today's spot hides its answer; an answer is saved once per day, builds a streak and fills the split.
+{
+  const env=makeEnv(),today=new Date().toISOString().slice(0,10);
+  const pz=(await api(env,'/api/puzzle')).data;
+  assert.equal(pz.day,today);assert.ok(pz.number>=1&&pz.hero.length===2&&pz.board.length>=3&&pz.story.length>=2);
+  assert.ok(!('best' in pz)&&!('grades' in pz)&&!('eq' in pz),'the answer is not sent before answering');
+  const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  assert.equal((await api(env,'/api/puzzle?day='+tomorrow)).status,404,'no peeking at tomorrow');
+  assert.equal((await api(env,'/api/puzzle?day=2020-01-01')).status,404);
+  assert.equal((await api(env,'/api/puzzle/answer',{day:today,choice:'shove'})).status,400);
+  const anon=(await api(env,'/api/puzzle/answer',{day:today,choice:'fold'})).data;
+  assert.ok(!anon.saved&&anon.best&&anon.grades.fold.label,'signed-out players get the grades but are not counted');
+  const ann=(await api(env,'/api/accounts',{name:'Puzzler'})).data;
+  assert.equal((await api(env,'/api/puzzle/me',{key:ann.key,day:today})).data.choice,null);
+  const first=(await api(env,'/api/puzzle/answer',{key:ann.key,day:today,choice:'call'})).data;
+  assert.ok(first.saved);assert.equal(first.counts.call,1);assert.equal(first.stats.streak,1);assert.equal(first.stats.played,1);
+  assert.equal(first.stats.correct,first.best==='call'?1:0);
+  const again=(await api(env,'/api/puzzle/answer',{key:ann.key,day:today,choice:'fold'})).data;
+  assert.equal(again.choice,'call','the first answer of the day stands');assert.equal(again.counts.fold,0);
+  const me=(await api(env,'/api/puzzle/me',{key:ann.key,day:today})).data;
+  assert.equal(me.choice,'call');assert.ok(me.grades&&me.best,'a returning player sees their result');
+  // Streaks count back over consecutive days and survive until today's puzzle is answered.
+  const d=env.DIRECTORY.instances.get('global'),ago=n=>new Date(Date.now()-n*86400000).toISOString().slice(0,10);
+  for(const n of [1,2,4])d.sql.exec('INSERT INTO puzzle_answers(account,day,choice,correct,t) VALUES (?,?,?,?,?)',ann.account.id,ago(n),'fold',1,0);
+  assert.equal(d.puzzleStats(ann.account.id).streak,3,'today plus the two days before; the gap ends it');
+  d.sql.exec('DELETE FROM puzzle_answers WHERE day=?',today);
+  assert.equal(d.puzzleStats(ann.account.id).streak,2,'an unanswered today does not break the streak yet');
+  if(ago(1)>=PUZZLE_START){
+    const past=(await api(env,'/api/puzzle/answer',{key:ann.key,day:ago(1),choice:'call'})).data;
+    assert.ok(!past.saved&&past.grades,'earlier days replay without saving');
+  }
   checks++;
 }
 
