@@ -154,6 +154,11 @@ export default {
         const r=await dir(env,'/puzzle/answer',{key:body.key,day:pz.day,choice,correct:choice===pz.p.best});
         return r.status===200?json({...r.data,saved:true,...reveal(pz)}):send(r);
       }
+      const friends=url.pathname.match(/^\/api\/friends(\/add|\/remove|\/new-code)?$/);
+      if(friends){
+        if(friends[1]&&friends[1]!=='/remove'&&await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        return send(await dir(env,'/friends'+(friends[1]||''),await readBody(request)));
+      }
       if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
       if(url.pathname==='/api/rooms'){
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);

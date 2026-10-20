@@ -1989,3 +1989,45 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
   .pz-choice kbd{display:none}
   .pz-tag{min-width:54px}
 }
+/* Friends */
+.fr-signed-out{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.fr-signed-out p{margin:0;color:#e9e2d6}
+.fr-signin-btn{display:inline-block;width:auto;margin:0;text-decoration:none;text-align:center}
+.fr-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:stretch}
+.fr-top .panel,.fr-list-panel{margin-top:0}
+.fr-list-panel{margin-top:18px}
+#friends h3{margin:0 0 10px;color:var(--gold);letter-spacing:.14em;font-size:13px}
+.fr-code{font:800 34px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:#fff;padding:14px 10px;border-radius:10px;background:#1b1611;border:1px dashed #8a6a3a;text-align:center;user-select:all}
+.fr-hint{color:#bfb6a8;font-size:13px;line-height:1.45}
+.fr-code-actions{display:flex;gap:10px}
+.fr-code-actions .gold{flex:1;margin-top:0}
+.fr-code-actions .outline{flex:0 0 auto}
+.fr-new-code{margin-top:10px;background:none;border:0;padding:0;color:#bfb6a8;font-size:12px;text-decoration:underline;cursor:pointer}
+.fr-add label{display:block;color:#d8cfc2;font-size:13px;margin-bottom:6px}
+.fr-add-row{display:flex;gap:10px}
+.fr-add-row input{flex:1;min-width:0;padding:12px 14px;border-radius:8px;border:1px solid #8a6a3a;background:#0e0c0a;color:#fff;font:700 18px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase}
+.fr-add-row .gold{width:auto;margin-top:0;flex:0 0 auto}
+.fr-status{min-height:1.2em;margin:10px 0 0;color:#ff9a8a;font-size:13px}
+.fr-status.ok{color:#6fe0a0}
+.fr-list-head{display:flex;justify-content:space-between;align-items:baseline}
+.fr-list-head span{color:#bfb6a8;font-size:11px;letter-spacing:.14em}
+.fr-empty{color:#bfb6a8;margin:6px 0}
+.fr-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid #2e241a}
+.fr-row:first-child{border-top:0}
+.fr-avatar{position:relative;flex:0 0 46px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#2a2118;border:2px solid #8a6a3a;color:var(--gold);font-weight:800;font-size:18px}
+.fr-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.fr-avatar.online:after{content:"";position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border-radius:50%;background:#4bd28e;border:2px solid #101010}
+.fr-main{flex:1;min-width:0;display:grid;gap:3px}
+.fr-main strong{color:#fff;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fr-meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:#d8cfc2}
+.fr-league{display:inline-flex;align-items:center;gap:5px}
+.fr-league svg{width:16px;height:16px}
+.fr-seen.on{color:#6fe0a0;font-weight:700}
+.fr-puzzle{font-size:12px;color:#bfb6a8}
+.fr-remove{flex:0 0 auto}
+@media(max-width:900px){.fr-top{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .fr-code{font-size:28px}
+  .fr-add-row,.fr-code-actions{flex-direction:column}.fr-add-row .gold{width:100%}
+  .fr-row{gap:10px}.fr-remove{padding:6px 8px}
+}

@@ -451,6 +451,35 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+// Friends: everyone has a public friend code; entering one adds the friendship both ways, and either side can remove it.
+{
+  const env=makeEnv(),acc=[];
+  for(const n of ['Ada','Ben','Cyd'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  assert.equal((await api(env,'/api/friends',{})).status,401,'friends need a sign-in');
+  const ada=(await api(env,'/api/friends',{key:acc[0].key})).data,ben=(await api(env,'/api/friends',{key:acc[1].key})).data;
+  assert.match(ada.code,/^[A-HJKMNP-Z2-9]{8}$/);assert.notEqual(ada.code,ben.code);assert.equal(ada.friends.length,0);
+  assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.code,ada.code,'the code stays the same');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:ada.code})).status,400,'not yourself');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:'ZZZZ-ZZZZ'})).status,404);
+  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:'abc'})).status,400);
+  const added=(await api(env,'/api/friends/add',{key:acc[0].key,code:ben.code.slice(0,4).toLowerCase()+'-'+ben.code.slice(4)})).data;
+  assert.equal(added.added,'Ben','codes work in lower case with a dash');
+  assert.deepEqual(added.friends.map(f=>f.name),['Ben']);
+  assert.ok(added.friends[0].lastSeen&&'solvedToday' in added.friends[0]&&'puzzleStreak' in added.friends[0]&&added.friends[0].league);
+  assert.ok(!('key' in added.friends[0])&&!('friend_code' in added.friends[0]),'no secrets in the list');
+  assert.deepEqual((await api(env,'/api/friends',{key:acc[1].key})).data.friends.map(f=>f.name),['Ada'],'friendship goes both ways');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[1].key,code:ada.code})).status,409,'already friends');
+  // A new code stops the old one working; friends already added stay.
+  const fresh=(await api(env,'/api/friends/new-code',{key:acc[1].key})).data;
+  assert.notEqual(fresh.code,ben.code);assert.equal(fresh.friends.length,1);
+  assert.equal((await api(env,'/api/friends/add',{key:acc[2].key,code:ben.code})).status,404,'the old code no longer works');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[2].key,code:fresh.code})).status,200);
+  const removed=(await api(env,'/api/friends/remove',{key:acc[1].key,id:acc[0].account.id})).data;
+  assert.deepEqual(removed.friends.map(f=>f.name),['Cyd']);
+  assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.friends.length,0,'removing ends it for both');
+  checks++;
+}
+
 console.log('PASS: '+checks+' room server checks');
 
 // Chat: private and ranked players can exchange authenticated messages; reconnect sees history.
@@ -668,6 +697,35 @@ console.log('PASS: '+checks+' room server checks');
     const past=(await api(env,'/api/puzzle/answer',{key:ann.key,day:ago(1),choice:'call'})).data;
     assert.ok(!past.saved&&past.grades,'earlier days replay without saving');
   }
+  checks++;
+}
+
+// Friends: everyone has a public friend code; entering one adds the friendship both ways, and either side can remove it.
+{
+  const env=makeEnv(),acc=[];
+  for(const n of ['Ada','Ben','Cyd'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  assert.equal((await api(env,'/api/friends',{})).status,401,'friends need a sign-in');
+  const ada=(await api(env,'/api/friends',{key:acc[0].key})).data,ben=(await api(env,'/api/friends',{key:acc[1].key})).data;
+  assert.match(ada.code,/^[A-HJKMNP-Z2-9]{8}$/);assert.notEqual(ada.code,ben.code);assert.equal(ada.friends.length,0);
+  assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.code,ada.code,'the code stays the same');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:ada.code})).status,400,'not yourself');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:'ZZZZ-ZZZZ'})).status,404);
+  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:'abc'})).status,400);
+  const added=(await api(env,'/api/friends/add',{key:acc[0].key,code:ben.code.slice(0,4).toLowerCase()+'-'+ben.code.slice(4)})).data;
+  assert.equal(added.added,'Ben','codes work in lower case with a dash');
+  assert.deepEqual(added.friends.map(f=>f.name),['Ben']);
+  assert.ok(added.friends[0].lastSeen&&'solvedToday' in added.friends[0]&&'puzzleStreak' in added.friends[0]&&added.friends[0].league);
+  assert.ok(!('key' in added.friends[0])&&!('friend_code' in added.friends[0]),'no secrets in the list');
+  assert.deepEqual((await api(env,'/api/friends',{key:acc[1].key})).data.friends.map(f=>f.name),['Ada'],'friendship goes both ways');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[1].key,code:ada.code})).status,409,'already friends');
+  // A new code stops the old one working; friends already added stay.
+  const fresh=(await api(env,'/api/friends/new-code',{key:acc[1].key})).data;
+  assert.notEqual(fresh.code,ben.code);assert.equal(fresh.friends.length,1);
+  assert.equal((await api(env,'/api/friends/add',{key:acc[2].key,code:ben.code})).status,404,'the old code no longer works');
+  assert.equal((await api(env,'/api/friends/add',{key:acc[2].key,code:fresh.code})).status,200);
+  const removed=(await api(env,'/api/friends/remove',{key:acc[1].key,id:acc[0].account.id})).data;
+  assert.deepEqual(removed.friends.map(f=>f.name),['Cyd']);
+  assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.friends.length,0,'removing ends it for both');
   checks++;
 }
 

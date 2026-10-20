@@ -6,6 +6,7 @@ import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 // rating.js (loaded by grading.js) defines the Ranked leagues shared with the site.
 const R=globalThis.RivlRating;
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
+const FRIEND_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MAX_FRIENDS=100;
 const LOBBY_TTL=15*60*1000,BOARD_TTL=10000;
 const day=()=>new Date().toISOString().slice(0,10);
 const hex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -45,6 +46,12 @@ export class Directory {
     // Daily puzzle: one answer per account per UTC day (the first one counts), for streaks and the how-others-answered split.
     this.sql.exec('CREATE TABLE IF NOT EXISTS puzzle_answers(account TEXT NOT NULL,day TEXT NOT NULL,choice TEXT NOT NULL,correct INTEGER NOT NULL,t INTEGER NOT NULL,PRIMARY KEY(account,day))');
     this.sql.exec('CREATE INDEX IF NOT EXISTS puzzle_answers_day ON puzzle_answers(day,choice)');
+    // Friends: each account has a public friend code (separate from its secret sign-in code). Entering someone's
+    // code adds the friendship both ways; either side can remove it. last_seen powers "active now" in the list.
+    for(const [name,def] of [['friend_code','TEXT'],['last_seen','INTEGER']])
+      if(!this.rows('PRAGMA table_info(accounts)').some(c=>c.name===name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
+    this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_friend_code ON accounts(friend_code)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS friends(account TEXT NOT NULL,friend TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(account,friend))');
     // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
     this.boards=new Map();
   }
@@ -129,6 +136,23 @@ export class Directory {
     for(const d of days){if(d!==expect)break;streak++;expect=new Date(Date.parse(d+'T00:00:00Z')-86400000).toISOString().slice(0,10)}
     return {streak,played:t.played,correct:t.correct};
   }
+  // A friend code is 8 characters from an alphabet without look-alikes (no 0/O, 1/I/L), made the first time it's needed.
+  friendCode(a,fresh){
+    if(a.friend_code&&!fresh)return a.friend_code;
+    for(;;){
+      const code=Array.from(crypto.getRandomValues(new Uint8Array(8)),n=>FRIEND_CHARS[n%FRIEND_CHARS.length]).join('');
+      if(this.one('SELECT id FROM accounts WHERE friend_code=?',code))continue;
+      this.sql.exec('UPDATE accounts SET friend_code=? WHERE id=?',code,a.id);a.friend_code=code;return code;
+    }
+  }
+  seen(a){this.sql.exec('UPDATE accounts SET last_seen=? WHERE id=?',Date.now(),a.id)}
+  friendList(a){
+    const today=day();
+    return this.rows(`SELECT x.*,EXISTS(SELECT 1 FROM puzzle_answers p WHERE p.account=x.id AND p.day=?) AS solved FROM friends f JOIN accounts x ON x.id=f.friend
+      WHERE f.account=? ORDER BY COALESCE(x.last_seen,0) DESC LIMIT ?`,today,a.id,MAX_FRIENDS)
+      .map(x=>({...this.publicAccount(x,false),lastSeen:x.last_seen||null,solvedToday:!!x.solved,puzzleStreak:this.puzzleStats(x.id).streak}));
+  }
+  friendsReply(a){return this.reply({code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS})}
   reply(body,status=200){return Response.json(body,{status})}
   async fetch(request){
     const url=new URL(request.url),path=url.pathname;
@@ -187,6 +211,7 @@ export class Directory {
       if(path==='/accounts/me'||path==='/verify'){
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign-in code not recognised.'},401);
+        this.seen(a);
         return this.reply({account:path==='/verify'?this.publicAccount(a,false):this.selfAccount(a)});
       }
       if(path==='/accounts/google')return await this.google(body);
@@ -241,6 +266,32 @@ export class Directory {
         if(!a)return this.reply({error:'Sign in again.'},401);
         const mine=this.one('SELECT choice FROM puzzle_answers WHERE account=? AND day=?',a.id,String(body.day||''));
         return this.reply({choice:mine?.choice||null,counts:mine?this.puzzleCounts(body.day):null,stats:this.puzzleStats(a.id)});
+      }
+      if(path.startsWith('/friends')){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in to see your friends.'},401);
+        this.seen(a);
+        if(path==='/friends')return this.friendsReply(a);
+        if(path==='/friends/new-code'){this.friendCode(a,true);return this.friendsReply(a)}
+        if(path==='/friends/add'){
+          const code=String(body.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+          if(code.length!==8)return this.reply({error:'Friend codes are 8 letters and numbers, like ABCD-2345.'},400);
+          const f=this.one('SELECT * FROM accounts WHERE friend_code=?',code);
+          if(!f)return this.reply({error:'No player has that friend code. Check it and try again.'},404);
+          if(f.id===a.id)return this.reply({error:'That is your own friend code.'},400);
+          if(this.one('SELECT 1 AS x FROM friends WHERE account=? AND friend=?',a.id,f.id))return this.reply({error:f.name+' is already your friend.'},409);
+          const count=id=>this.one('SELECT COUNT(*) AS n FROM friends WHERE account=?',id).n;
+          if(count(a.id)>=MAX_FRIENDS)return this.reply({error:`You can have up to ${MAX_FRIENDS} friends.`},400);
+          if(count(f.id)>=MAX_FRIENDS)return this.reply({error:f.name+"'s friends list is full."},400);
+          const t=Date.now();
+          this.sql.exec('INSERT OR IGNORE INTO friends(account,friend,created) VALUES (?,?,?)',a.id,f.id,t);
+          this.sql.exec('INSERT OR IGNORE INTO friends(account,friend,created) VALUES (?,?,?)',f.id,a.id,t);
+          return this.reply({added:f.name,code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS});
+        }
+        if(path==='/friends/remove'){
+          this.sql.exec('DELETE FROM friends WHERE (account=? AND friend=?) OR (account=? AND friend=?)',a.id,String(body.id||''),String(body.id||''),a.id);
+          return this.friendsReply(a);
+        }
       }
       if(path==='/puzzle/counts')return this.reply({counts:this.puzzleCounts(url.searchParams.get('day')||day())});
       if(path==='/usage/room'||path==='/usage/hand'){

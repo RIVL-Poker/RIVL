@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=daily-puzzle-2-20261020">
+    <link rel="stylesheet" href="style.css?v=friends-20261020">
     <script src="screen-modes.js"></script>
 </head>
 
@@ -15,7 +15,7 @@
     <div id="app">
         <aside class="sidebar">
             <div class="brand">♠ <span>RIVL</span></div>
-            <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav" data-view="puzzle">◆ &nbsp; Daily Puzzle</button><button class="nav"
+            <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav" data-view="puzzle">◆ &nbsp; Daily Puzzle</button><button class="nav" data-view="friends">♣ &nbsp; Friends</button><button class="nav"
                     data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp;
                     Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button><button class="nav" data-view="support">? &nbsp; Support</button></nav>
             <div class="season"><small id="sideTier">ELO</small>
@@ -274,6 +274,28 @@
                     </div>
                 </div>
             </section>
+            <section id="friends" class="view content-view">
+                <h1>FRIENDS</h1>
+                <div id="frSignedOut" class="panel fr-signed-out"><p>Sign in to add friends and see when they're playing.</p><a href="#" id="frSignIn" class="gold fr-signin-btn">SIGN IN</a></div>
+                <div id="frSignedIn" hidden>
+                    <div class="fr-top">
+                        <div class="panel fr-code-card">
+                            <h3>YOUR FRIEND CODE</h3>
+                            <div class="fr-code" id="frCode">––––-––––</div>
+                            <p class="fr-hint">Give this to friends so they can add you. It's not your sign-in code, so it's safe to share.</p>
+                            <div class="fr-code-actions"><button type="button" class="gold" id="frShare">SHARE INVITE</button><button type="button" class="outline" id="frCopy">COPY CODE</button></div>
+                            <button type="button" class="fr-new-code" id="frNewCode">Get a new code</button>
+                        </div>
+                        <form class="panel fr-add" id="frAdd">
+                            <h3>ADD A FRIEND</h3>
+                            <label for="frInput">Their friend code</label>
+                            <div class="fr-add-row"><input id="frInput" maxlength="9" autocomplete="off" spellcheck="false" placeholder="ABCD-2345" autocapitalize="characters"><button type="submit" class="gold">ADD FRIEND</button></div>
+                            <p id="frStatus" class="fr-status" role="status"></p>
+                        </form>
+                    </div>
+                    <div class="panel fr-list-panel"><div class="fr-list-head"><h3>YOUR FRIENDS</h3><span id="frCount"></span></div><div id="frList"></div></div>
+                </div>
+            </section>
             <section id="profile" class="view content-view">
                 <h1>YOUR PROFILE</h1>
                 <article class="panel ranked-tracker" aria-labelledby="rtTitle">
@@ -440,6 +462,7 @@
     <script src="rooms.js"></script>
     <script src="table-themes.js"></script>
     <script src="puzzle.js"></script>
+    <script src="friends.js"></script>
 </body>
 
 </html>
