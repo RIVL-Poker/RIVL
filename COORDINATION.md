@@ -89,3 +89,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 ### 2026-10-20 21:20 UTC · Claude
 - Friends moved into Profile, above Bot Practice Mode Rating; the Daily Puzzle opens from Play (Play stays lit, with a back button). Both sidebar entries are gone. `show('friends')` and `?friend=CODE` links land on the Profile section.
 - "Active now" fix: any signed-in request (the friends list's own 1-minute refresh, signing in, joining a room) used to mark a player as seen, so a tab left open kept them "active" forever. Presence now comes only from `/api/presence`: a heartbeat every 2 minutes while the page is on screen, plus an "away" beacon when it's hidden or closed. The server decides `online` (5-minute window if no goodbye arrives) and `seenAgo` on its own clock.
+
+### 2026-10-20 22:20 UTC · Claude
+- Invite friends to a casual room: the room lobby (after Create Room) has an Invite Friends panel, online friends first, until the match starts. Invites are stored in the directory (`invites` table, one per pair, 15-minute expiry) and reach the friend in the reply to their presence heartbeat, now every 60 seconds. The friend gets a JOIN / NO THANKS pop-up on any page.
+- New endpoints: `/api/friends/invite` {key,id,code} and `/api/friends/dismiss-invite` {key,from}; `/api/presence` now returns `invites`.

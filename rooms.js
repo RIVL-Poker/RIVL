@@ -343,7 +343,7 @@
     if(socket){socket.onclose=null;socket.close()}
     clearInterval(queueTimer);socket=null;roomCode='';token='';rankedEntry=false;snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
     const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM';
-    $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();
+    $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();document.dispatchEvent(new Event('rivl:room'));
   }
   function connect(){
     clearTimeout(retryTimer);
@@ -354,7 +354,7 @@
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
-      if(message.type==='state'){const before=snapshot;snapshot=message.state;keepPhotos(before,snapshot);if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render()}
+      if(message.type==='state'){const before=snapshot;snapshot=message.state;keepPhotos(before,snapshot);if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render();document.dispatchEvent(new Event('rivl:room'))}
       else if(message.type==='chat')addChatMessage(message.message);
       else if(message.type==='freeroll'){resetView('');window.rivlFreeroll?.handle(message)}
       else if(message.type==='removed'){const ranked=!!snapshot?.ranked||rankedEntry,reason=message.reason||'You are no longer in that room.';resetView(reason);if(ranked){dropRankedHistory();showRankedMenu(reason)}}
@@ -436,7 +436,11 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('roomBotPicker').hidden)closeBotPicker()});
   document.querySelectorAll('[data-level]').forEach(button=>button.onclick=()=>{send({type:'addBot',seat:selectedSeat,level:button.dataset.level});closeBotPicker()});
   // The Freeroll page seats players at their tournament table with a token the tournament hands out.
-  window.rivlRooms={enter(code,seatToken){if(token&&socket){socket.onclose=null;socket.close()}roomCode=code;token=seatToken;snapshot=null;saveSession();show('rooms');status('Joining your freeroll table…');connect()},code:()=>roomCode,freeroll:()=>!!snapshot?.tourney};
+  window.rivlRooms={enter(code,seatToken){if(token&&socket){socket.onclose=null;socket.close()}roomCode=code;token=seatToken;snapshot=null;saveSession();show('rooms');status('Joining your freeroll table…');connect()},code:()=>roomCode,freeroll:()=>!!snapshot?.tourney,
+    // Friends can be invited to a casual room until its match starts (friends.js).
+    casual:()=>!!snapshot&&!snapshot.ranked&&!snapshot.tourney&&!snapshot.started,
+    // Accepting a friend's invite: leave any other room first, then take a seat at theirs.
+    join(code){if(code===roomCode){show('rooms');return}if(token&&leaveRoom()===false)return;show('rooms');$('roomCodeInput').value=code;enter('join')}};
   // Resume a saved seat after a refresh or a closed tab.
   try{const saved=JSON.parse(stored(SESSION)||'null');if(API&&saved?.code&&saved?.token){roomCode=saved.code;token=saved.token;show('rooms');status('Rejoining room '+roomCode+'…');connect()}}catch{}
 })();
