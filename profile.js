@@ -7,7 +7,12 @@
   function paint(){
     const name=window.rivlPlayerName();
     document.querySelectorAll('[data-player-name]').forEach(el=>{el.textContent=name;if(el.id!=='rtTitle')window.rivlLeagueIcons?.decorate(el,window.rivlAccount?.current()?.leagueKey||window.RivlRating?.tier(window.rivlAccount?.current()?.rating??0).key,{prepend:true})});
-    document.querySelectorAll('[data-player-initial]').forEach(el=>el.textContent=name[0].toUpperCase());
+    // Your own avatar circles (header, bot table seat): saved photo when set, otherwise the initial.
+    const photo=window.rivlAccount?.current()?.avatar||'';
+    document.querySelectorAll('[data-player-initial]').forEach(el=>{
+      if(validPhoto(photo)){if(el.querySelector('img')?.getAttribute('src')===photo)return;const img=document.createElement('img');img.src=photo;img.alt='';img.className='rivl-avatar-photo';el.replaceChildren(img)}
+      else el.textContent=name[0].toUpperCase();
+    });
     window.rivlPaintAvatar?.();
     const signedIn=!!window.rivlAccount?.current();
     for(const id of ['roomName','joinName']){const input=document.getElementById(id);if(!input)continue;if(read()||signedIn)input.value=name;input.disabled=signedIn;input.title=signedIn?'Signed in: your account name is used':''}
