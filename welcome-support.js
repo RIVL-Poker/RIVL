@@ -1,12 +1,10 @@
-/* Support and privacy page interactions (the welcome / login screen lives in login.js).
+/* Support page interactions. The Privacy Policy and Terms of Use are privacy.html and terms.html; the welcome / login screen lives in login.js.
    Bug reports are sent anonymously: only the category, the text typed and the browser type go to the
    server, which emails them to RIVL support. No account, sign-in code or email address is sent. */
 (()=>{
   const $=id=>document.getElementById(id);
   const stored=k=>{try{return localStorage.getItem(k)}catch{return null}};
   const API=window.RIVL_ROOM_API||stored('rivlRoomApi')||(/^https?:$/.test(location.protocol)?location.origin:'');
-  $('viewPrivacy')?.addEventListener('click',()=>show('privacy'));
-  $('backToSupport')?.addEventListener('click',()=>show('support'));
   let sending=false;
   $('bugReportForm')?.addEventListener('submit',async e=>{
     e.preventDefault();

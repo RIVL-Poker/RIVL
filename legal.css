@@ -1,0 +1,12 @@
+/* Shared look for the standalone Privacy Policy and Terms of Use pages. */
+:root{color-scheme:dark}
+body{margin:0;background:#0d0d0d;color:#e6e0d6;font:16px/1.7 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:780px;margin:0 auto;padding:32px 16px 64px}
+a{color:#e9c383}
+h1{color:#e9c383;letter-spacing:.06em;font-size:28px;margin:12px 0 4px}
+h2{color:#e9c383;font-size:18px;margin:32px 0 8px}
+.muted{color:#a89c8a}
+.back{display:inline-block;margin-bottom:8px;text-decoration:none}
+ul{padding-left:22px}
+li{margin:4px 0}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid #3a2f20}
