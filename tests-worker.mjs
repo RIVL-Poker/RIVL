@@ -813,6 +813,17 @@ console.log('PASS: '+checks+' room server checks');
       await T().settle();
       return {env,t,accts,sockets,maxSeen};
     }
+    // A night that hasn't started moves with the schedule: an old 8 PM start becomes the current one, sign-ups kept.
+    {
+      const env=makeEnv(),night=nightOf(now),start=startOf(night);
+      const a=(await api(env,'/api/accounts',{name:'Early'})).data;
+      now=start-30*60000;await api(env,'/api/freeroll/register',{key:a.key});
+      const T=env.TOURNEYS.instances.get(night);T.t.startAt=start-3600000;T.state.storage.setAlarm(start-3600000);
+      now=start-2*3600000;
+      const v=(await api(env,'/api/freeroll')).data;
+      assert.equal(v.startAt,start,'tonight follows the current start time');assert.equal(v.entrants,1,'sign-ups are kept');
+      assert.equal(T.state.alarm,start,'the start alarm moves too');
+    }
     // A full field of 40 (four of them late), a two-table field that merges into one, heads-up, and a night nobody comes.
     const big=await freeroll(40,{late:4,allin:.03});
     assert.ok(big.t.recorded,'results saved');
