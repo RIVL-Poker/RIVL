@@ -52,15 +52,24 @@
     return b;
   }
 
+  // Phones and small tablets always show the icon rail; the toggle opens the full sidebar over the page.
+  const narrow = window.matchMedia('(max-width:850px)');
+  function labelToggle(){
+    const b = document.getElementById('sidebarToggle');
+    if (!b) return;
+    const expanded = narrow.matches ? root.classList.contains('sidebar-open') : !root.classList.contains('sidebar-collapsed');
+    b.setAttribute('aria-expanded', String(expanded));
+    b.setAttribute('aria-label', expanded ? 'Collapse sidebar' : 'Expand sidebar');
+    b.title = expanded ? 'Collapse sidebar' : 'Expand sidebar';
+  }
   function setSidebar(collapsed){
     root.classList.toggle('sidebar-collapsed', collapsed);
     try { localStorage.setItem(SIDEBAR_KEY, collapsed ? 'collapsed' : 'open') } catch(e) {}
-    const b = document.getElementById('sidebarToggle');
-    if (b) {
-      b.setAttribute('aria-expanded', String(!collapsed));
-      b.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-      b.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
-    }
+    labelToggle();
+  }
+  function setDrawer(open){
+    root.classList.toggle('sidebar-open', open);
+    labelToggle();
   }
 
   function init(){
@@ -90,9 +99,14 @@
       t.id = 'sidebarToggle';
       t.className = 'sidebar-toggle';
       t.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
-      t.onclick = () => setSidebar(!root.classList.contains('sidebar-collapsed'));
+      t.onclick = () => narrow.matches ? setDrawer(!root.classList.contains('sidebar-open')) : setSidebar(!root.classList.contains('sidebar-collapsed'));
       brand.after(t);
       setSidebar(root.classList.contains('sidebar-collapsed'));
+      // The open drawer closes on picking a page, tapping outside it, Esc, or widening to desktop.
+      document.querySelectorAll('.sidebar .nav').forEach(n => n.addEventListener('click', () => setDrawer(false)));
+      document.addEventListener('click', e => { if (root.classList.contains('sidebar-open') && !e.target.closest('.sidebar')) setDrawer(false) });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('sidebar-open')) setDrawer(false) });
+      narrow.addEventListener('change', () => setDrawer(false));
     }
   }
 
