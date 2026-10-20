@@ -4,6 +4,7 @@ export {Directory} from './directory.js';
 import {gradeDecision} from './grading.js';
 import {verifyGoogleToken} from './google.js';
 import {cleanReport,sendBugReport,BUG_MAX_CHARS} from './bug-report.js';
+import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=13000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
@@ -84,6 +85,10 @@ export default {
         if(url.pathname==='/api/status')return send(await cached(env,'/status',10000));
         // The Google OAuth client ID is public; the page reads it here so it lives in one place (wrangler.toml).
         if(url.pathname==='/api/config')return json({googleClientId:env.GOOGLE_CLIENT_ID||''});
+        if(url.pathname==='/api/puzzle'){
+          const pz=puzzleFor(url.searchParams.get('day')||undefined);
+          return pz?json(publicPuzzle(pz)):json({error:'No puzzle for that day.'},404);
+        }
         if(url.pathname==='/api/lobby')return send(await cached(env,'/lobby',5000));
         if(url.pathname==='/api/leaderboard')return send(await cached(env,'/leaderboard',10000));
         if(url.pathname==='/api/leaderboard/league'){
@@ -132,6 +137,22 @@ export default {
           return json({error:'Your report could not be sent right now. Please try again later.'},502);
         }
         return json({ok:true});
+      }
+      if(url.pathname==='/api/puzzle/answer'||url.pathname==='/api/puzzle/me'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        const body=await readBody(request),pz=puzzleFor(String(body.day||''));
+        if(!pz)return json({error:'No puzzle for that day.'},404);
+        if(url.pathname==='/api/puzzle/me'){
+          if(!body.key)return json({error:'Sign in to keep a streak.'},401);
+          const r=await dir(env,'/puzzle/me',{key:body.key,day:pz.day});
+          return r.status===200&&r.data.choice?json({...r.data,...reveal(pz)}):send(r);
+        }
+        const choice=String(body.choice||'');
+        if(!CHOICES.includes(choice)||!pz.p.grades[choice])return json({error:'Pick fold, call or raise.'},400);
+        // Only today's puzzle is saved; earlier days can be replayed for practice. Signed-out players see the split without adding to it.
+        if(!pz.today||!body.key)return json({choice,saved:false,counts:(await cached(env,'/puzzle/counts?day='+pz.day,10000)).data.counts||null,...reveal(pz)});
+        const r=await dir(env,'/puzzle/answer',{key:body.key,day:pz.day,choice,correct:choice===pz.p.best});
+        return r.status===200?json({...r.data,saved:true,...reveal(pz)}):send(r);
       }
       if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
       if(url.pathname==='/api/rooms'){
