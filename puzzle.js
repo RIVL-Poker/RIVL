@@ -139,6 +139,8 @@
   $('pzBackToday').onclick=()=>load();
   $('pzSignIn').querySelector('a')?.addEventListener('click',e=>{e.preventDefault();if(typeof show==='function')show('profile')});
   $('openPuzzle')?.addEventListener('click',()=>{if(typeof show==='function')show('puzzle')});
+  // The puzzle lives inside Play: it opens from the card on the Play page and goes back there.
+  $('pzBackToPlay')?.addEventListener('click',()=>{if(typeof show==='function')show('play');if(typeof showResumeBanner==='function')showResumeBanner()});
   // Desktop shortcuts while the puzzle page is open: F fold, C call, R raise.
   document.addEventListener('keydown',e=>{
     if(!$('puzzle').classList.contains('active')||e.metaKey||e.ctrlKey||e.altKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;

@@ -35,7 +35,22 @@
     window.rivlPaintName?.();
     window.refreshRatingUI?.();
   }
-  function setAccount(account,key,via){state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render()}
+  function setAccount(account,key,via){const was=state?.key;state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render();if(state?.key!==was){if(state)onScreen();document.dispatchEvent(new Event('rivl:account'))}}
+  // Presence for friends' "active now": a heartbeat every 2 minutes while this page is on screen, and a last
+  // message when it's hidden or closed. A background tab or a locked phone sends nothing, so it drops off.
+  const HEARTBEAT_MS=2*60*1000;let beat=null;
+  function presence(away){
+    if(!state||!API)return;
+    const url=API.replace(/\/$/,'')+'/api/presence',body=JSON.stringify(away?{key:state.key,away:true}:{key:state.key});
+    if(away&&navigator.sendBeacon){try{if(navigator.sendBeacon(url,body))return}catch{}}
+    // A plain-text body keeps this a simple request; the server reads it as JSON either way.
+    fetch(url,{method:'POST',body,keepalive:true}).catch(()=>{});
+  }
+  function onScreen(){
+    clearInterval(beat);beat=null;
+    if(document.visibilityState!=='visible')return presence(true);
+    presence();beat=setInterval(()=>{if(document.visibilityState==='visible')presence()},HEARTBEAT_MS);
+  }
   // Google: the page hands the ID token to our server, which verifies it with Google before signing in.
   // A first-time Google player gets {needsName:true} and sends the same token back with a table name.
   async function google(credential,name){
@@ -73,7 +88,9 @@
   }
 
   function init(){
-    render();refresh();
+    render();refresh();onScreen();
+    document.addEventListener('visibilitychange',onScreen);
+    window.addEventListener('pagehide',()=>presence(true));
     $('accountCreate')?.addEventListener('click',async()=>{
       try{status('Creating your account…');const {account,key}=await call('/api/accounts',{name:$('accountName').value});setAccount(account,key);
         $('accountKey').hidden=false;$('accountShowKey').textContent='HIDE CODE';status('Account created. Copy your sign-in code now and keep it somewhere safe.')}
@@ -89,6 +106,7 @@
     $('accountSignOut')?.addEventListener('click',()=>{
       const google=state?.via==='google';
       if(!confirm(google?'Sign out on this device? You can sign back in with Google.':'Sign out on this device? You will need your sign-in code to sign back in.'))return;
+      presence(true);
       if(google){call('/api/signout',{key:state.key}).catch(()=>{});try{window.google?.accounts.id.disableAutoSelect()}catch{}}
       setAccount(null);status('Signed out.');
     });

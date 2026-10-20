@@ -85,3 +85,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Added a FULL SCREEN button to the match top bar (bot practice, online rooms and Ranked) and a collapse arrow for the desktop sidebar. Both live in `screen-modes.js`; styles are at the end of `style.css`.
 - Full screen hides the sidebar and page header and uses the browser's real full screen where allowed (iPhone falls back to the same table-only view). Esc, the button, or leaving the match turns it off. The sidebar choice is saved per device.
 - When the scene gets bigger on desktop (full screen or collapsed sidebar), the seat box is sized as a fraction of the scene so it stays on the painted Cairo rail. The normal layout is unchanged.
+
+### 2026-10-20 21:20 UTC · Claude
+- Friends moved into Profile, above Bot Practice Mode Rating; the Daily Puzzle opens from Play (Play stays lit, with a back button). Both sidebar entries are gone. `show('friends')` and `?friend=CODE` links land on the Profile section.
+- "Active now" fix: any signed-in request (the friends list's own 1-minute refresh, signing in, joining a room) used to mark a player as seen, so a tab left open kept them "active" forever. Presence now comes only from `/api/presence`: a heartbeat every 2 minutes while the page is on screen, plus an "away" beacon when it's hidden or closed. The server decides `online` (5-minute window if no goodbye arrives) and `seenAgo` on its own clock.
