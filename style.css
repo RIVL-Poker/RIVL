@@ -2031,3 +2031,68 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
   .fr-add-row,.fr-code-actions{flex-direction:column}.fr-add-row .gold{width:100%}
   .fr-row{gap:10px}.fr-remove{padding:6px 8px}
 }
+
+/* Nightly freeroll */
+#freeroll h3{margin:0 0 10px;color:var(--gold);letter-spacing:.14em;font-size:13px}
+#freeroll .panel b{float:none}
+.frl-signed-out{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.frl-signed-out p{margin:0;color:#e9e2d6}
+.frl-signin-btn{display:inline-block;width:auto;margin:0;text-decoration:none;text-align:center}
+.frl-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;padding:26px 28px;background:radial-gradient(ellipse at 88% 10%,#f6a04740,transparent 55%),linear-gradient(135deg,#21170e,#0d0c0b 70%)}
+.frl-hero:after{content:'★';position:absolute;right:-20px;bottom:-90px;font-size:260px;line-height:1;color:#efb65b0d;pointer-events:none}
+.frl-hero-main{position:relative;z-index:1;min-width:0}
+.frl-badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #8a6a3a;color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.16em;background:#1b1611}
+.frl-badge[data-state=running]{color:#0b0b0c;background:#4bd28e;border-color:#4bd28e}
+.frl-badge[data-state=running]:before{content:'';display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:#0b0b0c;vertical-align:1px;animation:frl-pulse 1.4s ease-in-out infinite}
+@keyframes frl-pulse{50%{opacity:.25}}
+.frl-hero h2{margin:12px 0 2px;font-size:clamp(28px,4vw,44px);line-height:1.05;color:#fff}
+.frl-when{margin:0 0 10px;color:var(--gold);font-size:13px;letter-spacing:.06em}
+.frl-sub{margin:0 0 18px;color:#d8cfc2;font-size:14px;line-height:1.5;max-width:560px}
+.frl-actions{display:flex;flex-wrap:wrap;gap:10px}
+.frl-actions .gold{margin:0;min-width:220px}
+.frl-actions .gold:disabled{opacity:.6;cursor:default;filter:none}
+.frl-actions .gold.done{opacity:1;background:#173524;border-color:#4bd28e;color:#6fe0a0}
+.frl-status{min-height:1.2em;margin:10px 0 0;color:#ff9a8a;font-size:13px}
+.frl-status.ok{color:#6fe0a0}
+.frl-clock{position:relative;z-index:1;text-align:center;min-width:200px;padding:16px 20px;border-radius:12px;border:1px solid #654728;background:#0b0a09d9}
+.frl-clock small{display:block;color:#bfb6a8;font-size:11px;letter-spacing:.16em}
+.frl-clock strong{display:block;margin-top:6px;font:800 36px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff;font-variant-numeric:tabular-nums}
+.frl-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.frl-facts div{border:1px solid #4a3622;border-radius:10px;padding:12px 14px;background:#0e0c0a}
+.frl-facts small{display:block;color:#bfb6a8;font-size:10px;letter-spacing:.14em}
+.frl-facts b{display:block;margin-top:4px;color:#fff;font-size:20px;font-variant-numeric:tabular-nums}
+.frl-facts em{display:block;font-style:normal;color:var(--gold);font-size:12px;margin-top:2px}
+.frl-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start}
+.frl-grid .panel{margin-top:0}
+.frl-list-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.frl-list-head span{color:#bfb6a8;font-size:11px;letter-spacing:.14em}
+.frl-champs-head{margin-top:18px}
+.frl-list{max-height:520px;overflow:auto}
+.frl-row{display:flex;align-items:center;gap:12px;padding:9px 4px;border-top:1px solid #2e241a;font-size:14px}
+.frl-row:first-child{border-top:0}
+.frl-row.me{background:#efbd7014;border-radius:6px}
+.frl-row.busted{opacity:.55}
+.frl-pos{flex:0 0 26px;color:#bfb6a8;font-variant-numeric:tabular-nums;text-align:right}
+.frl-name{flex:1;min-width:0;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frl-name i{font-style:normal;font-size:10px;letter-spacing:.12em;color:#0b0b0c;background:var(--gold);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+.frl-cups{color:var(--gold);font-size:12px;letter-spacing:1px}
+.frl-right{display:flex;align-items:baseline;gap:8px;flex:0 0 auto;font-variant-numeric:tabular-nums}
+.frl-right b{color:#fff}
+.frl-right small{color:#bfb6a8;font-size:11px}
+.frl-out{color:#bfb6a8;font-size:12px;letter-spacing:.06em}
+.frl-win{color:#0b0b0c;background:var(--gold);border-radius:4px;padding:2px 7px;font-size:11px;font-weight:800;letter-spacing:.12em}
+.frl-empty{color:#bfb6a8;margin:6px 0}
+.frl-result{margin-bottom:18px;border-color:#8a6a3a;text-align:center;background:linear-gradient(135deg,#1e160e,#0d0c0b)}
+.frl-result strong{display:block;font-size:24px;color:#fff;letter-spacing:.06em}
+.frl-result p{margin:6px 0 0;color:#d8cfc2}
+.frl-result.won{border-color:var(--gold);box-shadow:0 0 30px #e6ae4333}
+.frl-result.won strong{color:var(--gold)}
+.frl-fine{color:#bfb6a8;font-size:12px;line-height:1.55;margin:18px 0 0;max-width:820px}
+@media(max-width:900px){.frl-grid{grid-template-columns:1fr}.frl-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+  .frl-hero{grid-template-columns:1fr;padding:20px 18px;gap:16px}
+  .frl-clock{min-width:0}
+  .frl-clock strong{font-size:30px}
+  .frl-actions{flex-direction:column}.frl-actions .gold,.frl-actions .outline{width:100%;min-width:0}
+  .frl-facts b{font-size:17px}
+}
