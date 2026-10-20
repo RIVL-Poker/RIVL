@@ -2,9 +2,15 @@
    and talks to the Directory (accounts, online ratings, lobby, free-plan budget). */
 export {Directory} from './directory.js';
 import {gradeDecision} from './grading.js';
+import {verifyGoogleToken} from './google.js';
+import {cleanReport,sendBugReport,BUG_MAX_CHARS} from './bug-report.js';
+import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
-const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=5000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4;
+const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=13000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
+// Bots take a fresh random 2–5 seconds on every decision, so play reads like a person thinking.
+// The cap sits just under 5 seconds so alarm and network delay never push a move past 5.
+const botThinkMs=()=>BOT_THINK_MIN_MS+Math.floor(Math.random()*(BOT_THINK_MAX_MS-BOT_THINK_MIN_MS));
 // Blinds rise every 8 hands so a match reaches a finish.
 const BLINDS=[[10,20],[15,30],[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000]];
 const HAND_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
@@ -77,6 +83,12 @@ export default {
       }
       if(request.method==='GET'){
         if(url.pathname==='/api/status')return send(await cached(env,'/status',10000));
+        // The Google OAuth client ID is public; the page reads it here so it lives in one place (wrangler.toml).
+        if(url.pathname==='/api/config')return json({googleClientId:env.GOOGLE_CLIENT_ID||''});
+        if(url.pathname==='/api/puzzle'){
+          const pz=puzzleFor(url.searchParams.get('day')||undefined);
+          return pz?json(publicPuzzle(pz)):json({error:'No puzzle for that day.'},404);
+        }
         if(url.pathname==='/api/lobby')return send(await cached(env,'/lobby',5000));
         if(url.pathname==='/api/leaderboard')return send(await cached(env,'/leaderboard',10000));
         if(url.pathname==='/api/leaderboard/league'){
@@ -105,6 +117,44 @@ export default {
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/me',await readBody(request)));
       }
+      if(url.pathname==='/api/google'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        const body=await readBody(request,6000);
+        const claims=await verifyGoogleToken(body.credential,env.GOOGLE_CLIENT_ID);
+        if(body.name!=null&&!body.key&&await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
+        return send(await dir(env,'/accounts/google',{sub:claims.sub,name:body.name,key:body.key}));
+      }
+      if(url.pathname==='/api/bug-report'){
+        if(await limited(env.BUG_LIMITER,request))return json({error:'Too many reports from your network. Try again in a minute.'},429);
+        const report=cleanReport(await readBody(request,BUG_MAX_CHARS*2+1000));
+        if(report.error)return json({error:report.error},400);
+        if(!env.BUG_REPORT_EMAIL)return json({error:'Bug reports are not set up yet. Please try again later.'},503);
+        try{
+          const {EmailMessage}=env.EmailMessage?{EmailMessage:env.EmailMessage}:await import('cloudflare:email');
+          await sendBugReport(env,report,url.origin,EmailMessage);
+        }catch(err){
+          console.error('bug report send failed',err?.message);
+          return json({error:'Your report could not be sent right now. Please try again later.'},502);
+        }
+        return json({ok:true});
+      }
+      if(url.pathname==='/api/puzzle/answer'||url.pathname==='/api/puzzle/me'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        const body=await readBody(request),pz=puzzleFor(String(body.day||''));
+        if(!pz)return json({error:'No puzzle for that day.'},404);
+        if(url.pathname==='/api/puzzle/me'){
+          if(!body.key)return json({error:'Sign in to keep a streak.'},401);
+          const r=await dir(env,'/puzzle/me',{key:body.key,day:pz.day});
+          return r.status===200&&r.data.choice?json({...r.data,...reveal(pz)}):send(r);
+        }
+        const choice=String(body.choice||'');
+        if(!CHOICES.includes(choice)||!pz.p.grades[choice])return json({error:'Pick fold, call or raise.'},400);
+        // Only today's puzzle is saved; earlier days can be replayed for practice. Signed-out players see the split without adding to it.
+        if(!pz.today||!body.key)return json({choice,saved:false,counts:(await cached(env,'/puzzle/counts?day='+pz.day,10000)).data.counts||null,...reveal(pz)});
+        const r=await dir(env,'/puzzle/answer',{key:body.key,day:pz.day,choice,correct:choice===pz.p.best});
+        return r.status===200?json({...r.data,saved:true,...reveal(pz)}):send(r);
+      }
+      if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
       if(url.pathname==='/api/rooms'){
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
         const body=await readBody(request);
@@ -128,10 +178,13 @@ export default {
         if(!body.key)return json({error:RANKED_SIGN_IN},401);
         const size=body.size==null?6:Number(body.size);
         if(!RANKED_SIZES.includes(size))return json({error:'Choose a 3, 6, or 9-player ranked table.'},400);
-        const lobby=await dir(env,'/lobby/ranked?size='+size);
-        for(const room of (lobby.data.rooms||[]).slice(0,3)){
-          const joined=await joinRoom(room.code,{key:body.key,ranked:true,size});
+        // The Directory hands out one filling table per request and counts the seat straight away.
+        const skip=[];
+        for(let attempt=0;attempt<3;attempt++){
+          const {data}=await dir(env,'/lobby/claim',{size,skip});if(!data.code)break;
+          const joined=await joinRoom(data.code,{key:body.key,ranked:true,size});
           if(joined.status===200||joined.status===401)return send(joined);
+          skip.push(data.code);
         }
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
         return send(await createRoom({key:body.key,ranked:true,size}));
@@ -156,7 +209,7 @@ const rankOf=c=>'23456789TJQKA'.indexOf(c[0])+2;
 
 export class Room {
   constructor(state,env){
-    this.state=state;this.env=env;this.room=null;this.alarmAt=0;
+    this.state=state;this.env=env;this.room=null;this.alarmAt=0;this.photosSent=new WeakMap();
     // Keep-alive pings are answered by Cloudflare without waking the room, so idle tables cost nothing.
     if(typeof WebSocketRequestResponsePair!=='undefined')state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping','pong'));
   }
@@ -177,11 +230,21 @@ export class Room {
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
-        holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,
+        holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,sbSeat:g.sbSeat??-1,bbSeat:g.bbSeat??-1,
         winners:g.winners||[],result:g.result||'',note:g.note||'',ratingChanges:g.ratingChanges||null,matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
   }
   send(ws,message){try{ws.send(JSON.stringify(message))}catch{}}
-  broadcast(){for(const [ws,token] of this.sockets())this.send(ws,{type:'state',state:this.publicState(token),isHost:token===this.room.hostToken})}
+  // Profile photos are sent to each socket once; later updates leave them out until a seat or photo changes,
+  // so every bet does not resend up to nine photos to every player.
+  broadcast(){
+    const photos=this.room.seats.map(s=>s?.avatar||'').join('|');
+    for(const [ws,token] of this.sockets()){
+      const state=this.publicState(token);
+      if(this.photosSent.get(ws)===photos){for(const seat of state.seats)if(/^data:/.test(seat?.avatar||''))delete seat.avatar}
+      else this.photosSent.set(ws,photos);
+      this.send(ws,{type:'state',state,isHost:token===this.room.hostToken});
+    }
+  }
   matchOver(g=this.room?.game){return !g||g.result==='Match complete'}
   humansAway(g){return g.players.filter(p=>!p.bot&&!p.left).every(p=>p.away)}
   ratedSeats(){return Object.values(this.room.members).filter(m=>m.accountId)}
@@ -193,8 +256,12 @@ export class Room {
     if(room.pendingResults){
       // Ratings are computed by the Directory from the server's own finishing order.
       const out=await this.dir('/results',room.pendingResults);
-      if(out&&g){g.ratingChanges=out.changes||[];if(out.rated===false)g.note='Unrated: at least two signed-in players are needed for a rated match.'}
-      room.pendingResults=null;
+      // A transient Directory failure must not silently discard a ranked match result.
+      // The Directory deduplicates by matchId, so retrying is safe.
+      if(out&&!out.error){
+        if(g){g.ratingChanges=out.changes||[];if(out.rated===false)g.note='Unrated: at least two signed-in players are needed for a rated match.'}
+        room.pendingResults=null;
+      }
     }
     await this.syncLobby();
     if(this.matchOver(g))await this.armAlarm(room.lastActive+IDLE_MS);
@@ -278,6 +345,7 @@ export class Room {
     g.dealer=this.next(old?.dealer??8,alive);
     const sb=participants.length===2?g.dealer:this.next(g.dealer,alive);
     const bb=this.next(sb,alive);
+    g.sbSeat=sb;g.bbSeat=bb;
     for(const p of participants)g.hands[p.seat]=[g.deck.pop(),g.deck.pop()];
     const blind=(seat,amount)=>{const p=participants.find(x=>x.seat===seat);const v=Math.min(p.stack,amount);p.stack-=v;p.bet+=v;p.contribution+=v;g.pot+=v;p.allIn=p.stack===0};
     blind(sb,g.smallBlind);blind(bb,g.bigBlind);
@@ -342,7 +410,8 @@ export class Room {
   endStreet(){
     const g=this.room.game;
     const alive=g.players.filter(p=>!p.folded);
-    if(alive.length===1){alive[0].stack+=g.pot;g.winners=[{seat:alive[0].seat,name:alive[0].name,amount:g.pot}];g.result=alive[0].name+' wins '+g.pot+' (everyone folded)';g.pot=0;g.phase='showdown';g.shown=[];g.turn=-1;g.deadline=0;return}
+    // A bot that wins without a showdown turns its cards over; a person keeps theirs hidden, as at a real table.
+    if(alive.length===1){alive[0].stack+=g.pot;g.winners=[{seat:alive[0].seat,name:alive[0].name,amount:g.pot}];g.result=alive[0].name+' wins '+g.pot+' (everyone folded)';g.pot=0;g.phase='showdown';g.shown=alive[0].bot?[alive[0].seat]:[];g.turn=-1;g.deadline=0;return}
     if(g.phase==='river'||alive.filter(p=>!p.allIn).length<2){this.finishHand();return}
     g.deck.pop();const count=g.phase==='preflop'?3:1;
     for(let i=0;i<count;i++)g.board.push(g.deck.pop());
@@ -355,6 +424,7 @@ export class Room {
   applyAction(seat,action,amount){
     const g=this.room.game,p=g.players.find(x=>x.seat===seat),legal=this.legal(seat);
     if(!legal)throw Error('Not your turn');
+    g.botThinking=false;
     const call=Math.max(0,g.currentBet-p.bet);
     // How each player has bet this hand shapes the ranges decision grading assumes for them.
     const line=action==='raise'||action==='allin'&&p.stack>call?2:(action==='call'||action==='allin')&&call>0?1:0;
@@ -365,6 +435,7 @@ export class Room {
       if(!legal.canRaise)throw Error('Cannot raise');
       const target=action==='allin'?p.bet+p.stack:Number(amount);
       if(!Number.isInteger(target)||target<=g.currentBet||target>legal.raiseToMax)throw Error('Invalid raise amount');
+      if(target%5!==0&&target!==legal.raiseToMax)throw Error('Raises must be in increments of 5');
       if(target<g.currentBet+g.minRaise&&target!==legal.raiseToMax)throw Error('Raise below minimum');
       const increment=target-g.currentBet,wasMin=g.minRaise;
       const v=target-p.bet;p.stack-=v;p.bet=target;p.contribution+=v;g.pot+=v;
@@ -400,7 +471,9 @@ export class Room {
     const potOdds=legal.call/Math.max(1,g.pot+legal.call);
     const mayRaise=legal.canRaise&&(g.streetRaises||0)<BOT_RAISES_PER_STREET;
     if(mayRaise&&(strength>.72&&Math.random()<style.aggression+.2||legal.check&&strength>.55&&Math.random()<style.aggression)){
-      const target=Math.min(legal.raiseToMax,Math.max(legal.raiseToMin,g.currentBet+Math.round(g.pot*(.5+Math.random()*.4))));
+      // Raises go in steps of 5 (the server rejects anything else short of all-in), even when the bet to beat is not.
+      const step=x=>5*Math.ceil(x/5),want=Math.max(step(legal.raiseToMin),step(g.currentBet+g.pot*(.5+Math.random()*.4)));
+      const target=want>=legal.raiseToMax?legal.raiseToMax:want;
       if(target>g.currentBet)return ['raise',target];
     }
     if(legal.check)return ['check'];
@@ -415,7 +488,12 @@ export class Room {
       if(alive.length<2||active.length===0||active.length===1&&active[0].bet===g.currentBet){this.endStreet();if(g.phase==='showdown')break;continue}
       const p=g.players.find(x=>x.seat===g.turn);
       if(!p){this.endStreet();if(g.phase==='showdown')break;continue}
-      if(p.bot){const [action,amount]=this.botAction(p,g);this.applyAction(p.seat,action,amount)}
+      if(p.bot){
+        // The first pass starts the bot's think clock; the alarm at that deadline makes the move.
+        if(!g.botThinking){g.botThinking=true;g.deadline=Date.now()+botThinkMs();break}
+        if(Date.now()<g.deadline-50)break;
+        const [action,amount]=this.botAction(p,g);this.applyAction(p.seat,action,amount);
+      }
       else if(p.away||p.left)this.applyAction(p.seat,this.legal(p.seat).check?'check':'fold');
       else break;
       if(g.phase==='showdown')break;
@@ -433,6 +511,10 @@ export class Room {
     }
     // Finished matches, lobbies and tables where every human is away wait for players; rooms idle for 6 hours are deleted.
     if(this.matchOver(g)||g.phase==='showdown'&&this.humansAway(g)){
+      if(room.pendingResults){
+        await this.save();
+        if(room.pendingResults){await this.state.storage.setAlarm(Date.now()+30000);return}
+      }
       if(Date.now()>=idleUntil&&!this.sockets().length)return this.destroy();
       await this.state.storage.setAlarm(Math.max(idleUntil,Date.now()+60000));return;
     }
@@ -445,9 +527,10 @@ export class Room {
     }
     if(Date.now()<g.deadline-50){await this.armAlarm(g.deadline);return}
     const p=g.players.find(x=>x.seat===g.turn),legal=p&&this.legal(p.seat);
-    if(legal){
+    if(p?.bot)this.autoAdvance();
+    else if(legal){
       this.applyAction(p.seat,legal.check?'check':'fold');
-      if(!p.bot&&++p.timeouts>=2)p.away=true;
+      if(++p.timeouts>=2)p.away=true;
       this.autoAdvance();
     }
     await this.save();
