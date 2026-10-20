@@ -2136,3 +2136,161 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
 .frl-notice span{color:#e9e2d6;font-size:13px}
 .frl-notice div{display:flex;gap:10px;margin-top:6px}
 .frl-notice .gold{flex:1;margin:0}
+
+/* Online tables (rooms, Ranked, the freeroll) use the bot practice POV for your hand: two large hole cards with
+   the round decision clock on their left and your BB count on their right, in place of the small seat pill.
+   Sizes match the body.in-game #table rules above. The clock's ring drains from green to red on your turn. */
+#roomGame .poker-table>.rivl-pvp-myseat{
+  position:absolute!important;left:50%!important;top:calc(100% + 19px)!important;bottom:auto!important;right:auto!important;
+  transform:translate(-50%,-50%)!important;width:max-content!important;height:auto!important;min-width:0!important;
+  display:block!important;padding:0!important;margin:0!important;background:none!important;border:0!important;
+  box-shadow:none!important;border-radius:0!important;pointer-events:none;overflow:visible!important;z-index:15!important}
+#roomGame .poker-table>.rivl-pvp-myseat>.avatar,
+#roomGame .poker-table>.rivl-pvp-myseat>div:not(.holecards):not(.rivl-seat-clock){display:none!important}
+#roomGame .poker-table>.rivl-pvp-myseat>.holecards{display:flex!important;justify-content:center;align-items:center;gap:10px;position:relative;z-index:1}
+#roomGame .poker-table>.rivl-pvp-myseat>.holecards .card{
+  width:92px!important;height:124px!important;flex:0 0 auto;box-sizing:border-box;padding:10px!important;
+  font-size:31px!important;line-height:1.1;border-radius:8px}
+#roomGame .poker-table>.rivl-pvp-myseat>.holecards .card:not(.back)>strong{font-size:.65em!important}
+#roomGame .poker-table>.rivl-pvp-myseat>.holecards .card:not(.back)>.rivl-card-center{font-size:1.4em!important}
+#roomGame .poker-table>.rivl-pvp-myseat>.rivl-seat-clock{
+  position:absolute!important;right:calc(100% + 28px);top:50%;transform:translateY(-50%);
+  width:80px!important;height:80px!important;flex:none!important;box-sizing:border-box;
+  background:#d4a654;box-shadow:0 0 0 4px #16100a,0 4px 16px #000b!important}
+#roomGame .poker-table>.rivl-pvp-myseat>.rivl-seat-clock>span{
+  width:66px!important;height:66px!important;background:#0c0b0a!important;color:#f3cb80!important;
+  font-size:32px!important;font-weight:800;font-variant-numeric:tabular-nums}
+#roomGame .poker-table>.rivl-pvp-myseat>.rivl-seat-clock.is-live>span{color:#f7d291!important}
+#roomGame .poker-table>.rivl-pvp-myseat>.bb-count{
+  left:calc(100% + 12px)!important;top:50%!important;bottom:auto!important;right:auto!important;transform:translateY(-50%)!important;
+  height:20px!important;min-width:42px;padding:0 7px!important;font-size:11px!important;line-height:18px!important;border-radius:10px!important}
+@media(min-width:901px) and (max-width:1200px){
+  #roomGame .poker-table>.rivl-pvp-myseat>.holecards .card{width:76px!important;height:102px!important;font-size:25px!important}
+  #roomGame .poker-table>.rivl-pvp-myseat>.rivl-seat-clock{width:66px!important;height:66px!important;right:calc(100% + 20px)}
+  #roomGame .poker-table>.rivl-pvp-myseat>.rivl-seat-clock>span{width:54px!important;height:54px!important;font-size:26px!important}
+}
+@media(max-width:900px){
+  #roomGame .poker-table>.rivl-pvp-myseat{top:calc(100% + 48px)!important}
+  #roomGame .poker-table>.rivl-pvp-myseat>.holecards{gap:5px}
+  #roomGame .poker-table>.rivl-pvp-myseat>.holecards .card{width:44px!important;height:60px!important;font-size:18px!important;padding:3px 4px!important;border-radius:5px}
+  #roomGame .poker-table>.rivl-pvp-myseat>.rivl-seat-clock{width:46px!important;height:46px!important;right:calc(100% + 10px)}
+  #roomGame .poker-table>.rivl-pvp-myseat>.rivl-seat-clock>span{width:38px!important;height:38px!important;font-size:18px!important}
+  #roomGame .poker-table>.rivl-pvp-myseat>.bb-count{left:calc(100% + 8px)!important;height:14px!important;min-width:0;padding:0 5px!important;font-size:9px!important;line-height:12px!important}
+}
+@media(max-width:600px){#roomGame .poker-table>.rivl-pvp-myseat{top:calc(100% + 30px)!important}}
+
+/* Dealer and blind badges sit in the BB count tag under each seat, never on top of a player's profile picture. */
+.is-sb>.avatar::before,.is-bb>.avatar::before,.is-dealer>.avatar::after{content:none!important}
+.bb-count{display:inline-flex;align-items:center;gap:3px}
+.is-sb>.bb-count::before,.is-bb>.bb-count::before,.is-dealer>.bb-count::after{
+  display:inline-grid;place-items:center;min-width:1.5em;height:1.25em;padding:0 2px;margin:0 -3px;border-radius:.65em;box-sizing:border-box;
+  font:900 .85em/1 Inter,Arial,sans-serif;letter-spacing:0}
+.is-sb>.bb-count::before{content:'SB';background:#2c5fa8;color:#fff;margin-right:0}
+.is-bb>.bb-count::before{content:'BB';background:#f6d48e;color:#160e04;margin-right:0}
+.is-dealer>.bb-count::after{content:'D';background:#f4efe4;color:#111;margin-left:0;border-radius:50%;min-width:1.25em}
+
+/* Phone online tables use the bot practice table: the Cairo artwork is drawn tall, the table box is pinned to
+   its painted rim (see the body.in-game #table phone rules above), and the seats ring just outside it. */
+@media(max-width:600px){
+  #roomGame .rivl-pvp-scene{--scene-w:calc(100vw - 75px);--bg-w:106%;--bg-h:min(94%,var(--scene-w)*1.4);position:relative;padding:0!important;
+    background-size:var(--bg-w) var(--bg-h)!important;background-position:50% 75%!important}
+  body.table-focus #roomGame .rivl-pvp-scene{--scene-w:100vw}
+  #roomGame .rivl-pvp-scene .skyline{display:none}
+  #roomGame .rivl-pvp-scene .rivl-pvp-table{position:absolute!important;margin:0!important;aspect-ratio:auto!important;
+    left:calc(50% - var(--bg-w)*.43)!important;width:calc(var(--bg-w)*.86)!important;
+    top:calc((100% - var(--bg-h))*.75 + var(--bg-h)*.42)!important;height:calc(var(--bg-h)*.42)!important}
+}
+@media(max-width:520px){body:not(.table-focus) #roomGame .rivl-pvp-scene{--scene-w:calc(100vw - 54px)}}
+
+/* Online seats sit where bot practice seats do: on the painted Cairo rim, clockwise from your left (the order
+   rooms.js uses). This restates the Cairo table layout above so the older head-first online rules lose. */
+@media(min-width:901px){
+  #roomGame .rivl-pvp-table[data-player-count="2"] .s1{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s1{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s2{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s2{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s3{left:99.4%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s2{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s3{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s4{left:99.4%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s1{left:4.1%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s2{left:5.2%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s3{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s4{left:94.8%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s5{left:95.9%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1{left:4.1%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s2{left:5.2%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s3{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s4{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s5{left:94.8%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s6{left:95.9%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1{left:23.3%!important;top:102.4%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2{left:0.6%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s3{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s4{left:50.0%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s5{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s6{left:99.4%!important;top:51.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s7{left:76.7%!important;top:102.4%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s1{left:23.3%!important;top:102.4%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s2{left:4.1%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s3{left:5.2%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s4{left:24.4%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s5{left:75.6%!important;top:1.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s6{left:94.8%!important;top:23.2%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s7{left:95.9%!important;top:80.5%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s8{left:76.7%!important;top:102.4%!important}
+}
+
+/* Phone online seats: the bot practice seat ring (3, 6 and 9 players use its exact spots), filled in for the
+   other seat counts online tables can have. Seats run clockwise from your left, as on desktop. */
+@media(max-width:600px){
+  #roomGame .rivl-pvp-table[data-player-count] .rivl-pvp-seat{right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:7;
+    max-width:none;padding:2px 6px 2px 2px;gap:4px;font-size:9px;line-height:1.15;border-radius:16px}
+  #roomGame .rivl-pvp-table[data-player-count] .rivl-pvp-seat>.rivl-seat-label{white-space:normal;width:max-content;max-width:54px;overflow:hidden;text-overflow:ellipsis}
+  #roomGame .rivl-pvp-table[data-player-count] .rivl-pvp-seat .think-dots{position:absolute;top:-7px;right:2px;height:10px;padding:0 3px;gap:2px}
+  #roomGame .rivl-pvp-table[data-player-count] .rivl-pvp-seat .think-dots b{width:3px;height:3px}
+  #roomGame .rivl-pvp-table[data-player-count="2"] .s1{left:50%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s1{left:28%!important;top:-12%!important}
+  #roomGame .rivl-pvp-table[data-player-count="3"] .s2{left:72%!important;top:-12%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s1{left:14%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s2{left:50%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="4"] .s3{left:86%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s1{left:14%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s2{left:31%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s3{left:69%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="5"] .s4{left:86%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s1{left:13%!important;top:72%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s2{left:14%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s3{left:50%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s4{left:86%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="6"] .s5{left:87%!important;top:72%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s1{left:13%!important;top:72%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s2{left:14%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s3{left:31%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s4{left:69%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s5{left:86%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="7"] .s6{left:87%!important;top:72%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s1{left:14%!important;top:86%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s2{left:11%!important;top:56%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s3{left:14%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s4{left:50%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s5{left:86%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s6{left:89%!important;top:56%!important}
+  #roomGame .rivl-pvp-table[data-player-count="8"] .s7{left:86%!important;top:86%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s1{left:14%!important;top:86%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s2{left:11%!important;top:56%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s3{left:14%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s4{left:31%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s5{left:69%!important;top:-14%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s6{left:86%!important;top:22%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s7{left:89%!important;top:56%!important}
+  #roomGame .rivl-pvp-table[data-player-count="9"] .s8{left:86%!important;top:86%!important}
+}
+
+/* Portrait tablets: online tables keep the wide bot practice table instead of the tall phone oval. */
+@media(min-width:601px) and (max-width:1024px) and (orientation:portrait){
+  #roomGame .rivl-pvp-table{width:min(88%,680px,calc((100dvh - 300px)*2.05));aspect-ratio:2.35/1;border-radius:48%;margin:60px auto 90px}
+  #roomGame .rivl-pvp-seat.shown-above .rivl-shown{top:auto;bottom:calc(100% + 4px)}
+}

@@ -173,7 +173,8 @@
       $('roomMyName').textContent=me?.name||'Spectator';
       paintSeatAvatar($('roomMyAvatar'),snapshot.seats[me?.seat]||me);const mySpot=$('roomMyAvatar').parentElement;for(const [cls,seat] of [['is-dealer',g.dealer],['is-sb',g.sbSeat],['is-bb',g.bbSeat]])mySpot.classList.toggle(cls,!!me&&me.seat===seat);
       $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
-      $('roomTimer').hidden=g.turn!==me?.seat||g.phase==='showdown';
+      // Like bot practice, your clock always sits beside your cards and counts down only on your turn.
+      const myTurn=!!me&&g.turn===me.seat&&g.phase!=='showdown';$('roomTimer').hidden=!me;$('roomTimer').classList.toggle('is-live',myTurn);
       const newHand=g.handNumber!==previousHand;
       if(newHand){previousHand=g.handNumber;previousBoard=[];previousTurn=-1;lastTick=-1}
       const hole=$('roomHoleCards'),table=$('roomPokerTable'),seatOf=new Map([...$('roomGamePlayers').children].map(el=>[+el.dataset.seat,el]));
@@ -293,9 +294,9 @@
       clearInterval(clockTimer);
       const tick=()=>{
         const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);
-        $('roomTimer').style.background='conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)';
+        $('roomTimer').style.background=myTurn?'conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)':'';
         const sec=Math.ceil(ms/1000);if(g.turn===me?.seat&&sec<=5&&sec>0&&sec!==lastTick){pvpSound('tick');lastTick=sec}
-        $('roomTimerText').textContent=g.phase==='showdown'?'DONE':g.turn<0?'WAIT':Math.ceil(ms/1000)+'s';
+        $('roomTimerText').textContent=myTurn?Math.ceil(ms/1000):'–';
       };
       tick();clockTimer=setInterval(tick,200);
     }else clearInterval(clockTimer);
