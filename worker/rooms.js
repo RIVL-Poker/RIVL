@@ -187,6 +187,7 @@ export default {
         if(friends[1]&&friends[1]!=='/remove'&&await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/friends'+(friends[1]||''),await readBody(request)));
       }
+      if(url.pathname==='/api/presence')return send(await dir(env,'/presence',await readBody(request)));
       if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
       if(url.pathname==='/api/rooms'){
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);

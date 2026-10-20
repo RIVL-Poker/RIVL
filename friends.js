@@ -1,20 +1,20 @@
 /* RIVL friends: every account has a public friend code (never the secret sign-in code). Share yours, enter a
    friend's to add each other, and see their league, Elo, when they were last on and their daily puzzle streak.
-   A link like rivlpoker.com/?friend=ABCD2345 opens this page with the code filled in. */
+   The list is a section of Profile. A link like rivlpoker.com/?friend=ABCD2345 opens it with the code filled in. */
 (()=>{
   const $=id=>document.getElementById(id);
   if(!$('friends'))return;
-  const ACTIVE_MS=5*60*1000;
   let data=null,busy=false,poll=null,confirmId=null;
   const account=()=>window.rivlAccount?.current?.()||null;
   const status=(t,ok)=>{const el=$('frStatus');el.textContent=t||'';el.classList.toggle('ok',!!ok)};
   const pretty=code=>code?code.slice(0,4)+'-'+code.slice(4):'';
   const link=code=>`${location.origin.startsWith('http')?location.origin:'https://rivlpoker.com'}/?friend=${code}`;
-  function ago(t){
-    if(!t)return 'Not seen yet';
-    const d=Date.now()-t;
-    if(d<ACTIVE_MS)return 'Active now';
-    const m=Math.round(d/60000),h=Math.round(d/3600000),days=Math.round(d/86400000);
+  // The server says who is online right now and how long ago everyone else was on, measured on its own clock.
+  function ago(f){
+    if(f.online)return 'Active now';
+    if(f.seenAgo==null)return 'Not seen yet';
+    const d=f.seenAgo;
+    const m=Math.max(1,Math.round(d/60000)),h=Math.round(d/3600000),days=Math.round(d/86400000);
     return 'Active '+(m<60?m+' min ago':h<24?h+(h===1?' hour':' hours')+' ago':days+(days===1?' day':' days')+' ago');
   }
   function avatar(f){
@@ -37,14 +37,14 @@
     }
     for(const f of data.friends){
       const row=document.createElement('div');row.className='fr-row';
-      const active=f.lastSeen&&Date.now()-f.lastSeen<ACTIVE_MS;
+      const active=!!f.online;
       const pic=avatar(f);if(active)pic.classList.add('online');
       const main=document.createElement('div');main.className='fr-main';
       const name=document.createElement('strong');name.textContent=f.name;
       const meta=document.createElement('span');meta.className='fr-meta';
       const league=document.createElement('span');league.className='fr-league league-'+f.leagueKey;league.textContent=`${f.league} · ${Number(f.rating||0).toLocaleString()} Elo`;
       window.rivlLeagueIcons?.decorate(league,f.leagueKey,{prepend:true});
-      const seen=document.createElement('span');seen.className='fr-seen'+(active?' on':'');seen.textContent=ago(f.lastSeen);
+      const seen=document.createElement('span');seen.className='fr-seen'+(active?' on':'');seen.textContent=ago(f);
       meta.append(league,seen);
       const puzzle=document.createElement('span');puzzle.className='fr-puzzle';
       puzzle.textContent=(f.solvedToday?'◆ Solved today’s puzzle':'◆ Hasn’t played today’s puzzle')+(f.puzzleStreak?` · ${f.puzzleStreak}-day streak`:'');
@@ -85,15 +85,20 @@
     $('frNewCode').dataset.confirm='';$('frNewCode').textContent='Get a new code';
     act('/api/friends/new-code',{},'You have a new friend code. Friends you already added stay.');
   };
-  $('frSignIn')?.addEventListener('click',e=>{e.preventDefault();if(typeof show==='function')show('profile')});
-  // Refresh when the page opens, and every minute while it stays open, so "active now" stays current.
-  const open=()=>{status('');confirmId=null;load();clearInterval(poll);poll=setInterval(()=>{if($('friends').classList.contains('active'))load();else clearInterval(poll)},60000)};
-  document.querySelectorAll('[data-view="friends"]').forEach(b=>b.addEventListener('click',open));
-  // ?friend=CODE from an invite link: open Friends with the code ready to add.
+  // Signed out: the account sign-in is further down the same Profile page.
+  $('frSignIn')?.addEventListener('click',e=>{e.preventDefault();$('accountPanel')?.scrollIntoView({behavior:'smooth',block:'center'});$('accountName')?.focus({preventScroll:true})});
+  // Refresh when Profile opens, and every minute while it stays open and on screen, so "active now" stays current.
+  const onProfile=()=>document.getElementById('profile')?.classList.contains('active');
+  const open=()=>{status('');confirmId=null;load();clearInterval(poll);poll=setInterval(()=>{if(!onProfile())clearInterval(poll);else if(document.visibilityState==='visible')load()},60000)};
+  document.addEventListener('rivl:view',e=>{if(e.detail==='profile')open()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&onProfile())load()});
+  // Signing in or out on Profile shows or hides the friends list straight away.
+  document.addEventListener('rivl:account',()=>{if(onProfile())load()});
+  // ?friend=CODE from an invite link: open Profile at Friends with the code ready to add.
   const invited=new URLSearchParams(location.search).get('friend');
   if(invited){
     $('frInput').value=invited.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
     window.history.replaceState(null,'',location.pathname); // window.: script.js has its own global named history
-    setTimeout(()=>{if(typeof show==='function')show('friends');open();status(account()?'Press ADD FRIEND to add them.':'Sign in, then come back here to add your friend.')},0);
+    setTimeout(()=>{if(typeof show==='function')show('friends');status(account()?'Press ADD FRIEND to add them.':'Sign in, then come back here to add your friend.')},0);
   }
 })();

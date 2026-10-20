@@ -687,7 +687,24 @@ console.log('PASS: '+checks+' room server checks');
   const added=(await api(env,'/api/friends/add',{key:acc[0].key,code:ben.code.slice(0,4).toLowerCase()+'-'+ben.code.slice(4)})).data;
   assert.equal(added.added,'Ben','codes work in lower case with a dash');
   assert.deepEqual(added.friends.map(f=>f.name),['Ben']);
-  assert.ok(added.friends[0].lastSeen&&'solvedToday' in added.friends[0]&&'puzzleStreak' in added.friends[0]&&added.friends[0].league);
+  assert.ok('solvedToday' in added.friends[0]&&'puzzleStreak' in added.friends[0]&&added.friends[0].league);
+  // "Active now" comes only from the on-screen heartbeat. Signing in or loading the friends list doesn't count.
+  assert.equal(added.friends[0].online,false,'Ben has only loaded his friends list, so he is not online');
+  assert.equal(added.friends[0].seenAgo,null);
+  await api(env,'/api/me',{key:acc[1].key});
+  assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.friends[0].online,false,'signing in alone is not presence');
+  assert.equal((await api(env,'/api/presence',{key:'x'.repeat(30)})).status,401);
+  await api(env,'/api/presence',{key:acc[1].key});
+  let seenBen=(await api(env,'/api/friends',{key:acc[0].key})).data.friends[0];
+  assert.ok(seenBen.online&&seenBen.seenAgo<1000,'a heartbeat makes Ben active now');
+  await api(env,'/api/presence',{key:acc[1].key,away:true});
+  seenBen=(await api(env,'/api/friends',{key:acc[0].key})).data.friends[0];
+  assert.ok(!seenBen.online&&seenBen.seenAgo!=null,'hiding the page ends "active now" at once, and last seen stays');
+  // A page that stops sending (no goodbye) drops off after the online window.
+  await api(env,'/api/presence',{key:acc[1].key});
+  env.DIRECTORY.instances.get('global').sql.exec('UPDATE accounts SET online_until=?,last_seen=? WHERE id=?',Date.now()-1,Date.now()-6*60000,acc[1].account.id);
+  seenBen=(await api(env,'/api/friends',{key:acc[0].key})).data.friends[0];
+  assert.ok(!seenBen.online&&seenBen.seenAgo>=6*60000,'a silent page drops off');
   assert.ok(!('key' in added.friends[0])&&!('friend_code' in added.friends[0]),'no secrets in the list');
   assert.deepEqual((await api(env,'/api/friends',{key:acc[1].key})).data.friends.map(f=>f.name),['Ada'],'friendship goes both ways');
   assert.equal((await api(env,'/api/friends/add',{key:acc[1].key,code:ada.code})).status,409,'already friends');

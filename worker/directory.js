@@ -7,6 +7,9 @@ import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 const R=globalThis.RivlRating;
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
 const FRIEND_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MAX_FRIENDS=100;
+// The page sends a presence heartbeat every 2 minutes while it's on screen (account.js), and says when it's hidden.
+// If that last message never arrives (a phone that loses signal), the player drops off "active now" after 5 minutes.
+const ONLINE_MS=5*60*1000;
 const LOBBY_TTL=15*60*1000,BOARD_TTL=10000;
 const day=()=>new Date().toISOString().slice(0,10);
 const hex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -47,8 +50,9 @@ export class Directory {
     this.sql.exec('CREATE TABLE IF NOT EXISTS puzzle_answers(account TEXT NOT NULL,day TEXT NOT NULL,choice TEXT NOT NULL,correct INTEGER NOT NULL,t INTEGER NOT NULL,PRIMARY KEY(account,day))');
     this.sql.exec('CREATE INDEX IF NOT EXISTS puzzle_answers_day ON puzzle_answers(day,choice)');
     // Friends: each account has a public friend code (separate from its secret sign-in code). Entering someone's
-    // code adds the friendship both ways; either side can remove it. last_seen powers "active now" in the list.
-    for(const [name,def] of [['friend_code','TEXT'],['last_seen','INTEGER']])
+    // code adds the friendship both ways; either side can remove it. last_seen is when the player last had RIVL open
+    // on screen, and online_until says how long that counts as "active now" (see presence below).
+    for(const [name,def] of [['friend_code','TEXT'],['last_seen','INTEGER'],['online_until','INTEGER']])
       if(!this.rows('PRAGMA table_info(accounts)').some(c=>c.name===name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
     this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_friend_code ON accounts(friend_code)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS friends(account TEXT NOT NULL,friend TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(account,friend))');
@@ -148,12 +152,15 @@ export class Directory {
       this.sql.exec('UPDATE accounts SET friend_code=? WHERE id=?',code,a.id);a.friend_code=code;return code;
     }
   }
-  seen(a){this.sql.exec('UPDATE accounts SET last_seen=? WHERE id=?',Date.now(),a.id)}
+  // Presence comes only from the page's heartbeat, which runs while RIVL is open and on screen. Loading the
+  // friends list or verifying a key doesn't count, so a tab left open in the background doesn't look online.
+  presence(a,away){const t=Date.now();this.sql.exec('UPDATE accounts SET last_seen=?,online_until=? WHERE id=?',t,away?0:t+ONLINE_MS,a.id)}
   friendList(a){
-    const today=day();
+    const today=day(),now=Date.now();
     return this.rows(`SELECT x.*,EXISTS(SELECT 1 FROM puzzle_answers p WHERE p.account=x.id AND p.day=?) AS solved FROM friends f JOIN accounts x ON x.id=f.friend
       WHERE f.account=? ORDER BY COALESCE(x.last_seen,0) DESC LIMIT ?`,today,a.id,MAX_FRIENDS)
-      .map(x=>({...this.publicAccount(x,false),lastSeen:x.last_seen||null,solvedToday:!!x.solved,puzzleStreak:this.puzzleStats(x.id).streak}));
+      // online and seenAgo are worked out here on the server's clock, so a phone with a wrong clock still shows them right.
+      .map(x=>({...this.publicAccount(x,false),lastSeen:x.last_seen||null,seenAgo:x.last_seen?Math.max(0,now-x.last_seen):null,online:(x.online_until||0)>now,solvedToday:!!x.solved,puzzleStreak:this.puzzleStats(x.id).streak}));
   }
   friendsReply(a){return this.reply({code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS})}
   reply(body,status=200){return Response.json(body,{status})}
@@ -214,7 +221,6 @@ export class Directory {
       if(path==='/accounts/me'||path==='/verify'){
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign-in code not recognised.'},401);
-        this.seen(a);
         return this.reply({account:path==='/verify'?this.publicAccount(a,false):this.selfAccount(a)});
       }
       if(path==='/accounts/google')return await this.google(body);
@@ -270,10 +276,15 @@ export class Directory {
         const mine=this.one('SELECT choice FROM puzzle_answers WHERE account=? AND day=?',a.id,String(body.day||''));
         return this.reply({choice:mine?.choice||null,counts:mine?this.puzzleCounts(body.day):null,stats:this.puzzleStats(a.id)});
       }
+      if(path==='/presence'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in again.'},401);
+        this.presence(a,!!body.away);
+        return this.reply({ok:true});
+      }
       if(path.startsWith('/friends')){
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign in to see your friends.'},401);
-        this.seen(a);
         if(path==='/friends')return this.friendsReply(a);
         if(path==='/friends/new-code'){this.friendCode(a,true);return this.friendsReply(a)}
         if(path==='/friends/add'){
