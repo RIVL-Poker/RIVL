@@ -33,6 +33,13 @@ export class Tournament {
   async load(night){
     if(!this.t)this.t=await this.state.storage.get('t')||null;
     if(!this.t&&validNight(night))this.t={night,startAt:startOf(night),status:'scheduled',players:{},tables:{},breaking:0,entrants:0,finishedAt:0,recorded:false};
+    // A night that hasn't started follows the current schedule, so a changed start time applies the same night.
+    // Anyone already signed up stays signed up, and the start alarm moves with it.
+    const t=this.t,start=t&&startOf(t.night);
+    if(t&&t.status==='scheduled'&&start!==t.startAt&&Date.now()<Math.min(start,t.startAt)){
+      t.startAt=start;
+      if(Object.keys(t.players).length){await this.save();await this.state.storage.setAlarm(start)}
+    }
     return this.t;
   }
   async save(){await this.state.storage.put('t',this.t)}
