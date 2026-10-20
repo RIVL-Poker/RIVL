@@ -1000,7 +1000,22 @@ body.in-game .table-scene .skyline,
   html.sidebar-collapsed .sidebar-toggle{position:static;margin:0 auto 22px}
   html.sidebar-collapsed .sidebar-toggle svg{transform:rotate(180deg)}
 }
-@media(max-width:850px){.sidebar-toggle{display:none}}
+/* Phones and small tablets: the toggle sits under the logo in the icon rail and opens the full sidebar over the page. */
+@media(max-width:850px){
+  .sidebar-toggle{position:static;margin:0 auto 22px;flex:0 0 auto}
+  .sidebar-toggle svg{transform:rotate(180deg)}
+  html.sidebar-open #app{padding-left:75px}
+  html.sidebar-open .sidebar{position:fixed;left:0;top:0;bottom:0;height:100dvh;width:min(260px,82vw);z-index:60;overflow-y:auto;padding:16px 14px;box-shadow:12px 0 40px #000c}
+  html.sidebar-open body::after{content:"";position:fixed;inset:0;z-index:59;background:#000a}
+  html.sidebar-open .brand{text-align:left;margin:0 0 18px 8px;padding-right:44px}
+  html.sidebar-open .brand span{font-size:18px}
+  html.sidebar-open .nav{font-size:15px;text-align:left;padding:14px 16px}
+  html.sidebar-open .nav:first-letter{font-size:inherit}
+  html.sidebar-open .season{display:block;margin-top:18px}
+  html.sidebar-open .sidebar-toggle{position:absolute;top:16px;right:14px;margin:0}
+  html.sidebar-open .sidebar-toggle svg{transform:none}
+}
+@media(max-width:520px){html.sidebar-open #app{padding-left:54px}}
 
 /* Full screen table (screen-modes.js): only the table, the match info and the action controls. */
 .fs-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
