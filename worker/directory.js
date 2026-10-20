@@ -7,9 +7,11 @@ import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 const R=globalThis.RivlRating;
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
 const FRIEND_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MAX_FRIENDS=100;
-// The page sends a presence heartbeat every 2 minutes while it's on screen (account.js), and says when it's hidden.
+// The page sends a presence heartbeat every minute while it's on screen (account.js), and says when it's hidden.
 // If that last message never arrives (a phone that loses signal), the player drops off "active now" after 5 minutes.
 const ONLINE_MS=5*60*1000;
+// An invite to a casual room shows for 15 minutes, or until the friend joins or says no thanks.
+const INVITE_MS=15*60*1000;
 const LOBBY_TTL=15*60*1000,BOARD_TTL=10000;
 const day=()=>new Date().toISOString().slice(0,10);
 const hex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -56,6 +58,8 @@ export class Directory {
       if(!this.rows('PRAGMA table_info(accounts)').some(c=>c.name===name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
     this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_friend_code ON accounts(friend_code)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS friends(account TEXT NOT NULL,friend TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(account,friend))');
+    // Invites to a casual room: one per pair of friends, the newest replacing the last. They reach the friend with their presence heartbeat.
+    this.sql.exec('CREATE TABLE IF NOT EXISTS invites(sender TEXT NOT NULL,friend TEXT NOT NULL,code TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(sender,friend))');
     // Nightly freeroll results: one row per player per night. Points are entrants minus place plus one, summed by month.
     this.sql.exec('CREATE TABLE IF NOT EXISTS freeroll_results(night TEXT NOT NULL,account TEXT NOT NULL,place INTEGER NOT NULL,entrants INTEGER NOT NULL,points INTEGER NOT NULL,PRIMARY KEY(night,account))');
     this.sql.exec('CREATE INDEX IF NOT EXISTS freeroll_results_place ON freeroll_results(place,night)');
@@ -161,6 +165,11 @@ export class Directory {
       WHERE f.account=? ORDER BY COALESCE(x.last_seen,0) DESC LIMIT ?`,today,a.id,MAX_FRIENDS)
       // online and seenAgo are worked out here on the server's clock, so a phone with a wrong clock still shows them right.
       .map(x=>({...this.publicAccount(x,false),lastSeen:x.last_seen||null,seenAgo:x.last_seen?Math.max(0,now-x.last_seen):null,online:(x.online_until||0)>now,solvedToday:!!x.solved,puzzleStreak:this.puzzleStats(x.id).streak}));
+  }
+  invitesFor(a){
+    this.sql.exec('DELETE FROM invites WHERE created<?',Date.now()-INVITE_MS);
+    return this.rows('SELECT i.sender,i.code,i.created,x.name,x.avatar,x.avatar_blocked FROM invites i JOIN accounts x ON x.id=i.sender WHERE i.friend=? ORDER BY i.created DESC LIMIT 5',a.id)
+      .map(i=>({from:i.sender,name:i.name,avatar:i.avatar_blocked?'':(i.avatar||''),code:i.code,created:i.created}));
   }
   friendsReply(a){return this.reply({code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS})}
   reply(body,status=200){return Response.json(body,{status})}
@@ -280,7 +289,7 @@ export class Directory {
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign in again.'},401);
         this.presence(a,!!body.away);
-        return this.reply({ok:true});
+        return this.reply({ok:true,invites:body.away?[]:this.invitesFor(a)});
       }
       if(path.startsWith('/friends')){
         const a=await this.byKey(body.key);
@@ -302,7 +311,20 @@ export class Directory {
           this.sql.exec('INSERT OR IGNORE INTO friends(account,friend,created) VALUES (?,?,?)',f.id,a.id,t);
           return this.reply({added:f.name,code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS});
         }
+        if(path==='/friends/invite'){
+          const code=String(body.code||'').toUpperCase();
+          if(!/^[A-Z2-9]{6}$/.test(code))return this.reply({error:'Create a room first, then invite friends to it.'},400);
+          const f=this.one('SELECT x.name FROM friends JOIN accounts x ON x.id=friends.friend WHERE friends.account=? AND friends.friend=?',a.id,String(body.id||''));
+          if(!f)return this.reply({error:'You can only invite your friends.'},400);
+          this.sql.exec('INSERT OR REPLACE INTO invites(sender,friend,code,created) VALUES (?,?,?,?)',a.id,String(body.id),code,Date.now());
+          return this.reply({ok:true,invited:f.name});
+        }
+        if(path==='/friends/dismiss-invite'){
+          this.sql.exec('DELETE FROM invites WHERE friend=? AND sender=?',a.id,String(body.from||''));
+          return this.reply({ok:true,invites:this.invitesFor(a)});
+        }
         if(path==='/friends/remove'){
+          this.sql.exec('DELETE FROM invites WHERE (sender=? AND friend=?) OR (sender=? AND friend=?)',a.id,String(body.id||''),String(body.id||''),a.id);
           this.sql.exec('DELETE FROM friends WHERE (account=? AND friend=?) OR (account=? AND friend=?)',a.id,String(body.id||''),String(body.id||''),a.id);
           return this.friendsReply(a);
         }

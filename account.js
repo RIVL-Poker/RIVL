@@ -36,15 +36,17 @@
     window.refreshRatingUI?.();
   }
   function setAccount(account,key,via){const was=state?.key;state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render();if(state?.key!==was){if(state)onScreen();document.dispatchEvent(new Event('rivl:account'))}}
-  // Presence for friends' "active now": a heartbeat every 2 minutes while this page is on screen, and a last
+  // Presence for friends' "active now": a heartbeat every minute while this page is on screen, and a last
   // message when it's hidden or closed. A background tab or a locked phone sends nothing, so it drops off.
-  const HEARTBEAT_MS=2*60*1000;let beat=null;
+  // The reply carries any game invites from friends, which friends.js shows (rivl:invites).
+  const HEARTBEAT_MS=60*1000;let beat=null;
   function presence(away){
     if(!state||!API)return;
     const url=API.replace(/\/$/,'')+'/api/presence',body=JSON.stringify(away?{key:state.key,away:true}:{key:state.key});
     if(away&&navigator.sendBeacon){try{if(navigator.sendBeacon(url,body))return}catch{}}
     // A plain-text body keeps this a simple request; the server reads it as JSON either way.
-    fetch(url,{method:'POST',body,keepalive:true}).catch(()=>{});
+    fetch(url,{method:'POST',body,keepalive:true}).then(r=>r.ok?r.json():null)
+      .then(d=>{if(!away&&d?.invites)document.dispatchEvent(new CustomEvent('rivl:invites',{detail:d.invites}))}).catch(()=>{});
   }
   function onScreen(){
     clearInterval(beat);beat=null;

@@ -2040,6 +2040,26 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
 .fr-seen.on{color:#6fe0a0;font-weight:700}
 .fr-puzzle{font-size:12px;color:#bfb6a8}
 .fr-remove{flex:0 0 auto}
+.room-invite{margin:0 0 16px}
+.room-invite h3{margin:0;color:var(--gold);letter-spacing:.14em;font-size:13px}
+.room-invite-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin-bottom:6px}
+.room-invite-head span{color:#bfb6a8;font-size:12px}
+.room-invite-list{max-height:280px;overflow-y:auto}
+.room-invite-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #2e241a}
+.room-invite-row:first-child{border-top:0}
+.room-invite-row .fr-avatar{flex-basis:38px;width:38px;height:38px;font-size:15px}
+.room-invite-row .fr-main strong{font-size:15px}
+.room-invite-row .fr-seen{font-size:12px;color:#bfb6a8}.room-invite-row .fr-seen.on{color:#6fe0a0}
+.room-invite-row button{flex:0 0 auto;width:auto;margin:0;padding:8px 14px}
+.room-invite-status{min-height:1.2em;margin:8px 0 0;color:#ff9a8a;font-size:13px}
+.room-invite-status.ok{color:#6fe0a0}
+.invite-toast{position:fixed;z-index:1000;left:50%;top:16px;transform:translateX(-50%);width:min(520px,calc(100% - 32px));display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:#17120d;border:1px solid var(--gold);box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.invite-toast[hidden]{display:none}
+.invite-toast .fr-avatar{flex-basis:40px;width:40px;height:40px;font-size:16px}
+.invite-toast-text{flex:1;min-width:0;display:grid;gap:2px;font-size:13px;color:#d8cfc2}
+.invite-toast-text strong{color:#fff;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.invite-toast button{flex:0 0 auto;width:auto;margin:0;padding:9px 14px}
+@media(max-width:520px){.invite-toast{flex-wrap:wrap}.invite-toast-text{flex-basis:calc(100% - 56px)}.invite-toast button{flex:1}}
 @media(max-width:900px){.fr-top{grid-template-columns:1fr}}
 @media(max-width:600px){
   .fr-code{font-size:28px}

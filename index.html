@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=sidebar-drawer-20261020">
+    <link rel="stylesheet" href="style.css?v=friend-invites-20261020">
     <script src="screen-modes.js?v=sidebar-drawer-20261020"></script>
 </head>
 
@@ -97,6 +97,11 @@
                 <div class="room-topline"><h2>ROOM <span id="roomCodeLabel"></span></h2><button class="outline" id="leaveRoom">LEAVE ROOM</button></div>
                 <div class="room-visibility"><span>Visibility</span><button id="roomPrivate" class="gold">PRIVATE</button><button id="roomPublic" class="outline">PUBLIC</button><button id="copyRoomCode" class="outline">COPY CODE</button></div>
                 <p id="roomHostNotice"></p>
+                <div id="roomInvite" class="panel room-invite" hidden>
+                  <div class="room-invite-head"><h3>INVITE FRIENDS</h3><span id="roomInviteHint">They get a pop-up to join this room.</span></div>
+                  <div id="roomInviteList" class="room-invite-list"></div>
+                  <p id="roomInviteStatus" class="room-invite-status" role="status"></p>
+                </div>
                 <div id="roomSeats" class="room-seats"></div>
                 <div id="roomBotPicker" class="rivl-modal-backdrop" hidden role="presentation"><div class="rivl-modal" role="dialog" aria-modal="true" aria-labelledby="botPickerTitle"><h3 id="botPickerTitle">ADD BOT</h3><div class="room-levels"><button data-level="Beginner">BEGINNER</button><button data-level="Intermediate">INTERMEDIATE</button><button data-level="Advanced">ADVANCED</button><button data-level="Expert">EXPERT</button></div><button class="outline" id="cancelBotPicker">CANCEL</button></div></div>
                 <button class="gold" id="roomStart" disabled>START MATCH</button>
@@ -473,6 +478,7 @@
             <p class="rivl-welcome-legal">Free play-money poker for ages 18+. No real money. By playing you agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
         </div>
     </div>
+    <div id="inviteToast" class="invite-toast" role="alert" hidden><span class="fr-avatar" id="inviteToastPic"></span><div class="invite-toast-text"><strong id="inviteToastName"></strong><span>invited you to a casual game</span></div><button type="button" class="gold" id="inviteToastJoin">JOIN</button><button type="button" class="outline" id="inviteToastNo">NO THANKS</button></div>
     <script src="welcome-support.js"></script>
     <script src="league-icons.js"></script>
     <script src="profile.js"></script>
