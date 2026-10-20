@@ -389,7 +389,8 @@ export class Room {
   endStreet(){
     const g=this.room.game;
     const alive=g.players.filter(p=>!p.folded);
-    if(alive.length===1){alive[0].stack+=g.pot;g.winners=[{seat:alive[0].seat,name:alive[0].name,amount:g.pot}];g.result=alive[0].name+' wins '+g.pot+' (everyone folded)';g.pot=0;g.phase='showdown';g.shown=[];g.turn=-1;g.deadline=0;return}
+    // A bot that wins without a showdown turns its cards over; a person keeps theirs hidden, as at a real table.
+    if(alive.length===1){alive[0].stack+=g.pot;g.winners=[{seat:alive[0].seat,name:alive[0].name,amount:g.pot}];g.result=alive[0].name+' wins '+g.pot+' (everyone folded)';g.pot=0;g.phase='showdown';g.shown=alive[0].bot?[alive[0].seat]:[];g.turn=-1;g.deadline=0;return}
     if(g.phase==='river'||alive.filter(p=>!p.allIn).length<2){this.finishHand();return}
     g.deck.pop();const count=g.phase==='preflop'?3:1;
     for(let i=0;i<count;i++)g.board.push(g.deck.pop());

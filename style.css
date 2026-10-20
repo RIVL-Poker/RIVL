@@ -432,6 +432,8 @@ body.rivl-modal-open{overflow:hidden}
  #roomGame .rivl-pvp-seat.shown-right .rivl-shown,#roomGame .rivl-pvp-seat.shown-left .rivl-shown{top:50%;bottom:auto;transform:translateY(-50%)}
  #roomGame .rivl-pvp-seat.shown-right .rivl-shown{left:calc(100% + 4px)}
  #roomGame .rivl-pvp-seat.shown-left .rivl-shown{left:auto;right:calc(100% + 4px)}
+ /* The top-centre seat sits just above the board, so its cards go beside the pill instead of onto the board. */
+ #roomGame .rivl-pvp-seat.shown-below:not(.shown-left):not(.shown-right) .rivl-shown{top:50%;left:calc(100% + 4px);transform:translateY(-50%)}
 }
 /* Leave room above the felt so top seats never sit on the rim label. */
 #roomGame .rivl-pvp-scene .skyline{margin-bottom:30px}
