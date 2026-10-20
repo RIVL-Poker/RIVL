@@ -729,7 +729,7 @@ console.log('PASS: '+checks+' room server checks');
       for(let i=0;i<size;i++)accts.push((await api(env,'/api/accounts',{name:'Player'+String(i).padStart(2,'0')})).data);
       const T=()=>env.TOURNEYS.instances.get(night);
       now=start-2*3600000;
-      assert.equal((await api(env,'/api/freeroll/register',{key:accts[0].key})).status,409,'sign-up opens an hour before');
+      assert.equal((await api(env,'/api/freeroll/register',{key:accts[0].key})).status,409,'sign-up opens 45 minutes before');
       assert.equal((await api(env,'/api/freeroll/register',{})).status,401,'signed-in players only');
       now=start-30*60000;
       for(const a of accts.slice(0,size-late)){const r=await api(env,'/api/freeroll/register',{key:a.key});assert.equal(r.status,200,r.data.error)}

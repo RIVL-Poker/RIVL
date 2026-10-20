@@ -1,8 +1,8 @@
-/* Nightly freeroll: one free tournament every night at 9 PM Eastern for up to 40 signed-in players.
+/* Nightly freeroll: one free tournament every night at 9 PM Central for up to 40 signed-in players.
    One Tournament object per night owns sign-ups, the blind clock, chip counts and who sits where. The tables are
    ordinary Room objects in tournament mode: after every hand a table reports its stacks here and is told who to
    keep, who to seat, who moves to another table and who is out. No real money, no Elo; just places and points. */
-export const FREEROLL={cap:40,stack:5000,levelMs:6*60000,regOpensMs:60*60000,lateRegMs:10*60000,tableSize:9,maxMs:4*3600000,startHour:21,zone:'America/New_York'};
+export const FREEROLL={cap:40,stack:5000,levelMs:6*60000,regOpensMs:45*60000,lateRegMs:10*60000,tableSize:9,maxMs:4*3600000,startHour:21,zone:'America/Chicago'};
 // Blinds by level (six minutes each), sized for 5,000-chip stacks so a full field finishes in about an hour and a half.
 export const FREEROLL_BLINDS=[[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[400,800],[500,1000],[700,1400],[1000,2000],[1500,3000],[2000,4000],[3000,6000],[4000,8000],[6000,12000],[8000,16000],[10000,20000],[15000,30000],[20000,40000],[30000,60000],[50000,100000]];
 const FIRST_HAND_MS=20000,WATCH_MS=60000,STALE_MS=3*60000;
@@ -13,13 +13,13 @@ function zoneOffset(t){
   const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:FREEROLL.zone,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).formatToParts(t).map(x=>[x.type,x.value]));
   return Math.round((Date.UTC(+p.year,p.month-1,+p.day,+p.hour,+p.minute,+p.second)-Math.floor(t/1000)*1000)/60000);
 }
-// 9 PM Eastern on the given date, as a UTC timestamp (daylight saving included).
+// 9 PM Central on the given date, as a UTC timestamp (daylight saving included).
 export function startOf(night){
   const wall=Date.parse(night+'T00:00:00Z')+FREEROLL.startHour*3600000;
   const guess=wall-zoneOffset(wall)*60000;
   return wall-zoneOffset(guess)*60000;
 }
-// Tonight's freeroll. The night rolls over at 4 AM Eastern so a tournament running past midnight stays "tonight".
+// Tonight's freeroll. The night rolls over at 4 AM Central so a tournament running past midnight stays "tonight".
 export function nightOf(now=Date.now()){return new Date(now+zoneOffset(now)*60000-4*3600000).toISOString().slice(0,10)}
 const nextNight=night=>new Date(Date.parse(night+'T12:00:00Z')+86400000).toISOString().slice(0,10);
 export const validNight=n=>typeof n==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(n)&&new Date(Date.parse(n+'T00:00:00Z')).toISOString().slice(0,10)===n;
@@ -36,7 +36,7 @@ export class Tournament {
     return this.t;
   }
   async save(){await this.state.storage.put('t',this.t)}
-  // Registration opens an hour before the start and stays open for the first ten minutes of play.
+  // Registration opens 45 minutes before the start and stays open for the first ten minutes of play.
   phase(now=Date.now()){
     const t=this.t;
     if(t.status==='running'||t.status==='finished'||t.status==='cancelled')return t.status;
@@ -202,7 +202,7 @@ export class Tournament {
       if(!a?.id)return this.reply({error:'Sign in to play the freeroll.'},401);
       if(t.players[a.id])return this.reply(this.view(now));
       const late=status==='running'&&now<t.startAt+FREEROLL.lateRegMs;
-      if(status==='scheduled')return this.reply({error:'Sign-up opens an hour before the start.'},409);
+      if(status==='scheduled')return this.reply({error:'Sign-up opens 45 minutes before the start.'},409);
       if(status!=='registering'&&!late)return this.reply({error:status==='finished'||status==='cancelled'||status==='running'?'Sign-up for tonight has closed.':'The freeroll is starting. Sign-up has closed.'},409);
       if(Object.keys(t.players).length>=FREEROLL.cap)return this.reply({error:`Tonight's freeroll is full (${FREEROLL.cap} players).`},409);
       const p={id:a.id,name:a.name,avatar:/^data:image\//.test(a.avatar||'')?a.avatar:'',stack:FREEROLL.stack,table:0,token:'',seated:false,place:null,handStart:FREEROLL.stack,at:now};
