@@ -1,6 +1,8 @@
 /* RIVL — Cloudflare Worker + Durable Objects. Serves the site (static assets), runs poker rooms,
    and talks to the Directory (accounts, online ratings, lobby, free-plan budget). */
 export {Directory} from './directory.js';
+export {Tournament} from './tournament.js';
+import {nightOf} from './tournament.js';
 import {gradeDecision} from './grading.js';
 import {verifyGoogleToken} from './google.js';
 import {cleanReport,sendBugReport,BUG_MAX_CHARS} from './bug-report.js';
@@ -37,6 +39,15 @@ const cache=new Map();
 async function cached(env,path,ttl){
   const hit=cache.get(path);if(hit&&Date.now()-hit.t<ttl)return hit.value;
   const value=await dir(env,path);if(value.status===200)cache.set(path,{t:Date.now(),value});return value;
+}
+// One Tournament object per night runs the nightly freeroll (see worker/tournament.js).
+async function tourney(env,night,path,body){
+  const response=await env.TOURNEYS.get(env.TOURNEYS.idFromName(night)).fetch('https://t'+path,{method:'POST',body:JSON.stringify({...body,night})});
+  return {status:response.status,data:await response.json()};
+}
+async function cachedTourney(env,night){
+  const key='freeroll:'+night,hit=cache.get(key);if(hit&&Date.now()-hit.t<3000)return hit.value;
+  const value=await tourney(env,night,'/view',{});if(value.status===200)cache.set(key,{t:Date.now(),value});return value;
 }
 // Ranked is matchmaking only: tables fill from the queue, start on their own, and are never joined by code.
 const RANKED_SIZES=[3,6,9],RANKED_COUNTDOWN_MS=15000;
@@ -89,6 +100,11 @@ export default {
           const pz=puzzleFor(url.searchParams.get('day')||undefined);
           return pz?json(publicPuzzle(pz)):json({error:'No puzzle for that day.'},404);
         }
+        if(url.pathname==='/api/freeroll'){
+          if(!env.TOURNEYS)return json({error:'The freeroll is not available.'},404);
+          const r=await cachedTourney(env,nightOf());return json(r.status===200?{...r.data,serverNow:Date.now()}:r.data,r.status);
+        }
+        if(url.pathname==='/api/freeroll/board')return send(await cached(env,'/freeroll/board?night='+nightOf(),30000));
         if(url.pathname==='/api/lobby')return send(await cached(env,'/lobby',5000));
         if(url.pathname==='/api/leaderboard')return send(await cached(env,'/leaderboard',10000));
         if(url.pathname==='/api/leaderboard/league'){
@@ -153,6 +169,18 @@ export default {
         if(!pz.today||!body.key)return json({choice,saved:false,counts:(await cached(env,'/puzzle/counts?day='+pz.day,10000)).data.counts||null,...reveal(pz)});
         const r=await dir(env,'/puzzle/answer',{key:body.key,day:pz.day,choice,correct:choice===pz.p.best});
         return r.status===200?json({...r.data,saved:true,...reveal(pz)}):send(r);
+      }
+      const freeroll=url.pathname.match(/^\/api\/freeroll\/(register|unregister|seat)$/);
+      if(freeroll){
+        if(!env.TOURNEYS)return json({error:'The freeroll is not available.'},404);
+        if(freeroll[1]!=='seat'&&await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        const body=await readBody(request);
+        if(!body.key)return json({error:'Sign in to play the freeroll.'},401);
+        const me=await dir(env,'/verify',{key:body.key});
+        if(me.status!==200||!me.data.account)return json({error:'Your sign-in code was not recognised. Sign in again.'},401);
+        const night=nightOf();cache.delete('freeroll:'+night);
+        const r=await tourney(env,night,'/'+freeroll[1],{account:me.data.account});
+        return send(r);
       }
       const friends=url.pathname.match(/^\/api\/friends(\/add|\/remove|\/new-code)?$/);
       if(friends){
@@ -234,6 +262,7 @@ export class Room {
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
+      tourney:this.room.tourney?{table:this.room.tourney.table,info:this.room.tourney.info||null,blinds:this.room.tourney.blinds||null,done:!!this.room.tourney.done}:null,
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,sbSeat:g.sbSeat??-1,bbSeat:g.bbSeat??-1,
         winners:g.winners||[],result:g.result||'',note:g.note||'',ratingChanges:g.ratingChanges||null,matchOver:this.matchOver(g),nextHandAt:g.nextHandAt||0,legal:m?this.legal(m.seat):null}:null};
@@ -269,13 +298,14 @@ export class Room {
       }
     }
     await this.syncLobby();
-    if(this.matchOver(g))await this.armAlarm(room.lastActive+IDLE_MS);
+    if(room.tourney)await this.tArm();
+    else if(this.matchOver(g))await this.armAlarm(room.lastActive+IDLE_MS);
     else if(g.phase==='showdown'){g.nextHandAt||=Date.now()+NEXT_HAND_MS;this.alarmAt=0;await this.armAlarm(g.nextHandAt)}
     await this.state.storage.put('room',room);this.broadcast();
   }
   // Public rooms with open seats that have not started are listed in the lobby.
   async syncLobby(){
-    const room=this.room;if(!room.code)return;
+    const room=this.room;if(!room.code||room.tourney)return;
     const humans=Object.keys(room.members).length,players=room.seats.filter(Boolean).length;
     const listed=room.ranked?!room.started&&players<rankedSize(room)&&humans>0:room.visibility==='public'&&this.matchOver(room.game)&&players<9&&humans>0;
     const sig=listed?[humans,players,room.seats.find(s=>s?.isHost)?.name].join('|'):'';
@@ -338,13 +368,13 @@ export class Room {
     const old=previous||this.room.game;
     // A seat missing from the previous hand busted out earlier in this match; only a fresh match starts at 1,000.
     const carried=i=>old?.players.find(p=>p.seat===i);
-    const participants=this.room.seats.flatMap((s,i)=>s?[{seat:i,name:s.name,bot:s.type==='bot',stack:old?carried(i)?.stack??0:1000,bet:0,contribution:0,folded:false,allIn:false,away:!!carried(i)?.away,timeouts:carried(i)?.timeouts||0}]:[]).filter(p=>p.stack>0);
+    const participants=this.room.tourney?this.tParticipants(old):this.room.seats.flatMap((s,i)=>s?[{seat:i,name:s.name,bot:s.type==='bot',stack:old?carried(i)?.stack??0:1000,bet:0,contribution:0,folded:false,allIn:false,away:!!carried(i)?.away,timeouts:carried(i)?.timeouts||0}]:[]).filter(p=>p.stack>0);
     if(old)this.eliminate(old.players.filter(p=>!participants.some(x=>x.seat===p.seat)).map(p=>p.seat));
     if(participants.length<2||!participants.some(p=>!p.bot)){
       if(old){old.phase='showdown';old.result='Match complete';old.turn=-1;old.deadline=0;old.nextHandAt=0;this.finishMatch(participants)}
       return;
     }
-    const handNumber=(old?.handNumber||0)+1,[smallBlind,bigBlind]=BLINDS[Math.min(BLINDS.length-1,Math.floor((handNumber-1)/8))];
+    const handNumber=(old?.handNumber||0)+1,[smallBlind,bigBlind]=this.room.tourney?.blinds||BLINDS[Math.min(BLINDS.length-1,Math.floor((handNumber-1)/8))];
     const g={phase:'preflop',handNumber,pot:0,board:[],players:participants,hands:{},deck:this.randomDeck(),turn:-1,deadline:0,currentBet:0,minRaise:bigBlind,smallBlind,bigBlind,acted:[],raiseLocked:[],streetRaises:0,winners:[],result:'',dealer:-1,nextHandAt:0,shown:[]};
     const alive=i=>participants.some(p=>p.seat===i);
     g.dealer=this.next(old?.dealer??8,alive);
@@ -508,6 +538,7 @@ export class Room {
   async alarm(){
     this.alarmAt=0;
     await this.load();const room=this.room;if(!room)return;
+    if(room.tourney)return this.tAlarm();
     const g=room.game,idleUntil=(room.lastActive||Date.now())+IDLE_MS;
     if(room.ranked&&!room.started&&room.startsAt){
       if(Date.now()<room.startsAt){await this.armAlarm(room.startsAt);return}
@@ -538,6 +569,97 @@ export class Room {
       if(++p.timeouts>=2)p.away=true;
       this.autoAdvance();
     }
+    await this.save();
+  }
+  // Freeroll tables: the Tournament object decides who sits here; this table deals, reports after each hand and follows its plan.
+  tourneyCall(path,body){
+    if(!this.env.TOURNEYS)return Promise.resolve(null);
+    return this.env.TOURNEYS.get(this.env.TOURNEYS.idFromName(this.room.tourney.id)).fetch('https://t'+path,{method:'POST',body:JSON.stringify({night:this.room.tourney.id,...body})})
+      .then(r=>r.ok?r.json():null).catch(()=>null);
+  }
+  seatT(p){
+    const room=this.room,id=String(p?.id||''),token=String(p?.token||'');if(!id||!token)return true;
+    const had=Object.entries(room.members).find(([,m])=>m.accountId===id);
+    if(had&&had[0]===token)return true;
+    const seat=had?had[1].seat:room.seats.findIndex(s=>s===null);
+    if(seat<0)return false;
+    if(had)delete room.members[had[0]];
+    else room.tourney.stacks[id]=Math.max(0,Math.floor(Number(p.stack)||0));
+    const name=cleanName(p.name,'Player');
+    room.members[token]={name,seat,accountId:id};
+    room.seats[seat]={type:'human',name,avatar:/^data:image\//.test(p.avatar||'')?p.avatar:name[0].toUpperCase(),isHost:false,verified:true};
+    return true;
+  }
+  tNotify(token,message){for(const [ws,t] of this.sockets())if(t===token){this.send(ws,{type:'freeroll',...message});try{ws.close(1000,'Freeroll')}catch{}}}
+  // Everyone seated with chips is dealt in. A player with no open connection sits out the hand (folded when it is their turn).
+  tParticipants(old){
+    const room=this.room,online=new Set(this.sockets().map(([,t])=>t));
+    return Object.entries(room.members).map(([token,m])=>{
+      const prev=old?.players.find(p=>p.seat===m.seat&&p.name===m.name),stack=room.tourney.stacks[m.accountId]??0;
+      return {seat:m.seat,name:m.name,bot:false,stack,start:stack,bet:0,contribution:0,folded:false,allIn:false,away:!online.has(token),timeouts:prev?.timeouts||0};
+    }).filter(p=>p.stack>0).sort((a,b)=>a.seat-b.seat);
+  }
+  async tArm(){
+    const t=this.room.tourney,g=this.room.game,now=Date.now();
+    let at;
+    if(t.done)at=Math.max(t.closeAt||0,now+60000);
+    else if(g&&g.phase!=='showdown')at=g.deadline||now+TURN_MS;
+    else if(g&&!t.waiting){g.nextHandAt||=now+NEXT_HAND_MS;at=Math.max(g.nextHandAt,t.wakeAt||0)}
+    else at=t.wakeAt||now+15000;
+    this.alarmAt=0;await this.armAlarm(at);
+  }
+  async tAlarm(){
+    const room=this.room,t=room.tourney,g=room.game,now=Date.now();
+    if(t.done){
+      t.closeAt||=now+10*60*1000;
+      if(now>=t.closeAt&&!this.sockets().length)return this.destroy();
+      await this.save();return;
+    }
+    if(!g||g.phase==='showdown'){
+      const due=Math.max(g&&!t.waiting?g.nextHandAt||0:0,t.wakeAt||0);
+      if(now<due-50){this.alarmAt=0;await this.armAlarm(due);return}
+      return this.tCycle();
+    }
+    if(now<g.deadline-50){this.alarmAt=0;await this.armAlarm(g.deadline);return}
+    const p=g.players.find(x=>x.seat===g.turn),legal=p&&this.legal(p.seat);
+    if(legal){this.applyAction(p.seat,legal.check?'check':'fold');if(++p.timeouts>=2)p.away=true}
+    this.autoAdvance();await this.save();
+  }
+  // Between hands: report stacks, follow the plan (knock-outs, moves, new seats, final standings), then deal.
+  async tCycle(halted=false){
+    const room=this.room,t=room.tourney,g=room.game;
+    const players=Object.values(room.members).map(m=>{
+      const p=g?.players.find(x=>x.seat===m.seat&&x.name===m.name);
+      if(p)t.stacks[m.accountId]=p.stack;
+      return {id:m.accountId,stack:t.stacks[m.accountId]??0,start:p?.start??t.stacks[m.accountId]??0};
+    });
+    const plan=await this.tourneyCall('/report',{table:t.table,players,halted});
+    if(!plan){t.wakeAt=Date.now()+10000;t.waiting=true;await this.save();return}
+    t.info=plan.info||t.info;t.blinds=plan.blinds||t.blinds;
+    const keep=new Set((plan.seats||[]).map(s=>s.id));
+    for(const [token,m] of Object.entries(room.members)){
+      if(keep.has(m.accountId))continue;
+      const id=m.accountId,entrants=plan.info?.entrants||0;
+      const note=plan.finished?{kind:'finished',place:plan.places?.[id]??null,entrants,winner:plan.winner}
+        :plan.out?.[id]?{kind:'out',place:plan.out[id].place,entrants}
+        :plan.moves?.[id]?{kind:'moved',table:plan.moves[id].table}:{kind:'moved',table:0};
+      this.tNotify(token,note);
+      delete room.members[token];room.seats[m.seat]=null;delete t.stacks[id];
+    }
+    for(const s of plan.seats||[])this.seatT(s);
+    if(plan.finished){
+      t.done=true;t.closeAt=Date.now()+10*60*1000;
+      if(g){g.result='Match complete';g.note=plan.note||(plan.winner?plan.winner+' wins tonight’s freeroll.':'');g.nextHandAt=0;g.turn=-1}
+      await this.save();return;
+    }
+    if(plan.close||!Object.keys(room.members).length)return this.destroy();
+    const seated=Object.values(room.members).filter(m=>(t.stacks[m.accountId]??0)>0).length;
+    if(seated<2){t.waiting=true;t.wakeAt=Date.now()+15000;await this.save();return}
+    // Freeroll hands count against the free daily budget like any other; past the hard limit the tournament ends by chip count.
+    const usage=await this.dir('/usage/hand',{});
+    if(usage&&!usage.ok&&!halted)return this.tCycle(true);
+    t.waiting=false;t.wakeAt=0;
+    this.startHand(g&&g.phase==='showdown'?g:null);
     await this.save();
   }
   reply(body,status=200){return Response.json(body,{status})}
@@ -578,8 +700,25 @@ export class Room {
       this.room.seats[0]={type:'human',name:host,avatar:a?.avatar||host[0].toUpperCase(),isHost:true,verified:!!a};
       await this.save();return this.reply({token,seat:0});
     }
+    if(path==='/t/setup'&&request.method==='POST'){
+      if(room)return this.reply({error:'Room code collision'},409);
+      const body=await request.json();
+      this.room={code:String(body.code||''),hostToken:null,ranked:false,rankedMax:9,visibility:'private',seats:Array(9).fill(null),members:{},started:false,game:null,
+        tourney:{id:String(body.tid),table:Number(body.table),wakeAt:Number(body.startsAt)||Date.now(),stacks:{},info:null,blinds:null,done:false,waiting:false}};
+      await this.save();return this.reply({ok:true});
+    }
     if(!room)return this.reply({error:'Room not found. Check the code.'},404);
+    if(path==='/t/add'&&request.method==='POST'){
+      if(!room.tourney||room.tourney.done)return this.reply({error:'Not a freeroll table'},409);
+      const body=await request.json();
+      for(const p of Array.isArray(body.players)?body.players:[])if(!this.seatT(p))return this.reply({error:'Table is full'},409);
+      // A table waiting for opponents deals as soon as someone is seated with it.
+      if(room.tourney.waiting){room.tourney.waiting=false;room.tourney.wakeAt=Date.now()+1500}
+      await this.save();return this.reply({ok:true});
+    }
+    if(path==='/t/poke'){if(room.tourney){this.alarmAt=0;await this.save()}return this.reply({ok:true})}
     if(path==='/join'&&request.method==='POST'){
+      if(room.tourney)return this.reply({error:'Freeroll tables are seated by the tournament.'},403);
       if(room.started&&!this.matchOver(room.game))return this.reply({error:'Match already in progress'},409);
       const body=await request.json(),a=await account(body.key);
       if(body.key&&!a)return this.reply({error:'Your sign-in code was not recognised. Sign in again.'},401);
@@ -639,7 +778,11 @@ export class Room {
         for(const [client] of this.sockets())this.send(client,{type:'chat',message:entry});
         return;
       }
-      if(msg.type==='leave')return this.removeMember(token,'You left the room');
+      if(msg.type==='leave'){
+        // Leaving a freeroll table keeps the seat: hands are folded until the player comes back.
+        if(room.tourney){const p=room.game?.players.find(x=>x.seat===member.seat);if(p&&!this.matchOver(room.game))p.away=true;try{ws.close(1000,'Left the table')}catch{}await this.save();return}
+        return this.removeMember(token,'You left the room');
+      }
       if(msg.type==='action'){
         if(this.matchOver(room.game))throw Error('Match not started');
         const p=room.game.players.find(x=>x.seat===member.seat);

@@ -52,6 +52,9 @@ export class Directory {
       if(!this.rows('PRAGMA table_info(accounts)').some(c=>c.name===name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
     this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_friend_code ON accounts(friend_code)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS friends(account TEXT NOT NULL,friend TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(account,friend))');
+    // Nightly freeroll results: one row per player per night. Points are entrants minus place plus one, summed by month.
+    this.sql.exec('CREATE TABLE IF NOT EXISTS freeroll_results(night TEXT NOT NULL,account TEXT NOT NULL,place INTEGER NOT NULL,entrants INTEGER NOT NULL,points INTEGER NOT NULL,PRIMARY KEY(night,account))');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS freeroll_results_place ON freeroll_results(place,night)');
     // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
     this.boards=new Map();
   }
@@ -292,6 +295,23 @@ export class Directory {
           this.sql.exec('DELETE FROM friends WHERE (account=? AND friend=?) OR (account=? AND friend=?)',a.id,String(body.id||''),String(body.id||''),a.id);
           return this.friendsReply(a);
         }
+      }
+      if(path==='/freeroll/results'){
+        const night=String(body.night||''),entrants=Math.max(0,Math.floor(Number(body.entrants)||0));
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(night)||!Array.isArray(body.players))return this.reply({error:'Bad results'},400);
+        for(const p of body.players){
+          const place=Math.floor(Number(p?.place));if(!place||place<1||place>entrants)continue;
+          this.sql.exec('INSERT OR IGNORE INTO freeroll_results(night,account,place,entrants,points) VALUES (?,?,?,?,?)',night,String(p.id),place,entrants,entrants-place+1);
+        }
+        this.boards.clear();return this.reply({ok:true});
+      }
+      if(path==='/freeroll/board'){
+        const night=url.searchParams.get('night')||day(),month=night.slice(0,7);
+        return this.reply(this.board('freeroll:'+month,()=>({month,
+          leaders:this.rows(`SELECT a.*,SUM(f.points) AS pts,SUM(f.place=1) AS w,COUNT(*) AS n FROM freeroll_results f JOIN accounts a ON a.id=f.account
+            WHERE f.night LIKE ? GROUP BY f.account ORDER BY pts DESC,w DESC,a.name LIMIT 10`,month+'-%').map(a=>({...this.publicAccount(a,false),avatar:undefined,points:a.pts,wins:a.w,played:a.n})),
+          champions:this.rows(`SELECT f.night,f.entrants,a.* FROM freeroll_results f JOIN accounts a ON a.id=f.account WHERE f.place=1 ORDER BY f.night DESC LIMIT 7`)
+            .map(a=>({night:a.night,entrants:a.entrants,...this.publicAccount(a,false),avatar:undefined,wins:this.one('SELECT COUNT(*) AS n FROM freeroll_results WHERE account=? AND place=1',a.id).n}))})));
       }
       if(path==='/puzzle/counts')return this.reply({counts:this.puzzleCounts(url.searchParams.get('day')||day())});
       if(path==='/usage/room'||path==='/usage/hand'){

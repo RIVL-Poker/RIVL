@@ -1,7 +1,8 @@
 // Simulates the room server (worker/rooms.js) and the directory (worker/directory.js)
 // with in-memory storage, an in-memory SQLite database and fake sockets.
 // Run: node tests-worker.mjs
-import worker,{Room,Directory} from './worker/rooms.js';
+import worker,{Room,Directory,Tournament} from './worker/rooms.js';
+import {startOf,nightOf,FREEROLL} from './worker/tournament.js';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {PUZZLE_START} from './worker/puzzles.js';
@@ -237,6 +238,7 @@ function makeEnv(vars={}){
   const env={...vars};
   env.DIRECTORY=ns(()=>new Directory({storage:{sql:fakeSql()}},env));
   env.ROOMS=ns(()=>{const state=fakeState();const room=new Room(state,env);room.fakeState=state;return room});
+  env.TOURNEYS=ns(()=>new Tournament(fakeState(),env));
   return env;
 }
 async function api(env,path,body){
@@ -448,35 +450,6 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   assert.equal(calls,2,'idle alarm retries failed result delivery');
   assert.equal(room.room.pendingResults,null,'successful delivery clears pending results');
   assert.deepEqual(room.room.game.ratingChanges,[{id:'a'}]);
-  checks++;
-}
-
-// Friends: everyone has a public friend code; entering one adds the friendship both ways, and either side can remove it.
-{
-  const env=makeEnv(),acc=[];
-  for(const n of ['Ada','Ben','Cyd'])acc.push((await api(env,'/api/accounts',{name:n})).data);
-  assert.equal((await api(env,'/api/friends',{})).status,401,'friends need a sign-in');
-  const ada=(await api(env,'/api/friends',{key:acc[0].key})).data,ben=(await api(env,'/api/friends',{key:acc[1].key})).data;
-  assert.match(ada.code,/^[A-HJKMNP-Z2-9]{8}$/);assert.notEqual(ada.code,ben.code);assert.equal(ada.friends.length,0);
-  assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.code,ada.code,'the code stays the same');
-  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:ada.code})).status,400,'not yourself');
-  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:'ZZZZ-ZZZZ'})).status,404);
-  assert.equal((await api(env,'/api/friends/add',{key:acc[0].key,code:'abc'})).status,400);
-  const added=(await api(env,'/api/friends/add',{key:acc[0].key,code:ben.code.slice(0,4).toLowerCase()+'-'+ben.code.slice(4)})).data;
-  assert.equal(added.added,'Ben','codes work in lower case with a dash');
-  assert.deepEqual(added.friends.map(f=>f.name),['Ben']);
-  assert.ok(added.friends[0].lastSeen&&'solvedToday' in added.friends[0]&&'puzzleStreak' in added.friends[0]&&added.friends[0].league);
-  assert.ok(!('key' in added.friends[0])&&!('friend_code' in added.friends[0]),'no secrets in the list');
-  assert.deepEqual((await api(env,'/api/friends',{key:acc[1].key})).data.friends.map(f=>f.name),['Ada'],'friendship goes both ways');
-  assert.equal((await api(env,'/api/friends/add',{key:acc[1].key,code:ada.code})).status,409,'already friends');
-  // A new code stops the old one working; friends already added stay.
-  const fresh=(await api(env,'/api/friends/new-code',{key:acc[1].key})).data;
-  assert.notEqual(fresh.code,ben.code);assert.equal(fresh.friends.length,1);
-  assert.equal((await api(env,'/api/friends/add',{key:acc[2].key,code:ben.code})).status,404,'the old code no longer works');
-  assert.equal((await api(env,'/api/friends/add',{key:acc[2].key,code:fresh.code})).status,200);
-  const removed=(await api(env,'/api/friends/remove',{key:acc[1].key,id:acc[0].account.id})).data;
-  assert.deepEqual(removed.friends.map(f=>f.name),['Cyd']);
-  assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.friends.length,0,'removing ends it for both');
   checks++;
 }
 
@@ -727,6 +700,110 @@ console.log('PASS: '+checks+' room server checks');
   assert.deepEqual(removed.friends.map(f=>f.name),['Cyd']);
   assert.equal((await api(env,'/api/friends',{key:acc[0].key})).data.friends.length,0,'removing ends it for both');
   checks++;
+}
+
+// Nightly freeroll: sign-up rules, then whole tournaments played out on a fake clock. Every table reports after each hand;
+// players bust, move and get balanced; chips are never created or lost; places run 1..N; results reach the Directory.
+{
+  const realNow=Date.now;let now=realNow();Date.now=()=>now;
+  try{
+    async function freeroll(size,{late=0,vars={},check=true,allin=.2}={}){
+      const env=makeEnv(vars),night=nightOf(now),start=startOf(night),accts=[];
+      for(let i=0;i<size;i++)accts.push((await api(env,'/api/accounts',{name:'Player'+String(i).padStart(2,'0')})).data);
+      const T=()=>env.TOURNEYS.instances.get(night);
+      now=start-2*3600000;
+      assert.equal((await api(env,'/api/freeroll/register',{key:accts[0].key})).status,409,'sign-up opens an hour before');
+      assert.equal((await api(env,'/api/freeroll/register',{})).status,401,'signed-in players only');
+      now=start-30*60000;
+      for(const a of accts.slice(0,size-late)){const r=await api(env,'/api/freeroll/register',{key:a.key});assert.equal(r.status,200,r.data.error)}
+      let view=(await api(env,'/api/freeroll')).data;
+      assert.equal(view.status,size-late?'registering':'registering');assert.equal(view.entrants,size-late);
+      if(size-late>1){
+        await api(env,'/api/freeroll/unregister',{key:accts[0].key});
+        assert.equal(T().view().entrants,size-late-1,'players can drop out before the start');
+        await api(env,'/api/freeroll/register',{key:accts[0].key});
+      }
+      assert.equal((await api(env,'/api/freeroll/seat',{key:accts[0].key})).status,409,'no seats before the draw');
+      now=start;await T().alarm();await T().settle();
+      const t=T().t;
+      if(size-late<2){assert.equal(t.status,'cancelled');return {env,t}}
+      assert.equal(t.status,'running');
+      assert.equal(Object.keys(t.tables).length,Math.ceil((size-late)/9),'one table per nine players');
+      assert.equal((await api(env,'/api/freeroll/unregister',{key:accts[1].key})).status,409,'no dropping out once it starts');
+      const seat=(await api(env,'/api/freeroll/seat',{key:accts[1].key})).data;
+      assert.ok(seat.code&&seat.token,'a seated player gets their table');
+      now=start+4*60000;
+      for(const a of accts.slice(size-late)){const r=await api(env,'/api/freeroll/register',{key:a.key});assert.equal(r.status,200,r.data.error)}
+      await T().settle();
+      if(size>=FREEROLL.cap){const extra=(await api(env,'/api/accounts',{name:'LatePlayer'})).data;assert.equal((await api(env,'/api/freeroll/register',{key:extra.key})).status,409,'capped at 40')}
+      const total=size*FREEROLL.stack;
+      const rooms=()=>[...env.ROOMS.instances.values()].filter(r=>r.room?.tourney);
+      const sockets=new Map();
+      let steps=0,maxSeen=0;
+      while(t.status==='running'&&steps++<200000){
+        now+=2500;
+        // Every seated player stays connected (a reconnect after a move uses the new seat token).
+        const seen=new Map();
+        for(const room of rooms()){
+          const members=Object.entries(room.room.members);maxSeen=Math.max(maxSeen,members.length);
+          assert.ok(members.length<=9,'never more than nine at a table');
+          for(const [token,m] of members){
+            assert.ok(!seen.has(m.accountId),'nobody sits at two tables');seen.set(m.accountId,room.room.code);
+            const ws=sockets.get(token);if(!ws||ws.readyState!==1)sockets.set(token,await connect(room,room.fakeState,token));
+          }
+        }
+        // Chips across all tables and players waiting to move always add up to the starting total.
+        if(steps%50===0){
+          let sum=0;const counted=new Set();
+          for(const room of rooms()){const g=room.room.game;if(room.room.tourney.done)continue;
+            for(const m of Object.values(room.room.members)){counted.add(m.accountId);const p=g?.players.find(x=>x.seat===m.seat&&x.name===m.name);sum+=p?p.stack:room.room.tourney.stacks[m.accountId]??0}
+            if(g&&g.phase!=='showdown')sum+=g.pot;}
+          for(const p of Object.values(t.players))if(p.place==null&&!counted.has(p.id))sum+=p.stack;
+          assert.equal(sum,total,'chips conserved across tables');
+        }
+        for(const room of rooms()){
+          const g=room.room.game;if(room.room.tourney.done)continue;
+          if(g&&g.phase!=='showdown'){
+            const m=Object.entries(room.room.members).find(([,x])=>x.seat===g.turn),l=room.legal(g.turn);
+            if(m&&l&&Math.random()<.95){
+              const r=Math.random(),msg=r<.3?{action:'fold'}:r<.55?{action:l.check?'check':'call'}:r<.55+allin&&l.canRaise?{action:'allin'}:{action:l.check?'check':'call'};
+              await say(room,sockets.get(m[0]),{type:'action',...msg});
+            }else if(now>=g.deadline)await room.alarm();
+          }else if(room.fakeState.alarm&&now>=room.fakeState.alarm)await room.alarm();
+        }
+        await T().settle();
+        if(steps%40===0)await T().alarm();
+      }
+      if(process.env.FR_DEBUG)console.log('freeroll',size,'steps',steps,'status',t.status,'tables',Object.keys(t.tables).length,'maxSeen',maxSeen,'minutes',Math.round((now-startOf(night))/60000),'hands',env.DIRECTORY.instances.get('global')?.usage().hands,'note',t.note);
+      assert.equal(t.status,'finished','the freeroll finished');
+      const places=Object.values(t.players).map(p=>p.place).sort((a,b)=>a-b);
+      assert.deepEqual(places,Array.from({length:size},(_,i)=>i+1),'every player gets one place');
+      if(check){const winner=Object.values(t.players).find(p=>p.place===1);assert.equal(winner.stack,total,'the winner holds every chip')}
+      await T().settle();
+      return {env,t,accts,sockets,maxSeen};
+    }
+    // A full field of 40 (four of them late), a two-table field that merges into one, heads-up, and a night nobody comes.
+    const big=await freeroll(40,{late:4,allin:.03});
+    assert.ok(big.t.recorded,'results saved');
+    const board=(await api(big.env,'/api/freeroll/board')).data;
+    assert.equal(board.leaders[0].points,40,'the winner scores 40 points');assert.equal(board.champions.length,1);assert.equal(board.champions[0].wins,1);
+    assert.ok(!('avatar' in board.leaders[0]),'no photos in the board');
+    const view=(await api(big.env,'/api/freeroll')).data;
+    assert.equal(view.status,'finished');assert.equal(view.players[0].place,1);assert.equal(view.players.length,40);
+    assert.ok(!JSON.stringify(view).includes(big.t.players[big.accts[0].account.id].token),'seat tokens are never public');
+    const out=(await api(big.env,'/api/freeroll/seat',{key:big.accts[5].key}));assert.equal(out.status,410,'a busted player is told their place');
+    // Busted players were sent their place before their table let them go.
+    const told=[...big.sockets.values()].flatMap(ws=>ws.messages.filter(m=>m.type==='freeroll'));
+    assert.ok(told.some(m=>m.kind==='out'&&m.place>1)&&told.some(m=>m.kind==='finished'&&m.place===1),'knock-outs and the win are announced');
+    assert.ok(told.some(m=>m.kind==='moved'&&m.table>0),'players are moved to balance tables');
+    for(const n of [17,10,2])await freeroll(n);
+    await freeroll(40,{late:20});
+    await freeroll(1);
+    // Past the hard daily hand limit the freeroll stops and places go by chips.
+    const halted=await freeroll(6,{vars:{DAILY_HAND_LIMIT:'2'},check:false,allin:0});
+    assert.match(halted.t.note,/free daily limit/);
+    checks++;
+  }finally{Date.now=realNow}
 }
 
 console.log('PASS: '+checks+' room server checks');

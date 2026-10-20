@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=friends-20261020">
+    <link rel="stylesheet" href="style.css?v=freeroll-20261020">
     <script src="screen-modes.js"></script>
 </head>
 
@@ -15,7 +15,7 @@
     <div id="app">
         <aside class="sidebar">
             <div class="brand">♠ <span>RIVL</span></div>
-            <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav" data-view="puzzle">◆ &nbsp; Daily Puzzle</button><button class="nav" data-view="friends">♣ &nbsp; Friends</button><button class="nav"
+            <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav" data-view="freeroll">★ &nbsp; Freeroll</button><button class="nav" data-view="puzzle">◆ &nbsp; Daily Puzzle</button><button class="nav" data-view="friends">♣ &nbsp; Friends</button><button class="nav"
                     data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="leaderboard">♛ &nbsp;
                     Leaderboard</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button><button class="nav" data-view="support">? &nbsp; Support</button></nav>
             <div class="season"><small id="sideTier">ELO</small>
@@ -240,6 +240,30 @@
                 <p class="demo-notice" id="status"></p>
                 <div id="matchResult" class="match-result" hidden></div>
             </section>
+            <section id="freeroll" class="view content-view">
+                <h1>NIGHTLY FREEROLL</h1>
+                <div id="frlSignedOutNote" class="panel frl-signed-out" hidden><p>Sign in to play. The freeroll is free, and open to signed-in players only.</p><a href="#" id="frlSignIn" class="gold frl-signin-btn">SIGN IN</a></div>
+                <div id="frlResult" class="panel frl-result" hidden><strong id="frlResultTitle"></strong><p id="frlResultText"></p></div>
+                <div id="frlBody" hidden>
+                    <div class="panel frl-hero">
+                        <div class="frl-hero-main">
+                            <span class="frl-badge" id="frlBadge">TONIGHT</span>
+                            <h2 id="frlTitle"></h2>
+                            <p class="frl-when" id="frlWhen"></p>
+                            <p class="frl-sub" id="frlSub"></p>
+                            <div class="frl-actions"><button type="button" class="gold" id="frlAction"></button><button type="button" class="outline" id="frlSecondary" hidden></button></div>
+                            <p id="frlStatus" class="frl-status" role="status"></p>
+                        </div>
+                        <div class="frl-clock"><small id="frlCountLabel"></small><strong id="frlCount"></strong></div>
+                    </div>
+                    <div class="frl-facts" id="frlFacts"></div>
+                    <div class="frl-grid">
+                        <div class="panel frl-list-panel"><div class="frl-list-head"><h3 id="frlListTitle">PLAYERS</h3><span id="frlListCount"></span></div><div id="frlList" class="frl-list"></div></div>
+                        <div class="panel frl-list-panel"><div class="frl-list-head"><h3 id="frlMonth">POINTS</h3><span>TOP 10</span></div><div id="frlLeaders" class="frl-list"></div><div class="frl-list-head frl-champs-head"><h3>RECENT CHAMPIONS</h3></div><div id="frlChamps" class="frl-list"></div></div>
+                    </div>
+                    <p class="frl-fine">How it works: sign-up opens at 8:00 PM Eastern. Everyone starts with 5,000 chips at tables of up to nine, blinds go up every six minutes, and tables are balanced and merged as players are knocked out until one player has every chip. Free to play, no real money, and your Ranked Elo does not change. Points each night are the number of players minus your place, plus one.</p>
+                </div>
+            </section>
             <section id="puzzle" class="view content-view">
                 <h1>DAILY PUZZLE</h1>
                 <div class="pz-head"><p id="pzTitle" class="pz-title">One decision a day, the same for everyone.</p>
@@ -463,6 +487,7 @@
     <script src="table-themes.js"></script>
     <script src="puzzle.js"></script>
     <script src="friends.js"></script>
+    <script src="freeroll.js"></script>
 </body>
 
 </html>
