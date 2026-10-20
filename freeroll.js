@@ -1,4 +1,4 @@
-/* RIVL nightly freeroll page: a free tournament every night at 9 PM Central for up to 40 signed-in players.
+/* RIVL nightly freeroll page: a free tournament every night at 8 PM Central for up to 40 signed-in players.
    Sign up from an hour before, get taken to your table at the start, follow the blind clock and standings,
    and see the month's points race. The tables themselves are the normal online table screen (rooms.js). */
 (()=>{
@@ -76,9 +76,9 @@
 
   function hero(){
     const a=account(),d=data,mine=me(),st=d.status;
-    // Central-time players see "Tonight at 9:00 PM"; everyone else sees the Central time and their own.
+    // Central-time players see "Tonight at 8:00 PM"; everyone else sees the Central time and their own.
     const central=new Date(d.startAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'}),local=time(d.startAt)===central;
-    let badge='TONIGHT',title=local?`Tonight at ${central}`:`${central} Central`,sub=`Every night at 9:00 PM Central · ${d.cap} players max · free to play`,count='',countLabel='',primary=null,secondary=null;
+    let badge='TONIGHT',title=local?`Tonight at ${central}`:`${central} Central`,sub=`Every night at 8:00 PM Central · ${d.cap} players max · free to play`,count='',countLabel='',primary=null,secondary=null;
     const regOpen=st==='registering'||d.lateReg;
     if(st==='scheduled'){countLabel='STARTS IN';count=clock(d.startAt-now());primary={text:`SIGN-UP OPENS AT ${time(d.regOpensAt)}`,disabled:true}}
     else if(st==='registering'){countLabel='STARTS IN';count=clock(d.startAt-now());badge=mine?'YOU’RE IN':'SIGN-UP OPEN'}
@@ -181,6 +181,6 @@
   document.addEventListener('visibilitychange',()=>{if(active())load()});
   $('frlSignIn')?.addEventListener('click',e=>{e.preventDefault();show('profile')});
   window.rivlFreeroll={handle,refresh:open};
-  // Check once on page load so a registered player who opens the site at 9 PM is taken to their table.
+  // Check once on page load so a registered player who opens the site at 8 PM is taken to their table.
   if(API)setTimeout(()=>{if(account())load()},1500);
 })();

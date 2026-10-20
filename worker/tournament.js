@@ -1,8 +1,8 @@
-/* Nightly freeroll: one free tournament every night at 9 PM Central for up to 40 signed-in players.
+/* Nightly freeroll: one free tournament every night at 8 PM Central for up to 40 signed-in players.
    One Tournament object per night owns sign-ups, the blind clock, chip counts and who sits where. The tables are
    ordinary Room objects in tournament mode: after every hand a table reports its stacks here and is told who to
    keep, who to seat, who moves to another table and who is out. No real money, no Elo; just places and points. */
-export const FREEROLL={cap:40,stack:5000,levelMs:6*60000,regOpensMs:45*60000,lateRegMs:10*60000,tableSize:9,maxMs:4*3600000,startHour:21,zone:'America/Chicago'};
+export const FREEROLL={cap:40,stack:5000,levelMs:6*60000,regOpensMs:45*60000,lateRegMs:10*60000,tableSize:9,maxMs:4*3600000,startHour:20,zone:'America/Chicago'};
 // Blinds by level (six minutes each), sized for 5,000-chip stacks so a full field finishes in about an hour and a half.
 export const FREEROLL_BLINDS=[[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[400,800],[500,1000],[700,1400],[1000,2000],[1500,3000],[2000,4000],[3000,6000],[4000,8000],[6000,12000],[8000,16000],[10000,20000],[15000,30000],[20000,40000],[30000,60000],[50000,100000]];
 const FIRST_HAND_MS=20000,WATCH_MS=60000,STALE_MS=3*60000;
@@ -13,7 +13,7 @@ function zoneOffset(t){
   const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:FREEROLL.zone,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).formatToParts(t).map(x=>[x.type,x.value]));
   return Math.round((Date.UTC(+p.year,p.month-1,+p.day,+p.hour,+p.minute,+p.second)-Math.floor(t/1000)*1000)/60000);
 }
-// 9 PM Central on the given date, as a UTC timestamp (daylight saving included).
+// 8 PM Central on the given date, as a UTC timestamp (daylight saving included).
 export function startOf(night){
   const wall=Date.parse(night+'T00:00:00Z')+FREEROLL.startHour*3600000;
   const guess=wall-zoneOffset(wall)*60000;
