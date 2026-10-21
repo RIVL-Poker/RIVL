@@ -51,6 +51,8 @@ async function cachedTourney(env,night){
 }
 // Ranked is matchmaking only: tables fill from the queue, start on their own, and are never joined by code.
 const RANKED_SIZES=[3,6,9],RANKED_COUNTDOWN_MS=15000;
+// Ranked players can add 5 seconds to their own turn clock, three times per match.
+const RANKED_EXTENSIONS=3,EXTENSION_MS=5000;
 const rankedSize=room=>RANKED_SIZES.includes(Number(room?.rankedMax))?Number(room.rankedMax):6;
 const RANKED_SIGN_IN='Sign in or create an account to play Ranked.';
 const CLOSED_MESSAGE='Online play has used its free capacity for today. Bot practice still works. New rooms open again after midnight UTC.';
@@ -262,7 +264,8 @@ export class Room {
     const shown=g?.phase==='showdown'&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
-      chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
+      chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),
+      extensionsLeft:this.room.ranked&&this.room.match?.ranked&&m?Math.max(0,RANKED_EXTENSIONS-(this.room.match.extensions?.[m.seat]||0)):null,startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
       tourney:this.room.tourney?{table:this.room.tourney.table,info:this.room.tourney.info||null,blinds:this.room.tourney.blinds||null,done:!!this.room.tourney.done}:null,
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,sbSeat:g.sbSeat??-1,bbSeat:g.bbSeat??-1,
@@ -783,6 +786,15 @@ export class Room {
         // Leaving a freeroll table keeps the seat: hands are folded until the player comes back.
         if(room.tourney){const p=room.game?.players.find(x=>x.seat===member.seat);if(p&&!this.matchOver(room.game))p.away=true;try{ws.close(1000,'Left the table')}catch{}await this.save();return}
         return this.removeMember(token,'You left the room');
+      }
+      if(msg.type==='extend'){
+        if(!room.ranked||!room.match?.ranked||this.matchOver(room.game))throw Error('Time extensions are for Ranked matches');
+        if(!this.legal(member.seat))throw Error('You can add time only on your turn');
+        const used=room.match.extensions||={};
+        if((used[member.seat]||0)>=RANKED_EXTENSIONS)throw Error('No time extensions left this match');
+        used[member.seat]=(used[member.seat]||0)+1;room.game.deadline+=EXTENSION_MS;
+        const p=room.game.players.find(x=>x.seat===member.seat);if(p)p.timeouts=0;
+        await this.save();return;
       }
       if(msg.type==='action'){
         if(this.matchOver(room.game))throw Error('Match not started');
