@@ -238,6 +238,16 @@ export class Directory {
         if(typeof body.key==='string')this.sql.exec('DELETE FROM sessions WHERE key_hash=?',await sha256(body.key));
         return this.reply({ok:true});
       }
+      if(path==='/history'){
+        const games=this.rows('SELECT * FROM game_history ORDER BY t DESC LIMIT 60');
+        return this.reply({games});
+      }
+      if(path==='/history/game'){
+        const id=String(url.searchParams.get('id')||'');
+        const game=this.one('SELECT * FROM game_history WHERE id=?',id);
+        if(!game)return this.reply({error:'Game not found'},404);
+        return this.reply({game,players:this.rows('SELECT name,place,chips,accuracy,decisions,elo_change FROM game_history_players WHERE game=? ORDER BY place,name',id)});
+      }
       if(path==='/leaderboard'){
         return this.reply(this.board('top',()=>{
           // Ranks follow from the sorted list itself: tied ratings share the higher place, as COUNT(rr>me)+1 gives.
@@ -336,6 +346,17 @@ export class Directory {
           const place=Math.floor(Number(p?.place));if(!place||place<1||place>entrants)continue;
           this.sql.exec('INSERT OR IGNORE INTO freeroll_results(night,account,place,entrants,points) VALUES (?,?,?,?,?)',night,String(p.id),place,entrants,entrants-place+1);
         }
+        const id='freeroll:'+night;
+        if(!this.one('SELECT id FROM game_history WHERE id=?',id)){
+          const players=body.players.filter(p=>Number(p.place)>=1&&Number(p.place)<=entrants);
+          const winner=players.find(p=>Number(p.place)===1);
+          const winnerName=winner?this.one('SELECT name FROM accounts WHERE id=?',String(winner.id))?.name||'Unknown':'Unknown';
+          this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',id,Date.parse(night+'T21:00:00-05:00')||Date.now(),'Freeroll',entrants,winnerName,0,0);
+          for(const p of players){
+            const name=this.one('SELECT name FROM accounts WHERE id=?',String(p.id))?.name||'Unknown';
+            this.sql.exec('INSERT OR IGNORE INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change) VALUES (?,?,?,?,?,?,?,?)',id,String(p.id),name,Number(p.place),null,null,0,null);
+          }
+        }
         this.boards.clear();return this.reply({ok:true});
       }
       if(path==='/freeroll/board'){
@@ -376,12 +397,19 @@ export class Directory {
     const rows=players.map(p=>({p,a:this.one('SELECT * FROM accounts WHERE id=?',String(p.id))})).filter(x=>x.a);
     const unique=[...new Map(rows.map(x=>[x.a.id,x])).values()];
     if(unique.length<2)return {rated:false,changes:[]};
-    this.sql.exec('INSERT INTO matches(id,t) VALUES (?,?)',String(matchId),Date.now());
+    const now=Date.now();
+    this.sql.exec('INSERT INTO matches(id,t) VALUES (?,?)',String(matchId),now);
     const w=1/Math.sqrt(unique.length-1);
     const graded=p=>Number(p.decisions)>=MIN_DECISIONS&&Number.isFinite(Number(p.acc));
     const score=(me,o)=>{const place=me.place<o.place?1:me.place>o.place?0:.5;return graded(me)&&graded(o)?W_PLACE*place+W_DEC*pairAcc(Number(me.acc),Number(o.acc)):place};
     const updates=unique.map(({p,a})=>({a,p,place:Number(p.place),next:glicko({r:a.rr,rd:a.rrd,vol:a.rvol},unique.filter(o=>o.a.id!==a.id).map(o=>({r:o.a.rr,rd:o.a.rrd,w,s:score(p,o.p)})))}));
-    for(const u of updates)this.sql.exec('UPDATE accounts SET rr=?,rrd=?,rvol=?,rgames=rgames+1,rwins=rwins+?,last_played=? WHERE id=?',u.next.r,u.next.rd,u.next.vol,u.place===1?1:0,Date.now(),u.a.id);
+    for(const u of updates)this.sql.exec('UPDATE accounts SET rr=?,rrd=?,rvol=?,rgames=rgames+1,rwins=rwins+?,last_played=? WHERE id=?',u.next.r,u.next.rd,u.next.vol,u.place===1?1:0,now,u.a.id);
+    const winner=updates.find(u=>u.place===1);
+    this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',String(matchId),now,'Ranked',updates.length,winner?.a.name||'Unknown',Math.max(0,Math.round(Number(arguments[0]?.duration)||0)),Math.max(0,Math.round(Number(arguments[0]?.hands)||0)));
+    for(const u of updates){
+      const acc=graded(u.p)?Math.round(Number(u.p.acc)*10)/10:null;
+      this.sql.exec('INSERT INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change) VALUES (?,?,?,?,?,?,?,?)',String(matchId),u.a.id,u.a.name,u.place,Number.isFinite(Number(u.p.chips))?Number(u.p.chips):null,acc,Number(u.p.decisions)||0,Math.round(u.next.r-u.a.rr));
+    }
     return {rated:true,changes:updates.map(u=>({id:u.a.id,name:u.a.name,before:Math.max(0,Math.round(u.a.rr-(u.a.elo_offset||0))),after:Math.max(0,Math.round(u.next.r-(u.a.elo_offset||0))),accuracy:graded(u.p)?Math.round(Number(u.p.acc)):null}))};
   }
 }
