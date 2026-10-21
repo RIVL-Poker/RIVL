@@ -2396,3 +2396,28 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
 .rivl-player-report-panel form button{margin-top:8px;min-height:48px;font-weight:900;letter-spacing:.08em}
 .rivl-player-report-panel form button:disabled{opacity:.55;cursor:wait}
 .rivl-report-note{font-size:12px;margin:14px 0 0;line-height:1.5}
+
+
+/* Leaderboard match history: Cairo black, walnut and gold. */
+#leaderboard .rivl-history-panel{margin-top:22px;border:1px solid #8e6a38;background:linear-gradient(145deg,#21180f,#110f0c 75%)}
+#leaderboard .rivl-history-panel .ladder-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#leaderboard .rivl-history-panel .ladder-top h3{color:#f0c77b;letter-spacing:.11em}
+#leaderboard .rivl-history-panel .ladder-top button{font-size:12px;padding:8px 14px}
+.rivl-history-filters{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.rivl-history-filters button{border:1px solid #856137;border-radius:7px;background:#19140f;color:#d7b982;padding:10px 15px;font-weight:800;cursor:pointer}
+.rivl-history-filters button.active{background:#a87935;color:#130e09;border-color:#edc67b}
+.rivl-history-game{border:1px solid #71542f;border-radius:10px;margin:10px 0;overflow:hidden;background:#15110d}
+.rivl-history-game-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;text-align:left;background:transparent;border:0;color:#f1e4d0;padding:17px;cursor:pointer}
+.rivl-history-game-toggle:hover,.rivl-history-game-toggle[aria-expanded=true]{background:#342517}
+.rivl-history-game-main{display:flex;flex-direction:column;gap:6px}
+.rivl-history-game-main strong{color:#eac179;letter-spacing:.08em}
+.rivl-history-game-main small{color:#baa88e}
+.rivl-history-game-stats{display:flex;align-items:center;gap:18px;font-size:13px}
+.rivl-history-game-stats span:first-child{color:#eac179;font-weight:800}
+.rivl-history-arrow{font-size:22px;color:#eac179}
+.rivl-history-detail{overflow-x:auto;padding:10px 12px 16px;border-top:1px solid #6d4e28}
+.rivl-history-detail[hidden]{display:none!important}
+.rivl-history-player{display:grid;grid-template-columns:70px minmax(105px,1.4fr) repeat(4,minmax(75px,1fr));gap:8px;min-width:650px;padding:11px 9px;border-bottom:1px solid #3c3021;color:#f1e7d5;font-size:12px;align-items:center}
+.rivl-history-player-head{color:#bd9961;font-size:10px;font-weight:900;letter-spacing:.06em}
+.rivl-history-winner{background:#3a29165e;color:#f5c978}
+@media(max-width:650px){.rivl-history-game-toggle{align-items:flex-start;flex-direction:column;gap:10px}.rivl-history-game-stats{gap:12px;flex-wrap:wrap}.rivl-history-filters button{padding:9px 11px;font-size:12px}}
