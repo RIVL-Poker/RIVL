@@ -2462,3 +2462,10 @@ body.in-game #table .myseat>.holecards,#roomGame .rivl-pvp-myseat>.holecards{zoo
   :is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle-wrap{right:6px}
   :is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle em{padding:4px 6px;font-size:8px}
 }
+
+/* Friends uses a drawn head-and-shoulders outline instead of a text glyph; sized in px so the collapsed sidebar
+   (which zeroes the nav font size and shows only the first letter) still shows it at the same size as the others. */
+.nav-icon{width:15px;height:15px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+@media(max-width:850px){.nav .nav-icon{width:20px;height:20px;vertical-align:-4px}}
+html.sidebar-collapsed .nav .nav-icon{width:20px;height:20px;vertical-align:-4px}
+html.sidebar-open .nav .nav-icon{width:15px;height:15px;vertical-align:-2px}
