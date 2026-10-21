@@ -115,3 +115,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 
 ### 2026-10-21 06:20 UTC · Claude
 - Friends is its own page again: sidebar is now Play, Freeroll, Leaderboard, Friends, Profile, Table Themes, Support. Everything friends-related (code, add, requests, list) moved out of Profile into `#friends`. The `show('friends')` → Profile alias is gone; invite links open the Friends page.
+
+### 2026-10-21 07:30 UTC · Claude
+- Player numbers for the owner at `/stats` (stats.html, stats.css, stats.js), locked by a new Cloudflare secret `STATS_KEY` (`npx wrangler secret put STATS_KEY`). Live: players online by activity (bots, casual, Ranked, freeroll, puzzle, browsing) and humans seated at tables dealing hands. History: daily/monthly actives, new players and accounts, players who played online, hands and matches by mode, freeroll turnout, peak online, day 1/7/30 return rates, CSV download.
+- Counting lives in `worker/stats.js` (Directory tables `stats_*`). Every open page now sends the heartbeat: signed in to `/api/presence` (now with `visitor` and `activity`), guests to the new `/api/ping` (random `rivlVisitor` id in localStorage, `PING_LIMITER` rate limit). Crawlers and `navigator.webdriver` guests are skipped. Rooms send `dealtTo()` (mode, humans, bots, accounts) with each `/usage/hand` call. History before today was backfilled once from accounts, game history and puzzle answers.
+- Privacy page updated (Player counts section, retention line). `rivlRooms.mode()` added to rooms.js.

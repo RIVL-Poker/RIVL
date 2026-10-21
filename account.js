@@ -35,18 +35,34 @@
     window.rivlPaintName?.();
     window.refreshRatingUI?.();
   }
-  function setAccount(account,key,via){const was=state?.key;state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render();if(state?.key!==was){if(state)onScreen();document.dispatchEvent(new Event('rivl:account'))}}
+  function setAccount(account,key,via){const was=state?.key;state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render();if(state?.key!==was){onScreen();document.dispatchEvent(new Event('rivl:account'))}}
   // Presence for friends' "active now": a heartbeat every minute while this page is on screen, and a last
   // message when it's hidden or closed. A background tab or a locked phone sends nothing, so it drops off.
   // The reply carries game invites and friend requests, which friends.js shows (rivl:invites).
   const HEARTBEAT_MS=60*1000;let beat=null;
+  // Guests send the same heartbeat to /api/ping, only to be counted in RIVL's player numbers. The visitor id is a
+  // random id kept in this browser (no cookie, nothing personal), so a refresh or a second tab is still one player.
+  let visitor='';
+  try{visitor=localStorage.getItem('rivlVisitor')||''}catch{}
+  if(!/^[A-Za-z0-9_-]{16,40}$/.test(visitor)){
+    visitor=Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'[n%64]).join('');
+    try{localStorage.setItem('rivlVisitor',visitor)}catch{}
+  }
+  // What the player is doing: seated at an online table (by its mode), bot practice, the puzzle, or anything else.
+  function activity(){
+    const room=window.rivlRooms?.mode?.();if(room)return room;
+    const view=document.querySelector('.view.active')?.id;
+    return view==='table'?'bots':view==='puzzle'?'puzzle':'browsing';
+  }
   function presence(away){
-    if(!state||!API)return;
-    const url=API.replace(/\/$/,'')+'/api/presence',body=JSON.stringify(away?{key:state.key,away:true}:{key:state.key});
+    // Automated browsers (tests, load scripts) are not players: a guest one sends nothing, a signed-in one only friends' presence.
+    if(!API||(!state&&navigator.webdriver))return;
+    const info=away?{visitor,away:true}:{visitor,activity:activity(),automated:!!navigator.webdriver||undefined};
+    const url=API.replace(/\/$/,'')+(state?'/api/presence':'/api/ping'),body=JSON.stringify(state?{key:state.key,...info}:info);
     if(away&&navigator.sendBeacon){try{if(navigator.sendBeacon(url,body))return}catch{}}
     // A plain-text body keeps this a simple request; the server reads it as JSON either way.
     fetch(url,{method:'POST',body,keepalive:true}).then(r=>r.ok?r.json():null)
-      .then(d=>{if(!away&&d)document.dispatchEvent(new CustomEvent('rivl:invites',{detail:{invites:d.invites,requests:d.requests}}))}).catch(()=>{});
+      .then(d=>{if(!away&&d&&state)document.dispatchEvent(new CustomEvent('rivl:invites',{detail:{invites:d.invites,requests:d.requests}}))}).catch(()=>{});
   }
   function onScreen(){
     clearInterval(beat);beat=null;

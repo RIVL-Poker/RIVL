@@ -513,6 +513,73 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+// Player numbers (worker/stats.js): heartbeats from open pages, deals reported by rooms, and the locked stats page.
+{
+  const KEY='k'.repeat(32),env=makeEnv({STATS_KEY:KEY});
+  const stats=async(key=KEY)=>(await api(env,'/api/stats',{statsKey:key}));
+  assert.equal((await stats('wrong')).status,403,'the stats page needs the key');
+  assert.equal((await api(makeEnv(),'/api/stats',{statsKey:''})).status,403,'without STATS_KEY set it is locked for everyone');
+  const ann=(await api(env,'/api/accounts',{name:'Ann'})).data,bob=(await api(env,'/api/accounts',{name:'Bob'})).data;
+  const V1='guestVisitorAAAAAAAA1',V2='guestVisitorAAAAAAAA2';
+  await api(env,'/api/ping',{visitor:V1,activity:'bots'});
+  await api(env,'/api/ping',{visitor:V1,activity:'bots'});
+  await api(env,'/api/ping',{visitor:V2,activity:'nonsense'});
+  await api(env,'/api/ping',{visitor:'short',activity:'bots'});
+  await worker.fetch(new Request('https://rivl.test/api/ping',{method:'POST',headers:{'User-Agent':'Mozilla/5.0 (compatible; Googlebot/2.1)'},body:JSON.stringify({visitor:'crawlerVisitorAAAAAA',activity:'browsing'})}),env);
+  let r=(await stats()).data;
+  assert.equal(r.live.online,2,'a refresh is the same guest; bad ids and crawlers are not counted');
+  assert.equal(r.live.byActivity.bots,1);assert.equal(r.live.byActivity.browsing,1,'an unknown activity counts as browsing');
+  // A guest who signs in is one player, not two.
+  await api(env,'/api/presence',{key:ann.key,visitor:V1,activity:'puzzle'});
+  r=(await stats()).data;
+  assert.equal(r.live.online,2);assert.equal(r.live.signedIn,1);assert.equal(r.live.guests,1);assert.equal(r.live.byActivity.puzzle,1);
+  await api(env,'/api/ping',{visitor:V2,away:true});
+  assert.equal((await stats()).data.live.online,1,'closing the page takes the guest off at once');
+  // A deal at an online table counts its seated humans as having played; bots are never players.
+  const created=(await api(env,'/api/rooms',{key:ann.key})).data,room=roomOf(env,created.code);
+  const j=(await api(env,'/api/rooms/'+created.code+'/join',{key:bob.key})).data;
+  const ws=await sit(env,created.code,created.token);await sit(env,created.code,j.token);
+  await say(room,ws,{type:'addBot',seat:2,level:'Beginner'});
+  await say(room,ws,{type:'startMatch'});
+  r=(await stats()).data;
+  const t0=r.days[0];
+  assert.equal(t0.playedOnline,2,'both humans played an online hand');
+  assert.equal(t0.handsByMode.casual,1);assert.equal(t0.matchesByMode.casual,1);assert.equal(t0.playerHands,2);
+  assert.deepEqual(r.live.tables.casual,{tables:1,humans:2,bots:1});
+  assert.equal(t0.active,4,'today: two guests and two accounts');assert.equal(t0.signedIn,2);assert.equal(t0.botPractice,1);
+  assert.equal(r.totals.accounts,2);assert.ok(t0.peakOnline>=1);
+  // Return rates and finished days, using made-up history.
+  const dir=env.DIRECTORY.instances.get('global'),day=n=>new Date(Date.now()-n*86400000).toISOString().slice(0,10);
+  for(let i=0;i<4;i++){dir.sql.exec('INSERT INTO stats_players(who,first_day) VALUES (?,?)','v:old'+i,day(10));dir.sql.exec('INSERT INTO stats_days(day,who,played) VALUES (?,?,0)',day(10),'v:old'+i)}
+  dir.sql.exec('INSERT INTO stats_days(day,who,played) VALUES (?,?,2)',day(9),'v:old0');
+  dir.sql.exec('INSERT INTO stats_days(day,who,played) VALUES (?,?,2)',day(3),'v:old1');
+  r=(await stats()).data;
+  const [d1,d7]=r.retention.all;
+  assert.equal(d1.players,4);assert.equal(d1.back,1);assert.equal(d1.rate,25,'day 1: one of four came back the next day');
+  assert.equal(d7.back,1,'day 7: one came back a week later');
+  assert.equal(r.retention.all[2].players,0,'no cohort is old enough for day 30 yet');
+  assert.equal(r.days[10].active,4);assert.equal(r.days[10].newPlayers,4);assert.equal(r.days[9].botPractice,1);
+  assert.ok(dir.one('SELECT * FROM stats_summary WHERE day=?',day(10)),'a finished day is totalled');
+  assert.equal(r.totals.active30,8);
+  checks++;
+}
+// Accounts and games from before tracking began are filled into the history once.
+{
+  const env=makeEnv({STATS_KEY:'k'.repeat(32)});
+  const ann=(await api(env,'/api/accounts',{name:'Ann'})).data;
+  const dir=env.DIRECTORY.instances.get('global'),old=Date.now()-5*86400000;
+  dir.sql.exec('UPDATE accounts SET created=?',old);
+  dir.sql.exec("INSERT INTO game_history(id,t,mode,players,winner) VALUES ('g1',?,'Ranked',2,'Ann')",old+3600000);
+  dir.sql.exec("INSERT INTO game_history_players(game,account,name,place) VALUES ('g1',?,'Ann',1)",ann.account.id);
+  for(const t of ['stats_players','stats_days'])dir.sql.exec('DELETE FROM '+t);
+  dir.sql.exec("DELETE FROM migrations WHERE name='stats_backfill_v1'");
+  const reopened=new Directory({storage:{sql:dir.sql}},env);
+  const d=new Date(old).toISOString().slice(0,10);
+  assert.equal(reopened.one('SELECT first_day FROM stats_players WHERE who=?','a:'+ann.account.id).first_day,d);
+  assert.equal(reopened.one('SELECT played FROM stats_days WHERE who=? AND day=?','a:'+ann.account.id,d).played,1,'an old Ranked game counts as playing online');
+  checks++;
+}
+
 console.log('PASS: '+checks+' room server checks');
 
 // Chat: private and ranked players can exchange authenticated messages; reconnect sees history.
@@ -962,6 +1029,73 @@ console.log('PASS: '+checks+' room server checks');
     assert.match(halted.t.note,/free daily limit/);
     checks++;
   }finally{Date.now=realNow}
+}
+
+// Player numbers (worker/stats.js): heartbeats from open pages, deals reported by rooms, and the locked stats page.
+{
+  const KEY='k'.repeat(32),env=makeEnv({STATS_KEY:KEY});
+  const stats=async(key=KEY)=>(await api(env,'/api/stats',{statsKey:key}));
+  assert.equal((await stats('wrong')).status,403,'the stats page needs the key');
+  assert.equal((await api(makeEnv(),'/api/stats',{statsKey:''})).status,403,'without STATS_KEY set it is locked for everyone');
+  const ann=(await api(env,'/api/accounts',{name:'Ann'})).data,bob=(await api(env,'/api/accounts',{name:'Bob'})).data;
+  const V1='guestVisitorAAAAAAAA1',V2='guestVisitorAAAAAAAA2';
+  await api(env,'/api/ping',{visitor:V1,activity:'bots'});
+  await api(env,'/api/ping',{visitor:V1,activity:'bots'});
+  await api(env,'/api/ping',{visitor:V2,activity:'nonsense'});
+  await api(env,'/api/ping',{visitor:'short',activity:'bots'});
+  await worker.fetch(new Request('https://rivl.test/api/ping',{method:'POST',headers:{'User-Agent':'Mozilla/5.0 (compatible; Googlebot/2.1)'},body:JSON.stringify({visitor:'crawlerVisitorAAAAAA',activity:'browsing'})}),env);
+  let r=(await stats()).data;
+  assert.equal(r.live.online,2,'a refresh is the same guest; bad ids and crawlers are not counted');
+  assert.equal(r.live.byActivity.bots,1);assert.equal(r.live.byActivity.browsing,1,'an unknown activity counts as browsing');
+  // A guest who signs in is one player, not two.
+  await api(env,'/api/presence',{key:ann.key,visitor:V1,activity:'puzzle'});
+  r=(await stats()).data;
+  assert.equal(r.live.online,2);assert.equal(r.live.signedIn,1);assert.equal(r.live.guests,1);assert.equal(r.live.byActivity.puzzle,1);
+  await api(env,'/api/ping',{visitor:V2,away:true});
+  assert.equal((await stats()).data.live.online,1,'closing the page takes the guest off at once');
+  // A deal at an online table counts its seated humans as having played; bots are never players.
+  const created=(await api(env,'/api/rooms',{key:ann.key})).data,room=roomOf(env,created.code);
+  const j=(await api(env,'/api/rooms/'+created.code+'/join',{key:bob.key})).data;
+  const ws=await sit(env,created.code,created.token);await sit(env,created.code,j.token);
+  await say(room,ws,{type:'addBot',seat:2,level:'Beginner'});
+  await say(room,ws,{type:'startMatch'});
+  r=(await stats()).data;
+  const t0=r.days[0];
+  assert.equal(t0.playedOnline,2,'both humans played an online hand');
+  assert.equal(t0.handsByMode.casual,1);assert.equal(t0.matchesByMode.casual,1);assert.equal(t0.playerHands,2);
+  assert.deepEqual(r.live.tables.casual,{tables:1,humans:2,bots:1});
+  assert.equal(t0.active,4,'today: two guests and two accounts');assert.equal(t0.signedIn,2);assert.equal(t0.botPractice,1);
+  assert.equal(r.totals.accounts,2);assert.ok(t0.peakOnline>=1);
+  // Return rates and finished days, using made-up history.
+  const dir=env.DIRECTORY.instances.get('global'),day=n=>new Date(Date.now()-n*86400000).toISOString().slice(0,10);
+  for(let i=0;i<4;i++){dir.sql.exec('INSERT INTO stats_players(who,first_day) VALUES (?,?)','v:old'+i,day(10));dir.sql.exec('INSERT INTO stats_days(day,who,played) VALUES (?,?,0)',day(10),'v:old'+i)}
+  dir.sql.exec('INSERT INTO stats_days(day,who,played) VALUES (?,?,2)',day(9),'v:old0');
+  dir.sql.exec('INSERT INTO stats_days(day,who,played) VALUES (?,?,2)',day(3),'v:old1');
+  r=(await stats()).data;
+  const [d1,d7]=r.retention.all;
+  assert.equal(d1.players,4);assert.equal(d1.back,1);assert.equal(d1.rate,25,'day 1: one of four came back the next day');
+  assert.equal(d7.back,1,'day 7: one came back a week later');
+  assert.equal(r.retention.all[2].players,0,'no cohort is old enough for day 30 yet');
+  assert.equal(r.days[10].active,4);assert.equal(r.days[10].newPlayers,4);assert.equal(r.days[9].botPractice,1);
+  assert.ok(dir.one('SELECT * FROM stats_summary WHERE day=?',day(10)),'a finished day is totalled');
+  assert.equal(r.totals.active30,8);
+  checks++;
+}
+// Accounts and games from before tracking began are filled into the history once.
+{
+  const env=makeEnv({STATS_KEY:'k'.repeat(32)});
+  const ann=(await api(env,'/api/accounts',{name:'Ann'})).data;
+  const dir=env.DIRECTORY.instances.get('global'),old=Date.now()-5*86400000;
+  dir.sql.exec('UPDATE accounts SET created=?',old);
+  dir.sql.exec("INSERT INTO game_history(id,t,mode,players,winner) VALUES ('g1',?,'Ranked',2,'Ann')",old+3600000);
+  dir.sql.exec("INSERT INTO game_history_players(game,account,name,place) VALUES ('g1',?,'Ann',1)",ann.account.id);
+  for(const t of ['stats_players','stats_days'])dir.sql.exec('DELETE FROM '+t);
+  dir.sql.exec("DELETE FROM migrations WHERE name='stats_backfill_v1'");
+  const reopened=new Directory({storage:{sql:dir.sql}},env);
+  const d=new Date(old).toISOString().slice(0,10);
+  assert.equal(reopened.one('SELECT first_day FROM stats_players WHERE who=?','a:'+ann.account.id).first_day,d);
+  assert.equal(reopened.one('SELECT played FROM stats_days WHERE who=? AND day=?','a:'+ann.account.id,d).played,1,'an old Ranked game counts as playing online');
+  checks++;
 }
 
 console.log('PASS: '+checks+' room server checks');

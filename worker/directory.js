@@ -3,6 +3,7 @@
 import {glicko} from './glicko.js';
 import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 import {startOf} from './tournament.js';
+import {setupStats,heartbeat,guestId,handDealt,report} from './stats.js';
 
 // rating.js (loaded by grading.js) defines the Ranked leagues shared with the site.
 const R=globalThis.RivlRating;
@@ -73,6 +74,8 @@ export class Directory {
     // Freerolls finished before game history existed get their history card from the saved results.
     for(const {night} of this.rows("SELECT DISTINCT night FROM freeroll_results WHERE 'freeroll:'||night NOT IN (SELECT id FROM game_history)"))
       this.freerollHistory(night,startOf(night),0);
+    // Player numbers for the owner's stats page (worker/stats.js).
+    setupStats(this);
     // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
     this.boards=new Map();
   }
@@ -321,7 +324,19 @@ export class Directory {
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign in again.'},401);
         this.presence(a,!!body.away);
+        if(!body.crawler&&!body.automated)heartbeat(this,{who:'a:'+a.id,visitor:body.visitor,activity:body.activity,away:!!body.away});
         return this.reply(body.away?{ok:true,invites:[],requests:[]}:{ok:true,invites:this.invitesFor(a),requests:this.requestsFor(a).slice(0,5).map(f=>({id:f.id,name:f.name,avatar:f.avatar}))});
+      }
+      // A guest's heartbeat: the same as /presence without an account, for the player numbers only.
+      if(path==='/stats/ping'){
+        const who=guestId(body.visitor);
+        if(who&&!body.crawler)heartbeat(this,{who,activity:body.activity,away:!!body.away});
+        return this.reply({ok:true});
+      }
+      // The owner's stats page. STATS_KEY is a Cloudflare secret; without it the page stays locked for everyone.
+      if(path==='/stats/report'){
+        if(!this.env.STATS_KEY||typeof body.statsKey!=='string'||body.statsKey!==this.env.STATS_KEY)return this.reply({error:'Not authorized.'},403);
+        return this.reply(report(this));
       }
       if(path.startsWith('/friends')){
         const a=await this.byKey(body.key);
@@ -412,6 +427,7 @@ export class Directory {
         // A new room or match is refused once the day's budget is used; hands in running matches get extra headroom.
         const allowed=column==='rooms'?!s.busy:body.newMatch?!s.handsFull:!s.closed;
         if(allowed)this.sql.exec(`UPDATE usage SET ${column}=${column}+1 WHERE day=?`,day());
+        if(allowed&&column==='hands'&&body.mode)handDealt(this,body);
         return this.reply({ok:allowed,status:this.status()});
       }
       return this.reply({error:'Not found'},404);

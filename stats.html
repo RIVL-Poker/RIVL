@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Player Numbers | RIVL</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="stats.css">
+</head>
+
+<body>
+    <main>
+        <a class="back" href="/">← Back to RIVL</a>
+        <h1>PLAYER NUMBERS</h1>
+        <p class="muted" id="statsUpdated">Owner only. Counted by RIVL's own server.</p>
+
+        <form id="statsLogin" class="card login" hidden>
+            <label for="statsKey">Stats key</label>
+            <div class="row">
+                <input id="statsKey" type="password" autocomplete="current-password" spellcheck="false" placeholder="The STATS_KEY secret">
+                <button type="submit">OPEN</button>
+            </div>
+            <p class="muted small" id="statsError" role="alert"></p>
+        </form>
+
+        <div id="statsBody" hidden>
+            <h2>Right now</h2>
+            <div class="tiles">
+                <div class="tile big"><b id="liveOnline">–</b><span>players online</span><small id="liveSplit"></small></div>
+                <div class="tile big"><b id="liveSeated">–</b><span>seated at online tables</span><small id="liveTables"></small></div>
+            </div>
+            <div class="card">
+                <h3>What they're doing</h3>
+                <div id="liveActivity" class="bars"></div>
+                <p class="muted small" id="liveWaiting"></p>
+            </div>
+
+            <h2>Active players</h2>
+            <div class="tiles" id="totals"></div>
+
+            <h2>Daily active players</h2>
+            <div class="card">
+                <div id="dauChart" class="chart" role="img"></div>
+                <p class="muted small"><span class="key key-online"></span>played an online hand <span class="key key-other"></span>other visits (bot practice, puzzle, browsing)</p>
+            </div>
+
+            <h2>Coming back</h2>
+            <div class="card">
+                <table class="ret">
+                    <thead><tr><th></th><th>Day 1</th><th>Day 7</th><th>Day 30</th></tr></thead>
+                    <tbody id="retention"></tbody>
+                </table>
+                <p class="muted small">Of the players who first came in the last 30 days, the share who came back exactly that many days later.</p>
+            </div>
+
+            <h2>Last 30 days</h2>
+            <div class="card scroll">
+                <table class="days">
+                    <thead><tr><th>Day</th><th>Active</th><th>Signed in</th><th>Played online</th><th>Bot practice</th><th>Puzzle</th><th>New players</th><th>New accounts</th><th>Hands</th><th>Casual</th><th>Ranked</th><th>Freeroll</th><th>Ranked matches</th><th>Freeroll entrants</th><th>Peak online</th></tr></thead>
+                    <tbody id="days"></tbody>
+                </table>
+            </div>
+            <button type="button" id="statsCsv" class="ghost">DOWNLOAD CSV</button>
+
+            <h2>By month</h2>
+            <div class="card scroll">
+                <table class="days">
+                    <thead><tr><th>Month</th><th>Active</th><th>Signed in</th><th>Played online</th><th>New players</th></tr></thead>
+                    <tbody id="months"></tbody>
+                </table>
+            </div>
+
+            <h2>How this is counted</h2>
+            <ul class="notes">
+                <li><b>Online</b> means the page is open and on screen. It sends a heartbeat every minute; a closed or hidden page drops off at once, one that loses signal after 5 minutes.</li>
+                <li>A <b>player</b> is one account, on any number of devices, or one guest browser. Refreshing or opening a second tab is still one player. Crawlers and automated browsers are not counted.</li>
+                <li><b>Played online</b> and <b>seated at online tables</b> come from the game server dealing a hand to that seat, so they can't be inflated by the page. Played online counts signed-in players (guests at casual tables are in the seated and hands numbers). Bots are counted apart and never as players.</li>
+                <li>Guests are counted from <span id="guestsSince">the day this went live</span>. Before that, the history holds signed-in players only, from their accounts, Ranked games, freerolls and puzzle answers.</li>
+                <li>Days are UTC. Per-player daily records are kept about 13 months; daily totals are kept after that.</li>
+            </ul>
+            <p><button type="button" id="statsForget" class="ghost">FORGET KEY ON THIS DEVICE</button></p>
+        </div>
+    </main>
+    <script src="stats.js"></script>
+</body>
+
+</html>
