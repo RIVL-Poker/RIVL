@@ -107,7 +107,7 @@
                 <button class="gold" id="roomStart" disabled>START MATCH</button>
                 <div id="roomGame" hidden>
                   <div class="gamebar rivl-pvp-gamebar">
-                    <div><small>BLINDS</small><strong id="roomBlinds">10 / 20</strong></div>
+                    <div><small id="roomBlindsLabel">BLINDS</small><strong id="roomBlinds">10 / 20</strong></div>
                     <div><small>HAND</small><strong id="roomGamePhase">HAND 1 · PREFLOP</strong></div>
                     <div><small>MODE</small><strong id="roomMode">PVP · UNRATED</strong></div>
                     <div><small>PLAYERS</small><strong id="roomPlayerCount">2</strong></div>
@@ -116,7 +116,7 @@
                     <div class="skyline">♠ RIVL · CAIRO TABLE ♠</div>
                     <div class="poker-table rivl-pvp-table" id="roomPokerTable">
                       <div id="roomGamePlayers" class="rivl-pvp-opponents"></div>
-                      <div class="pot"><strong id="roomPot" class="rivl-sr-only">0</strong><div id="roomPotChips" class="pot-chips" aria-hidden="true"></div></div>
+                      <div class="pot"><strong id="roomPot" class="rivl-sr-only">0</strong><div id="roomPotChips" class="pot-chips" aria-hidden="true"></div><button type="button" class="pot-amount" title="Show bets and the pot in chips or big blinds"><span>POT</span><b id="roomPotLabel">0</b><i><em data-unit="chips">CHIPS</em><em data-unit="bb">BB</em></i></button></div>
                       <div id="roomBoard" class="community rivl-pvp-board"></div>
                       <div class="myseat rivl-pvp-myseat">
                         <div id="roomHoleCards" class="holecards"></div>
@@ -198,6 +198,7 @@
                         </div>
                         <div class="pot"><strong id="pot" class="rivl-sr-only">15</strong>
                             <div id="potChips" class="pot-chips" aria-hidden="true"></div>
+                            <button type="button" class="pot-amount" title="Show bets and the pot in chips or big blinds"><span>POT</span><b id="potLabel">0</b><i><em data-unit="chips">CHIPS</em><em data-unit="bb">BB</em></i></button>
                         </div>
                         <div id="winFx" class="win-fx" aria-live="polite"></div>
                         <div id="chipFlight" class="chip-flight" aria-hidden="true"></div>
@@ -489,6 +490,7 @@
     <script src="rating.js"></script>
     <script src="chips.js"></script>
     <script src="muck.js"></script>
+    <script src="amounts.js"></script>
     <script src="script.js"></script>
     <script src="ladder-ui.js"></script>
     <script src="rooms.js"></script>

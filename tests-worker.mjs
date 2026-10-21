@@ -377,6 +377,29 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   checks++;
 }
 
+// 9a. Ranked blinds climb every 2.5 minutes on the match clock; no hand is dealt after 14 minutes.
+{
+  const env=makeEnv();
+  const acc=[];for(const n of ['Ann','Bob','Cat'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  const seated=[];for(const a of acc)seated.push((await api(env,'/api/ranked',{key:a.key,size:3})).data);
+  const room=roomOf(env,seated[0].code),sockets=[];for(const x of seated)sockets.push(await sit(env,x.code,x.token));
+  assert.ok(room.room.started,'a full 3-player table starts at once');
+  const g0=room.room.game;assert.deepEqual([g0.smallBlind,g0.bigBlind],[15,30],'ranked opens at 15/30');
+  const view=sockets[0].last('state').state.blindClock;
+  assert.equal(view.level,1);assert.deepEqual(view.next,[25,50]);assert.equal(view.nextAt,room.room.match.startedAt+150000,'next level in 2.5 minutes');
+  const nextHand=()=>{const g=room.room.game;g.phase='showdown';g.turn=-1;g.result='test';g.nextHandAt=0;room.startHand()};
+  const levels=[];for(const min of [2.4,2.6,5.1,7.6,10.1,12.6,13.9]){room.room.match.startedAt=Date.now()-min*60000;nextHand();levels.push(room.room.game.bigBlind)}
+  assert.deepEqual(levels,[30,50,100,200,300,500,500],'blinds follow the 2.5 minute clock and stop at the top level');
+  assert.equal(room.blindClock().next,null,'no next level after the last one');
+  room.room.game.players.forEach((p,i)=>{p.stack=[700,1500,800][i]});const stacks=Object.fromEntries(room.room.game.players.map(p=>[p.seat,p.stack]));
+  room.room.match.startedAt=Date.now()-14*60000-1;nextHand();
+  assert.ok(room.matchOver(),'no new hand after 14 minutes');
+  assert.match(room.room.game.note||'',/Time is up/);
+  const order=Object.entries(stacks).sort((a,b)=>b[1]-a[1]);
+  assert.equal(room.room.pendingResults.players.find(p=>p.place===1).id,acc[seated.findIndex(x=>room.room.members[x.token].seat===+order[0][0])].account.id,'the biggest stack places first when time runs out');
+  checks++;
+}
+
 // 9b. Quick Play and private rooms are unranked even with two signed-in players.
 {
   const env=makeEnv();
