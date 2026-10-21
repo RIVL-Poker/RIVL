@@ -404,6 +404,7 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const g0=room.room.game;assert.deepEqual([g0.smallBlind,g0.bigBlind],[15,30],'ranked opens at 15/30');
   const view=sockets[0].last('state').state.blindClock;
   assert.equal(view.level,1);assert.deepEqual(view.next,[25,50]);assert.equal(view.nextAt,room.room.match.startedAt+150000,'next level in 2.5 minutes');
+  {const g=room.room.game;g.phase='showdown';g.turn=-1;g.result='test';g.nextHandAt=0;const t=Date.now();await room.save();assert.ok(g.nextHandAt-t>=5900&&g.nextHandAt-t<=6500,'ranked deals the next hand 6 seconds after showdown');}
   const nextHand=()=>{const g=room.room.game;g.phase='showdown';g.turn=-1;g.result='test';g.nextHandAt=0;room.startHand()};
   const levels=[];for(const min of [2.4,2.6,5.1,7.6,10.1,12.6,13.9]){room.room.match.startedAt=Date.now()-min*60000;nextHand();levels.push(room.room.game.bigBlind)}
   assert.deepEqual(levels,[30,50,100,200,300,500,500],'blinds follow the 2.5 minute clock and stop at the top level');
