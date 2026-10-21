@@ -25,7 +25,7 @@
     const b=document.createElement('button');b.type='button';b.className='rivl-report-photo';b.textContent='REPORT PHOTO';b.title='Report inappropriate profile picture';b.onclick=()=>reportPhoto(seat);el.append(b);
   };
   // The server sends each seat's photo once; later states leave it out while the seat is unchanged.
-  const keepPhotos=(before,now)=>now?.seats?.forEach((s,i)=>{const old=before?.seats?.[i];if(s&&s.avatar===undefined&&old&&old.name===s.name)s.avatar=old.avatar});
+  const keepPhotos=(before,now)=>now?.seats?.forEach((s,i)=>{const old=before?.seats?.[i];if(s&&s.avatar===undefined&&old&&old.name===s.name&&old.accountId===s.accountId)s.avatar=old.avatar});
   const paintSeatAvatar=(el,p)=>{const a=avatarFor(p);el.replaceChildren();if(/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a)&&a.length<=45000){const img=document.createElement('img');img.src=a;img.alt='';img.className='rivl-avatar-photo';el.append(img)}else el.textContent=a};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   let clockTimer=null,roomBetKey='',previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1,clockKey='',clockSpan=12000;
@@ -215,6 +215,8 @@
       $('roomPot').textContent=g.pot;
       const amt=(n)=>window.rivlAmounts.fmt(n,g.bigBlind);
       $('roomPotTotal').textContent=amt(g.pot);$('roomPotLabel').textContent=amt(g.pot);window.rivlAmounts.paint();
+      $('roomPotTotal').textContent=Number(g.pot||0).toLocaleString();
+      $('roomBalance').textContent=Number(me?.stack??0).toLocaleString();
       const myContribution=Number(g.players.find(p=>p.seat===snapshot.mySeat)?.contribution||0);
       $('roomPotEquity').textContent=g.pot?Math.round(100*myContribution/g.pot)+'%':'0%';
       const potEl=$('roomPotChips');if(potEl.dataset.pot!==String(g.pot||0)){potEl.dataset.pot=g.pot||0;potEl.innerHTML=window.rivlChips.pileHTML(g.pot)}
@@ -280,7 +282,9 @@
         if(g.note){const n=document.createElement('p');n.className='muted';n.textContent=g.note;ratings.append(n)}
       }
       const l=g.legal;
-      $('roomActions').hidden=!l;
+      // Keep pot, equity and balance visible while waiting, folded, or between turns.
+      $('roomActions').hidden=false;
+      $('roomActions').classList.toggle('is-waiting',!l);
       if(l){
         $('roomCall').textContent=l.call?'CALL '+amt(l.call):'CHECK';
         $('roomRaise').disabled=!l.canRaise;

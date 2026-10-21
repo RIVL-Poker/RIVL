@@ -2342,3 +2342,9 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
   body.in-game #table .pot .pot-amount{top:auto;bottom:calc(100% + 1px);left:50%;transform:translateX(-50%)}
   body.in-game #table .pot .pot-amount>span{display:none}
 }
+/* Online ranked, private and freeroll: retain the HUD even when no action is legal. */
+#roomGame #roomActions.is-waiting > :not(.rivl-pot-stats){visibility:hidden!important;pointer-events:none!important}
+#roomGame #roomActions.is-waiting > .rivl-pot-stats{visibility:visible!important}
+#roomGame .rivl-pot-stats .rivl-pov-chip-icon{display:inline-grid;place-items:center;flex:none;width:20px;height:20px;border:2px solid #dba84f;border-radius:50%;background:#24180d;color:#f2bd5b;font-size:12px;line-height:1}
+/* Always render account-backed seat photos inside the circular nameplates. */
+#roomGame .rivl-pvp-seat .avatar img.rivl-avatar-photo,#roomGame .rivl-pvp-myseat .avatar img.rivl-avatar-photo{display:block!important;width:100%!important;height:100%!important;max-width:100%;max-height:100%;object-fit:cover;border-radius:50%;opacity:1!important;visibility:visible!important}
