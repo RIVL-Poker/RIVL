@@ -214,8 +214,8 @@
       previousPhase=g.phase;
       $('roomPot').textContent=g.pot;
       const amt=(n)=>window.rivlAmounts.fmt(n,g.bigBlind);
-      $('roomPotTotal').textContent=amt(g.pot);$('roomPotLabel').textContent=amt(g.pot);window.rivlAmounts.paint();
-      $('roomBalance').textContent=amt(me?.stack??0);
+      window.rivlAmounts.fill($('roomPotTotal'),g.pot,g.bigBlind);$('roomPotLabel').textContent=amt(g.pot);window.rivlAmounts.paint();
+      window.rivlAmounts.fill($('roomBalance'),me?.stack??0,g.bigBlind);
       const myContribution=Number(g.players.find(p=>p.seat===snapshot.mySeat)?.contribution||0);
       $('roomPotEquity').textContent=g.pot?Math.round(100*myContribution/g.pot)+'%':'0%';
       const potEl=$('roomPotChips');if(potEl.dataset.pot!==String(g.pot||0)){potEl.dataset.pot=g.pot||0;potEl.innerHTML=window.rivlChips.pileHTML(g.pot)}
@@ -295,7 +295,7 @@
         const betKey=[g.handNumber,g.board.length,l.call,first].join(':');
         if(betKey!==roomBetKey||Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
         roomBetKey=betKey;
-        slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
+        slider.value=amount.value;window.rivlAmounts.raiseLabel($('roomAmountLabel'),amount.value,snapshot?.game?.bigBlind);
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips'+(window.rivlAmounts.unit()==='bb'?' ('+amt(l.raiseToMin)+'–'+amt(l.raiseToMax)+')':'')+' · 12-second turn';
       }else{roomBetKey='';$('roomBetInfo').textContent=fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
@@ -438,8 +438,8 @@
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
   $('roomExtend').onclick=()=>{$('roomExtend').disabled=true;send({type:'extend'})};
   $('roomNext').onclick=()=>{if(snapshot?.tourney){resetView('');show('freeroll');window.rivlFreeroll?.refresh();return}if(!snapshot?.ranked)return send({type:'newMatch'});send({type:'leave'});resetView('Finding your next Ranked match…');enter('ranked')};
-  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);const raw=Number(value);const n=clamp(5*Math.round((Number.isFinite(raw)?raw:first)/5),first,last);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
-  $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){const l=snapshot?.game?.legal;if(l){const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);$('roomRaiseSlider').value=clamp(5*Math.round(n/5),first,last)}$('roomAmountLabel').textContent=e.target.value;}});
+  function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);const raw=Number(value);const n=clamp(5*Math.round((Number.isFinite(raw)?raw:first)/5),first,last);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;window.rivlAmounts.raiseLabel($('roomAmountLabel'),n,snapshot?.game?.bigBlind);}
+  $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){const l=snapshot?.game?.legal;if(l){const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);$('roomRaiseSlider').value=clamp(5*Math.round(n/5),first,last)}window.rivlAmounts.raiseLabel($('roomAmountLabel'),e.target.value,snapshot?.game?.bigBlind);}});
   $('roomRaiseAmount').addEventListener('change',e=>setRoomBet(e.target.value));
   $('roomRaiseSlider').addEventListener('input',e=>setRoomBet(e.target.value));
   $('roomMinusBet').onclick=()=>setRoomBet(Number($('roomRaiseAmount').value)-5);

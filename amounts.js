@@ -9,6 +9,13 @@
   function fmt(chips,bigBlind){chips=Math.max(0,Number(chips)||0);return unit==='bb'&&bigBlind>0?bbText(chips,bigBlind):chips.toLocaleString()}
   // With a unit word, for places that read "1,000 chips" in chip mode.
   const fmtUnit=(chips,bigBlind)=>fmt(chips,bigBlind)+(unit==='bb'&&bigBlind>0?'':' chips');
+  // Raise-to amounts stay in chips (the slider and box are chips); BB mode adds the big blind size beside them.
+  function raiseLabel(el,chips,bigBlind){if(el)el.textContent=Number(chips||0).toLocaleString()+(unit==='bb'&&bigBlind>0?' · '+bbText(Number(chips)||0,bigBlind):'')}
+  // For the pot and balance boxes: the number at full size with a small BB after it, so it fits where a chip count did.
+  function fill(el,chips,bigBlind){
+    if(!el)return;const text=fmt(chips,bigBlind),bb=text.endsWith('\u00a0BB');
+    el.textContent=bb?text.slice(0,-3):text;if(bb){const u=document.createElement('small');u.className='amount-unit';u.textContent='BB';el.append(u)}
+  }
   function paint(){
     for(const b of document.querySelectorAll('.pot-amount')){
       b.setAttribute('aria-label','Pot '+b.querySelector('b').textContent+'. Show amounts in '+(unit==='bb'?'chips':'big blinds'));
@@ -17,5 +24,5 @@
   }
   function set(next){unit=next==='bb'?'bb':'chips';try{localStorage.setItem(KEY,unit)}catch{}paint();listeners.forEach(f=>{try{f(unit)}catch{}})}
   document.addEventListener('click',e=>{if(e.target.closest?.('.pot-amount'))set(unit==='bb'?'chips':'bb')});
-  window.rivlAmounts={unit:()=>unit,fmt,fmtUnit,set,paint,onChange:f=>listeners.add(f)};
+  window.rivlAmounts={unit:()=>unit,fmt,fmtUnit,fill,raiseLabel,set,paint,onChange:f=>listeners.add(f)};
 })();
