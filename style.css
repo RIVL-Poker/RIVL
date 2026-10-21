@@ -2367,3 +2367,16 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
   body.in-game #table .actions .rivl-pov-pot-balance-row:has(.amount-unit){grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
   body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value:has(.amount-unit)>:is(.rivl-pot-stats-chip,.rivl-pov-chip-icon){display:none!important}
 }
+/* Online match on desktop: Full Screen and Leave Room sit at the right end of the blinds bar, as on the bot table,
+   instead of on a row of their own above it. */
+@media(min-width:601px){
+  #rooms.rivl-match-mode #roomLobby{position:relative}
+  #rooms.rivl-match-mode .room-topline{position:absolute;top:0;right:0;height:68px;padding:0 18px;background:none;border:0;align-items:center;gap:8px}
+  #rooms.rivl-match-mode #roomGame .rivl-pvp-gamebar{padding-right:340px;min-height:68px;box-sizing:border-box}
+}
+/* Phone online match: keep the blinds and hand text clear of the Full Screen and Leave Room buttons. */
+@media(max-width:600px){
+  #rooms.rivl-match-mode #roomGame .rivl-pvp-gamebar{padding-right:140px!important;gap:10px!important}
+  #roomGame .rivl-pvp-gamebar>div{min-width:0}
+  #roomGame .rivl-pvp-gamebar>div:nth-child(2) strong{display:block;font-size:14px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}

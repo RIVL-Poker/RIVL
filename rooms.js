@@ -162,7 +162,7 @@
       const g=snapshot.game;
       $('roomBlinds').textContent=g.smallBlind+' / '+g.bigBlind;
       $('roomMode').textContent=fr?'FREEROLL · TABLE '+fr.table:snapshot.ranked?'PVP · RANKED':'PVP · UNRANKED';
-      $('roomGamePhase').textContent='HAND '+g.handNumber+' · '+g.phase.toUpperCase();
+      $('roomGamePhase').textContent='#'+g.handNumber+' · '+g.phase.toUpperCase();
       const active=g.players.filter(p=>p&&!p.sittingOut);
       $('roomPlayerCount').textContent=active.length;
       const me=g.players.find(p=>p.seat===snapshot.mySeat);
@@ -226,9 +226,9 @@
         const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
         item.dataset.seat=p.seat;item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
-        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=amt(p.stack)+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
+        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=amt(p.stack)+(p.left?' · LEFT':p.away&&snapshot.seats[p.seat]?.online===false?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
-        if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}appendReport(item,snapshot.seats[p.seat]);
+        if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}
         const cards=g.shown?.[p.seat];
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
         // Evenly distribute opponents along a mirrored arc around the Cairo table.
@@ -296,8 +296,9 @@
         if(betKey!==roomBetKey||Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
         roomBetKey=betKey;
         slider.value=amount.value;window.rivlAmounts.raiseLabel($('roomAmountLabel'),amount.value,snapshot?.game?.bigBlind);
+        $('roomBetInfo').parentElement.hidden=true;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips'+(window.rivlAmounts.unit()==='bb'?' ('+amt(l.raiseToMin)+'–'+amt(l.raiseToMax)+')':'')+' · 12-second turn';
-      }else{roomBetKey='';$('roomBetInfo').textContent=fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
+      }else{roomBetKey='';$('roomBetInfo').parentElement.hidden=false;$('roomBetInfo').textContent=fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
       const tick=()=>{
         // The ring drains over the whole turn, extensions included, so an extension refills it.

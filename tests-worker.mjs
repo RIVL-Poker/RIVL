@@ -61,6 +61,23 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// Away: a player marked away who still has the table open gets a normal turn and comes back by acting;
+// one who is disconnected is checked or folded straight away.
+{
+  const {room,players,state}=await setup(0,3);
+  await say(room,players[0].ws,{type:'startMatch'});
+  const g=room.room.game,seatOf=pl=>room.room.members[pl.token].seat;
+  const turnPl=players.find(pl=>seatOf(pl)===g.turn),p=g.players.find(x=>x.seat===g.turn);
+  p.away=true;p.timeouts=2;room.autoAdvance();
+  assert.equal(g.turn,p.seat,'an away player with the table open is not skipped');
+  await say(room,turnPl.ws,{type:'action',action:room.legal(p.seat).check?'check':'call'});
+  assert.ok(!p.away,'acting brings the player back');
+  const next=g.players.find(x=>x.seat===g.turn),nextPl=players.find(pl=>seatOf(pl)===g.turn);
+  next.away=true;nextPl.ws.close();room.autoAdvance();
+  assert.notEqual(g.turn,next.seat,'a disconnected away player is skipped');
+  checks++;
+}
+
 // Side pots: unmatched all-in bets must be refunded, never lost or counted as winnings.
 {
   const {room,hostWs}=await setup(0,3);

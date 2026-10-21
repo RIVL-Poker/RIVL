@@ -301,7 +301,8 @@ export class Room {
     if(room.tourney)return room.tourney.done?null:Math.max(0,FREEROLL_EXTENSIONS-(room.tourney.ext?.[m.accountId]||0));
     return room.ranked&&room.match?.ranked?Math.max(0,RANKED_EXTENSIONS-(room.match.extensions?.[m.seat]||0)):null;
   }
-  humansAway(g){return g.players.filter(p=>!p.bot&&!p.left).every(p=>p.away)}
+  humansAway(g){return g.players.filter(p=>!p.bot&&!p.left).every(p=>p.away&&!this.seatOnline(p.seat))}
+  seatOnline(seat){return this.sockets().some(([,t])=>this.room.members[t]?.seat===seat)}
   ratedSeats(){return Object.values(this.room.members).filter(m=>m.accountId)}
   // Only Ranked rooms change Elo; Quick Play and private rooms are unranked.
   rated(){return !!this.room.ranked&&(this.ratedSeats().length>=2||Object.keys(this.room.match?.accounts||{}).length>=2||!!this.room.game?.ratingChanges?.length)}
@@ -551,7 +552,8 @@ export class Room {
         if(Date.now()<g.deadline-50)break;
         const [action,amount]=this.botAction(p,g);this.applyAction(p.seat,action,amount);
       }
-      else if(p.away||p.left)this.applyAction(p.seat,this.legal(p.seat).check?'check':'fold');
+      // Away players are skipped only while disconnected; one who still has the table open gets a normal turn and can act to come back.
+      else if(p.left||p.away&&!this.seatOnline(p.seat))this.applyAction(p.seat,this.legal(p.seat).check?'check':'fold');
       else break;
       if(g.phase==='showdown')break;
     }
