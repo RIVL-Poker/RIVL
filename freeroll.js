@@ -108,8 +108,8 @@
     const tiles=st==='running'&&d.level?[
       ['LEVEL',d.level.n],['BLINDS',`${chips(d.level.blinds[0])}/${chips(d.level.blinds[1])}`],['NEXT LEVEL',clock(d.level.nextAt-now()),`${chips(d.level.next[0])}/${chips(d.level.next[1])}`],
       ['AVERAGE STACK',chips(Math.round(d.entrants*d.structure.stack/Math.max(1,d.left)))]]
-      :[['PLAYERS',`${d.entrants}/${d.cap}`],['STARTING CHIPS',chips(d.structure.stack)],['BLINDS UP',`every ${d.structure.levelMinutes} min`],['LATE SIGN-UP',`${d.structure.lateRegMinutes} min`]];
-    $('frlFacts').innerHTML=tiles.map(([k,v,x])=>`<div><small>${k}</small><b>${esc(v)}</b>${x?`<em>${esc(x)}</em>`:''}</div>`).join('');
+      :[['PLAYERS',`${d.entrants}/${d.cap}`],['STARTING CHIPS',chips(d.structure.stack)],...(d.structure.blinds?[['STARTING BLINDS',`${chips(d.structure.blinds[0])}/${chips(d.structure.blinds[1])}`]]:[]),['BLINDS UP',`every ${d.structure.levelMinutes} min`],['LATE SIGN-UP',`${d.structure.lateRegMinutes} min`]];
+    $('frlFacts').classList.toggle('five',tiles.length===5);$('frlFacts').innerHTML=tiles.map(([k,v,x])=>`<div><small>${k}</small><b>${esc(v)}</b>${x?`<em>${esc(x)}</em>`:''}</div>`).join('');
   }
   function standings(){
     const d=data,a=account(),list=$('frlList'),st=d.status;

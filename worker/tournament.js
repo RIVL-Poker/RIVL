@@ -63,7 +63,7 @@ export class Tournament {
       cap:FREEROLL.cap,entrants:Object.keys(t.players).length,left:status==='running'?alive.length:null,tables:status==='running'?this.openTables().length:0,
       level:status==='running'?{n:level+1,blinds:blindsFor(level),next:blindsFor(level+1),nextAt:t.startAt+(level+1)*FREEROLL.levelMs}:null,
       lateReg:status==='running'&&now<t.startAt+FREEROLL.lateRegMs&&Object.keys(t.players).length<FREEROLL.cap,
-      structure:{stack:FREEROLL.stack,levelMinutes:FREEROLL.levelMs/60000,lateRegMinutes:FREEROLL.lateRegMs/60000,tableSize:FREEROLL.tableSize},
+      structure:{stack:FREEROLL.stack,blinds:FREEROLL_BLINDS[0],levelMinutes:FREEROLL.levelMs/60000,lateRegMinutes:FREEROLL.lateRegMs/60000,tableSize:FREEROLL.tableSize},
       winner:winner?{id:winner.id,name:winner.name}:null,finishedAt:t.finishedAt||0,note:t.note||'',players};
   }
   // Calls to tables. Adds and pokes are sent after this object's own state is saved, never awaited inside a report.
