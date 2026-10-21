@@ -157,6 +157,14 @@
                     </div>
                   </div>
                 </div>
+                <section id="roomLobbyChat" class="rivl-lobby-chat panel" aria-label="Room lobby chat">
+                  <div class="rivl-lobby-chat-head"><h3>♠ TABLE CHAT</h3><span>ROOM ONLY · 180 CHARACTER LIMIT</span></div>
+                  <div id="roomLobbyChatFeed" class="rivl-lobby-chat-feed" role="log" aria-label="Room messages" aria-live="polite"><p class="muted">No messages yet. Say hello!</p></div>
+                  <form id="roomLobbyChatForm" class="rivl-lobby-chat-form">
+                    <input id="roomLobbyChatInput" maxlength="180" autocomplete="off" placeholder="Message the players in this room…" aria-label="Message the players in this room" required>
+                    <button class="gold" type="submit">SEND</button>
+                  </form>
+                </section>
                 <p class="room-disclaimer">Your seat is kept if you refresh or lose connection.</p>
               </div>
             </section>
