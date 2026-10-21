@@ -7,6 +7,7 @@ import {gradeDecision} from './grading.js';
 import {verifyGoogleToken} from './google.js';
 import {cleanReport,sendBugReport,BUG_MAX_CHARS,cleanPlayerReport,sendPlayerReport} from './bug-report.js';
 import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
+import {CRAWLER_RE} from './stats.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=11000,RANKED_NEXT_HAND_MS=6000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
@@ -211,7 +212,17 @@ export default {
         if(friends[1]&&!['/remove','/dismiss-invite','/accept','/decline'].includes(friends[1])&&await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/friends'+(friends[1]||''),await readBody(request)));
       }
-      if(url.pathname==='/api/presence')return send(await dir(env,'/presence',await readBody(request)));
+      // Heartbeats from an open page: /presence for a signed-in player, /ping for a guest. Crawlers are left out of the player numbers.
+      const crawler=CRAWLER_RE.test(request.headers.get('User-Agent')||'');
+      if(url.pathname==='/api/presence')return send(await dir(env,'/presence',{...await readBody(request),crawler}));
+      if(url.pathname==='/api/ping'){
+        if(await limited(env.PING_LIMITER,request))return json({ok:false},429);
+        return send(await dir(env,'/stats/ping',{...await readBody(request),crawler}));
+      }
+      if(url.pathname==='/api/stats'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many tries. Wait a minute.'},429);
+        return send(await dir(env,'/stats/report',await readBody(request)));
+      }
       if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
       if(url.pathname==='/api/rooms'){
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
@@ -274,6 +285,13 @@ export class Room {
   async dir(path,body){
     if(!this.env.DIRECTORY)return null;
     try{const r=await dirStub(this.env).fetch('https://dir'+path,{method:'POST',body:JSON.stringify(body||{})});return await r.json()}catch{return null}
+  }
+  // Who is dealt in, sent with each hand's budget check for the owner's player numbers (worker/stats.js).
+  // Seated members are the humans; bots are counted apart so they never pass for players.
+  dealtTo(){
+    const room=this.room,humans=Object.values(room.members).filter(m=>m.seat>=0);
+    return {code:room.code,mode:room.tourney?'freeroll':room.ranked?'ranked':'casual',humans:humans.length,
+      bots:room.seats.filter(s=>s?.type==='bot').length,accounts:humans.map(m=>m.accountId).filter(Boolean)};
   }
   // One alarm write per turn clock is enough: an early alarm just re-arms itself for the real deadline.
   async armAlarm(at){if(this.alarmAt>Date.now()&&this.alarmAt<=at)return;this.alarmAt=at;await this.state.storage.setAlarm(at)}
@@ -377,7 +395,7 @@ export class Room {
   async beginMatch(){
     const room=this.room;
     if(room.seats.filter(Boolean).length<2)throw Error('At least two players required');
-    const usage=await this.dir('/usage/hand',{newMatch:true});
+    const usage=await this.dir('/usage/hand',{...this.dealtTo(),newMatch:true});
     if(usage&&!usage.ok)throw Error(CLOSED_MESSAGE);
     room.startsAt=0;
     room.match={id:crypto.randomUUID(),ranked:!!room.ranked,startedAt:Date.now(),out:[],left:[],accounts:Object.fromEntries(Object.values(room.members).filter(m=>m.accountId).map(m=>[m.seat,m.accountId]))};
@@ -598,7 +616,7 @@ export class Room {
     if(g.phase==='showdown'){
       if(Date.now()<(g.nextHandAt||0)){await this.armAlarm(g.nextHandAt);return}
       // Each hand is counted against the daily free-plan budget; past the hard limit the match stops unrated.
-      const usage=await this.dir('/usage/hand',{});
+      const usage=await this.dir('/usage/hand',this.dealtTo());
       if(usage&&!usage.ok){g.result='Match complete';g.note=CLOSED_MESSAGE;g.nextHandAt=0;room.match=null;await this.save();return}
       this.startHand(g);await this.save();return;
     }
@@ -697,7 +715,7 @@ export class Room {
     const seated=Object.values(room.members).filter(m=>(t.stacks[m.accountId]??0)>0).length;
     if(seated<2){t.waiting=true;t.wakeAt=Date.now()+15000;await this.save();return}
     // Freeroll hands count against the free daily budget like any other; past the hard limit the tournament ends by chip count.
-    const usage=await this.dir('/usage/hand',{});
+    const usage=await this.dir('/usage/hand',this.dealtTo());
     if(usage&&!usage.ok&&!halted)return this.tCycle(true);
     t.waiting=false;t.wakeAt=0;
     this.startHand(g&&g.phase==='showdown'?g:null);

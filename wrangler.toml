@@ -60,6 +60,12 @@ name = "BUG_LIMITER"
 namespace_id = "1004"
 simple = { limit = 3, period = 60 }
 
+# Page heartbeats from guests (one a minute per open tab), counted for the owner's player numbers.
+[[ratelimits]]
+name = "PING_LIMITER"
+namespace_id = "1005"
+simple = { limit = 60, period = 60 }
+
 # Anonymous bug reports: the Worker emails each report from the support address to the support
 # address through Cloudflare Email Routing. Email Routing must be on for rivlpoker.com and
 # destination_address must be a verified destination address there, or sending fails.
