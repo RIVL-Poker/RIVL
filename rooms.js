@@ -28,7 +28,7 @@
   const keepPhotos=(before,now)=>now?.seats?.forEach((s,i)=>{const old=before?.seats?.[i];if(s&&s.avatar===undefined&&old&&old.name===s.name)s.avatar=old.avatar});
   const paintSeatAvatar=(el,p)=>{const a=avatarFor(p);el.replaceChildren();if(/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a)&&a.length<=45000){const img=document.createElement('img');img.src=a;img.alt='';img.className='rivl-avatar-photo';el.append(img)}else el.textContent=a};
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
-  let clockTimer=null,roomBetKey='',previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1;
+  let clockTimer=null,roomBetKey='',previousHand=0,previousBoard=[],previousTurn=-1,previousPhase='',lastTick=-1,clockKey='',clockSpan=12000;
   function pvpSound(kind){const files={card:'card.wav',chip:'chips.wav',tick:'tick.wav',win:'pot.wav'};if(!files[kind])return;const a=new Audio('sounds/'+files[kind]);a.volume=kind==='tick'?.16:.28;a.play().catch(()=>{})}
   function animatedCard(code,back,delay=0){const el=cardNode(code,back);if(delay){el.classList.add('rivl-deal-in');el.style.animationDelay=delay+'ms'}return el}
   let roomTab='chat',roomHistory=[],roomChat=[];
@@ -175,6 +175,9 @@
       $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
       // Like bot practice, your clock always sits beside your cards and counts down only on your turn.
       const myTurn=!!me&&g.turn===me.seat&&g.phase!=='showdown';$('roomTimer').hidden=!me;$('roomTimer').classList.toggle('is-live',myTurn);
+      // Ranked: three +5 second extensions per match, usable on your own turn.
+      const ext=$('roomExtend'),extLeft=snapshot.extensionsLeft;ext.hidden=!me||extLeft==null||g.matchOver||!!me.folded;
+      if(!ext.hidden){ext.disabled=!myTurn||!extLeft;ext.classList.toggle('is-live',myTurn&&extLeft>0);$('roomExtendLeft').textContent=extLeft?extLeft+' left':'none left'}
       const newHand=g.handNumber!==previousHand;
       if(newHand){previousHand=g.handNumber;previousBoard=[];previousTurn=-1;lastTick=-1}
       const hole=$('roomHoleCards'),table=$('roomPokerTable'),seatOf=new Map([...$('roomGamePlayers').children].map(el=>[+el.dataset.seat,el]));
@@ -293,7 +296,9 @@
       }else{roomBetKey='';$('roomBetInfo').textContent=fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
       const tick=()=>{
-        const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),percent=Math.min(100,ms/120);
+        // The ring drains over the whole turn, extensions included, so an extension refills it.
+        const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),key=[g.handNumber,g.turn,g.board.length,g.currentBet].join(':');
+        if(key!==clockKey){clockKey=key;clockSpan=12000}clockSpan=Math.max(clockSpan,ms);const percent=Math.min(100,ms/clockSpan*100);
         $('roomTimer').style.background=myTurn?'conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)':'';
         const sec=Math.ceil(ms/1000);if(g.turn===me?.seat&&sec<=5&&sec>0&&sec!==lastTick){pvpSound('tick');lastTick=sec}
         $('roomTimerText').textContent=myTurn?Math.ceil(ms/1000):'–';
@@ -418,6 +423,7 @@
   $('roomRaise').onclick=()=>{setRoomBet($('roomRaiseAmount').value);send({type:'action',action:'raise',amount:Number($('roomRaiseAmount').value)})};
   $('roomRaiseAmount').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('roomRaise').click()}});
   $('roomAllin').onclick=()=>send({type:'action',action:'allin'});
+  $('roomExtend').onclick=()=>{$('roomExtend').disabled=true;send({type:'extend'})};
   $('roomNext').onclick=()=>{if(snapshot?.tourney){resetView('');show('freeroll');window.rivlFreeroll?.refresh();return}if(!snapshot?.ranked)return send({type:'newMatch'});send({type:'leave'});resetView('Finding your next Ranked match…');enter('ranked')};
   function setRoomBet(value){const l=snapshot?.game?.legal;if(!l)return;const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);const raw=Number(value);const n=clamp(5*Math.round((Number.isFinite(raw)?raw:first)/5),first,last);$('roomRaiseAmount').value=n;$('roomRaiseSlider').value=n;$('roomAmountLabel').textContent=n;}
   $('roomRaiseAmount').addEventListener('input',e=>{const n=Number(e.target.value);if(Number.isFinite(n)){const l=snapshot?.game?.legal;if(l){const first=5*Math.ceil(l.raiseToMin/5),last=5*Math.floor(l.raiseToMax/5);$('roomRaiseSlider').value=clamp(5*Math.round(n/5),first,last)}$('roomAmountLabel').textContent=e.target.value;}});

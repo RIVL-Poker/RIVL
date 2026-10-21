@@ -298,6 +298,23 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   let sent=null;const dirCall=room.dir.bind(room);room.dir=(path,body)=>{if(path==='/results')sent=body;return dirCall(path,body)};
   room.room.startsAt=Date.now()-1;await room.alarm();   // the countdown ends
   assert.ok(room.room.started&&room.room.game,'the match starts on its own');
+  // Time extensions: three +5 seconds per player per match, only on your own turn.
+  {
+    const g=room.room.game,turnIdx=tokens.findIndex(t=>room.room.members[t]?.seat===g.turn),waitIdx=tokens.findIndex((t,i)=>i!==turnIdx&&room.room.members[t]);
+    assert.equal(sockets[turnIdx].last('state').state.extensionsLeft,3,'each Ranked player starts a match with three extensions');
+    await say(room,sockets[waitIdx],{type:'extend'});
+    assert.match(sockets[waitIdx].last('error').error,/only on your turn/);
+    const before=g.deadline;
+    for(let k=0;k<3;k++)await say(room,sockets[turnIdx],{type:'extend'});
+    assert.equal(g.deadline,before+15000,'each extension adds five seconds');
+    assert.equal(sockets[turnIdx].last('state').state.extensionsLeft,0);
+    assert.equal(sockets[waitIdx].last('state').state.extensionsLeft,3,'other players keep their own extensions');
+    await say(room,sockets[turnIdx],{type:'extend'});
+    assert.match(sockets[turnIdx].last('error').error,/No time extensions left/);
+    assert.equal(g.deadline,before+15000,'a fourth extension adds nothing');
+    const turn=g.turn;await room.alarm();
+    assert.equal(room.room.game.turn,turn,'the turn is not timed out before the extended deadline');
+  }
   await say(room,sockets[2],{type:'leave'});   // Cat abandons with chips: places last, below anyone who busts later
   const busted=new Set(),bustOrder=[];
   for(let i=0;i<20000&&!room.matchOver();i++){
@@ -369,6 +386,8 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   const room=roomOf(env,code),ws=[await sit(env,code,token),await sit(env,code,t2)];
   assert.ok(!ws[0].last('state').state.rated,'private room is unranked');
   await say(room,ws[0],{type:'startMatch'});
+  assert.equal(ws[0].last('state').state.extensionsLeft,null,'no time extensions outside Ranked');
+  {const seat=room.room.game.turn,i=room.room.members[token].seat===seat?0:1;await say(room,ws[i],{type:'extend'});assert.match(ws[i].last('error').error,/Ranked/)}
   await say(room,ws[1],{type:'leave'});
   for(let i=0;i<20&&!room.matchOver();i++){const g=room.room.game;if(g.phase==='showdown')g.nextHandAt=0;else g.deadline=0;await room.alarm()}
   assert.ok(room.matchOver());
