@@ -2421,3 +2421,8 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
 .rivl-history-player-head{color:#bd9961;font-size:10px;font-weight:900;letter-spacing:.06em}
 .rivl-history-winner{background:#3a29165e;color:#f5c978}
 @media(max-width:650px){.rivl-history-game-toggle{align-items:flex-start;flex-direction:column;gap:10px}.rivl-history-game-stats{gap:12px;flex-wrap:wrap}.rivl-history-filters button{padding:9px 11px;font-size:12px}}
+
+/* Bottom ribbon (action buttons, raise box, pot / balance / equity) 15% smaller, and your own hole cards a little
+   bigger, on the bot table and every online table. zoom scales the whole block, so its spacing stays in proportion. */
+body.in-game #table .actions,#roomGame #roomActions{zoom:.85}
+body.in-game #table .myseat>.holecards,#roomGame .rivl-pvp-myseat>.holecards{zoom:1.15}
