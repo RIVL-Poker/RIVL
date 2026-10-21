@@ -206,9 +206,9 @@ export default {
         const r=await tourney(env,night,'/'+freeroll[1],{account:me.data.account});
         return send(r);
       }
-      const friends=url.pathname.match(/^\/api\/friends(\/add|\/remove|\/new-code|\/invite|\/dismiss-invite)?$/);
+      const friends=url.pathname.match(/^\/api\/friends(\/add|\/remove|\/new-code|\/invite|\/dismiss-invite|\/request|\/accept|\/decline)?$/);
       if(friends){
-        if(friends[1]&&friends[1]!=='/remove'&&friends[1]!=='/dismiss-invite'&&await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        if(friends[1]&&!['/remove','/dismiss-invite','/accept','/decline'].includes(friends[1])&&await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/friends'+(friends[1]||''),await readBody(request)));
       }
       if(url.pathname==='/api/presence')return send(await dir(env,'/presence',await readBody(request)));

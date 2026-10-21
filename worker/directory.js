@@ -63,6 +63,9 @@ export class Directory {
     this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_friend_code ON accounts(friend_code)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS friends(account TEXT NOT NULL,friend TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(account,friend))');
     // Invites to a casual room: one per pair of friends, the newest replacing the last. They reach the friend with their presence heartbeat.
+    // Friend requests to someone you played with (from Match History). They become friends when the other side accepts.
+    this.sql.exec('CREATE TABLE IF NOT EXISTS friend_requests(sender TEXT NOT NULL,target TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(sender,target))');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS friend_requests_target ON friend_requests(target,created)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS invites(sender TEXT NOT NULL,friend TEXT NOT NULL,code TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(sender,friend))');
     // Nightly freeroll results: one row per player per night. Points are entrants minus place plus one, summed by month.
     this.sql.exec('CREATE TABLE IF NOT EXISTS freeroll_results(night TEXT NOT NULL,account TEXT NOT NULL,place INTEGER NOT NULL,entrants INTEGER NOT NULL,points INTEGER NOT NULL,PRIMARY KEY(night,account))');
@@ -178,7 +181,19 @@ export class Directory {
     return this.rows('SELECT i.sender,i.code,i.created,x.name,x.avatar,x.avatar_blocked FROM invites i JOIN accounts x ON x.id=i.sender WHERE i.friend=? ORDER BY i.created DESC LIMIT 5',a.id)
       .map(i=>({from:i.sender,name:i.name,avatar:i.avatar_blocked?'':(i.avatar||''),code:i.code,created:i.created}));
   }
-  friendsReply(a){return this.reply({code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS})}
+  // Requests waiting on this player's answer, newest first, and the ids of people they've asked themselves.
+  requestsFor(a){
+    return this.rows('SELECT x.*,r.created AS asked FROM friend_requests r JOIN accounts x ON x.id=r.sender WHERE r.target=? ORDER BY r.created DESC LIMIT 50',a.id)
+      .map(x=>({...this.publicAccount(x,false),asked:x.asked}));
+  }
+  friendsReply(a,extra){return this.reply({...extra,code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS,incoming:this.requestsFor(a),
+    outgoing:this.rows('SELECT target FROM friend_requests WHERE sender=?',a.id).map(r=>r.target)})}
+  befriend(a,b){
+    const t=Date.now();
+    this.sql.exec('INSERT OR IGNORE INTO friends(account,friend,created) VALUES (?,?,?)',a,b,t);
+    this.sql.exec('INSERT OR IGNORE INTO friends(account,friend,created) VALUES (?,?,?)',b,a,t);
+    this.sql.exec('DELETE FROM friend_requests WHERE (sender=? AND target=?) OR (sender=? AND target=?)',a,b,b,a);
+  }
   reply(body,status=200){return Response.json(body,{status})}
   async fetch(request){
     const url=new URL(request.url),path=url.pathname;
@@ -253,7 +268,7 @@ export class Directory {
         const id=String(url.searchParams.get('id')||'');
         const game=this.one('SELECT * FROM game_history WHERE id=?',id);
         if(!game)return this.reply({error:'Game not found'},404);
-        return this.reply({game,players:this.rows('SELECT name,place,chips,accuracy,decisions,elo_change FROM game_history_players WHERE game=? ORDER BY place,name',id)});
+        return this.reply({game,players:this.rows('SELECT account AS id,name,place,chips,accuracy,decisions,elo_change FROM game_history_players WHERE game=? ORDER BY place,name',id)});
       }
       if(path==='/leaderboard'){
         return this.reply(this.board('top',()=>{
@@ -306,7 +321,7 @@ export class Directory {
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign in again.'},401);
         this.presence(a,!!body.away);
-        return this.reply({ok:true,invites:body.away?[]:this.invitesFor(a)});
+        return this.reply(body.away?{ok:true,invites:[],requests:[]}:{ok:true,invites:this.invitesFor(a),requests:this.requestsFor(a).slice(0,5).map(f=>({id:f.id,name:f.name,avatar:f.avatar}))});
       }
       if(path.startsWith('/friends')){
         const a=await this.byKey(body.key);
@@ -323,10 +338,37 @@ export class Directory {
           const count=id=>this.one('SELECT COUNT(*) AS n FROM friends WHERE account=?',id).n;
           if(count(a.id)>=MAX_FRIENDS)return this.reply({error:`You can have up to ${MAX_FRIENDS} friends.`},400);
           if(count(f.id)>=MAX_FRIENDS)return this.reply({error:f.name+"'s friends list is full."},400);
-          const t=Date.now();
-          this.sql.exec('INSERT OR IGNORE INTO friends(account,friend,created) VALUES (?,?,?)',a.id,f.id,t);
-          this.sql.exec('INSERT OR IGNORE INTO friends(account,friend,created) VALUES (?,?,?)',f.id,a.id,t);
-          return this.reply({added:f.name,code:this.friendCode(a),friends:this.friendList(a),max:MAX_FRIENDS});
+          this.befriend(a.id,f.id);
+          return this.friendsReply(a,{added:f.name});
+        }
+        // A request goes only to someone you were in a recorded game with. If they had already asked you, you're friends at once.
+        if(path==='/friends/request'){
+          const id=String(body.id||''),game=String(body.game||'');
+          const f=this.one('SELECT * FROM accounts WHERE id=?',id);
+          if(!f||f.id===a.id)return this.reply({error:'Invalid player.'},400);
+          if(!this.one('SELECT 1 AS x FROM game_history_players p JOIN game_history_players q ON q.game=p.game WHERE p.game=? AND p.account=? AND q.account=?',game,a.id,f.id))
+            return this.reply({error:'You can only send requests to players from your games.'},400);
+          if(this.one('SELECT 1 AS x FROM friends WHERE account=? AND friend=?',a.id,f.id))return this.reply({error:f.name+' is already your friend.'},409);
+          const count=x=>this.one('SELECT COUNT(*) AS n FROM friends WHERE account=?',x).n;
+          if(count(a.id)>=MAX_FRIENDS)return this.reply({error:`You can have up to ${MAX_FRIENDS} friends.`},400);
+          if(count(f.id)>=MAX_FRIENDS)return this.reply({error:f.name+"'s friends list is full."},400);
+          if(this.one('SELECT 1 AS x FROM friend_requests WHERE sender=? AND target=?',f.id,a.id)){this.befriend(a.id,f.id);return this.friendsReply(a,{added:f.name})}
+          if(this.one('SELECT COUNT(*) AS n FROM friend_requests WHERE sender=?',a.id).n>=MAX_FRIENDS)return this.reply({error:'You have too many requests waiting. Wait for some answers first.'},400);
+          this.sql.exec('INSERT OR IGNORE INTO friend_requests(sender,target,created) VALUES (?,?,?)',a.id,f.id,Date.now());
+          return this.friendsReply(a,{requested:f.name});
+        }
+        if(path==='/friends/accept'){
+          const f=this.one('SELECT x.* FROM friend_requests r JOIN accounts x ON x.id=r.sender WHERE r.sender=? AND r.target=?',String(body.id||''),a.id);
+          if(!f)return this.reply({error:'That friend request is no longer there.'},404);
+          const count=x=>this.one('SELECT COUNT(*) AS n FROM friends WHERE account=?',x).n;
+          if(count(a.id)>=MAX_FRIENDS)return this.reply({error:`You can have up to ${MAX_FRIENDS} friends.`},400);
+          if(count(f.id)>=MAX_FRIENDS)return this.reply({error:f.name+"'s friends list is full."},400);
+          this.befriend(a.id,f.id);
+          return this.friendsReply(a,{added:f.name});
+        }
+        if(path==='/friends/decline'){
+          this.sql.exec('DELETE FROM friend_requests WHERE sender=? AND target=?',String(body.id||''),a.id);
+          return this.friendsReply(a);
         }
         if(path==='/friends/invite'){
           const code=String(body.code||'').toUpperCase();

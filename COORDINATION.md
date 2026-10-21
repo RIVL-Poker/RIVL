@@ -108,3 +108,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 ### 2026-10-21 03:45 UTC · Claude
 - The chips/BB toggle now also covers stacks: opponents' seat labels, your stack, and the Balance in the pot HUD (bot practice and online). The BB tag under each avatar stays in big blinds.
 - Fixed a merge leftover from #108/#109 that overwrote the online pot total with chips, and gave the phone online HUD short labels (POT · BALANCE · EQUITY) so all three fit on one line.
+
+### 2026-10-21 06:00 UTC · Claude
+- Friend requests from Leaderboard → Match History: in a game you played, each other signed-in player gets + ADD FRIEND / REQUESTED / ACCEPT REQUEST / FRIENDS ✓. Requests (`friend_requests` table) only go to players you shared a recorded game with, and become a friendship when accepted; crossed requests become friends at once. Friend codes still add instantly.
+- Incoming requests show in Profile → Friends (Accept / Decline) and as a pop-up (Accept / Later) delivered with the presence heartbeat. New endpoints `/api/friends/request|accept|decline`; `/api/friends` now returns `incoming` and `outgoing`; `/api/history/game` rows include the player's account `id`.

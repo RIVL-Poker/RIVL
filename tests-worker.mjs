@@ -793,6 +793,39 @@ console.log('PASS: '+checks+' room server checks');
   checks++;
 }
 
+// Friend requests from Match History: only to players you shared a recorded game with, and only friends once accepted.
+{
+  const env=makeEnv(),acc=[];
+  for(const n of ['Dee','Eli','Fay','Gus'])acc.push((await api(env,'/api/accounts',{name:n})).data);
+  const d=env.DIRECTORY.instances.get('global'),[dee,eli,fay,gus]=acc,id=x=>x.account.id;
+  d.sql.exec("INSERT INTO game_history(id,t,mode,players,winner) VALUES ('g1',1,'Ranked',3,'Dee')");
+  for(const x of [dee,eli,fay])d.sql.exec("INSERT INTO game_history_players(game,account,name,place) VALUES ('g1',?,?,1)",id(x),x.account.name);
+  const game=(await api(env,'/api/history/game?id=g1')).data;
+  assert.ok(game.players.every(p=>p.id),'match history lists account ids for the friend buttons');
+  assert.equal((await api(env,'/api/friends/request',{key:dee.key,id:id(gus),game:'g1'})).status,400,'Gus was not in that game');
+  assert.equal((await api(env,'/api/friends/request',{key:gus.key,id:id(dee),game:'g1'})).status,400,'nor can Gus ask from it');
+  assert.equal((await api(env,'/api/friends/request',{key:dee.key,id:id(dee),game:'g1'})).status,400,'not yourself');
+  const sent=(await api(env,'/api/friends/request',{key:dee.key,id:id(eli),game:'g1'})).data;
+  assert.equal(sent.requested,'Eli');assert.deepEqual(sent.outgoing,[id(eli)]);assert.equal(sent.friends.length,0,'not friends until accepted');
+  const pres=(await api(env,'/api/presence',{key:eli.key})).data;
+  assert.deepEqual(pres.requests.map(r=>r.name),['Dee'],'Eli hears about it with his heartbeat');
+  let eliList=(await api(env,'/api/friends',{key:eli.key})).data;
+  assert.deepEqual(eliList.incoming.map(r=>r.name),['Dee']);assert.equal(eliList.friends.length,0);
+  const ok=(await api(env,'/api/friends/accept',{key:eli.key,id:id(dee)})).data;
+  assert.equal(ok.added,'Dee');assert.deepEqual(ok.friends.map(f=>f.name),['Dee']);assert.equal(ok.incoming.length,0);
+  assert.deepEqual((await api(env,'/api/friends',{key:dee.key})).data.friends.map(f=>f.name),['Eli'],'friends both ways');
+  assert.deepEqual((await api(env,'/api/friends',{key:dee.key})).data.outgoing,[],'the request is gone');
+  assert.equal((await api(env,'/api/friends/request',{key:dee.key,id:id(eli),game:'g1'})).status,409,'already friends');
+  assert.equal((await api(env,'/api/friends/accept',{key:eli.key,id:id(dee)})).status,404,'nothing left to accept');
+  // Declining removes it; asking someone who already asked you makes you friends at once.
+  await api(env,'/api/friends/request',{key:fay.key,id:id(dee),game:'g1'});
+  assert.equal((await api(env,'/api/friends/decline',{key:dee.key,id:id(fay)})).data.incoming.length,0);
+  assert.equal((await api(env,'/api/friends',{key:dee.key})).data.friends.length,1,'declining adds no one');
+  await api(env,'/api/friends/request',{key:fay.key,id:id(eli),game:'g1'});
+  assert.equal((await api(env,'/api/friends/request',{key:eli.key,id:id(fay),game:'g1'})).data.added,'Fay','crossed requests become a friendship');
+  checks++;
+}
+
 // Nightly freeroll: sign-up rules, then whole tournaments played out on a fake clock. Every table reports after each hand;
 // players bust, move and get balanced; chips are never created or lost; places run 1..N; results reach the Directory.
 {

@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=friend-invites-20261020">
+    <link rel="stylesheet" href="style.css?v=friend-requests-20261021">
     <script src="screen-modes.js?v=sidebar-drawer-20261020"></script>
 </head>
 
@@ -348,6 +348,7 @@
                                 <p id="frStatus" class="fr-status" role="status"></p>
                             </form>
                         </div>
+                        <div class="panel fr-list-panel fr-requests" id="frRequests" hidden><div class="fr-list-head"><h3>FRIEND REQUESTS</h3><span id="frReqCount"></span></div><div id="frReqList"></div></div>
                         <div class="panel fr-list-panel"><div class="fr-list-head"><h3>YOUR FRIENDS</h3><span id="frCount"></span></div><div id="frList"></div></div>
                     </div>
                 </div>
@@ -506,7 +507,7 @@
             <p class="rivl-welcome-legal">Free play-money poker for ages 18+. No real money. By playing you agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
         </div>
     </div>
-    <div id="inviteToast" class="invite-toast" role="alert" hidden><span class="fr-avatar" id="inviteToastPic"></span><div class="invite-toast-text"><strong id="inviteToastName"></strong><span>invited you to a casual game</span></div><button type="button" class="gold" id="inviteToastJoin">JOIN</button><button type="button" class="outline" id="inviteToastNo">NO THANKS</button></div>
+    <div id="inviteToast" class="invite-toast" role="alert" hidden><span class="fr-avatar" id="inviteToastPic"></span><div class="invite-toast-text"><strong id="inviteToastName"></strong><span id="inviteToastWhat">invited you to a casual game</span></div><button type="button" class="gold" id="inviteToastJoin">JOIN</button><button type="button" class="outline" id="inviteToastNo">NO THANKS</button></div>
     <script src="welcome-support.js"></script>
     <script src="league-icons.js"></script>
     <script src="profile.js"></script>
