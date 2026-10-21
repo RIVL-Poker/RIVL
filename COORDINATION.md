@@ -112,3 +112,6 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 ### 2026-10-21 06:00 UTC · Claude
 - Friend requests from Leaderboard → Match History: in a game you played, each other signed-in player gets + ADD FRIEND / REQUESTED / ACCEPT REQUEST / FRIENDS ✓. Requests (`friend_requests` table) only go to players you shared a recorded game with, and become a friendship when accepted; crossed requests become friends at once. Friend codes still add instantly.
 - Incoming requests show in Profile → Friends (Accept / Decline) and as a pop-up (Accept / Later) delivered with the presence heartbeat. New endpoints `/api/friends/request|accept|decline`; `/api/friends` now returns `incoming` and `outgoing`; `/api/history/game` rows include the player's account `id`.
+
+### 2026-10-21 06:20 UTC · Claude
+- Friends is its own page again: sidebar is now Play, Freeroll, Leaderboard, Friends, Profile, Table Themes, Support. Everything friends-related (code, add, requests, list) moved out of Profile into `#friends`. The `show('friends')` → Profile alias is gone; invite links open the Friends page.

@@ -1,8 +1,8 @@
 /* RIVL friends: every account has a public friend code (never the secret sign-in code). Share yours, enter a
    friend's to add each other, and see their league, Elo, when they were last on and their daily puzzle streak.
-   The list is a section of Profile. A link like rivlpoker.com/?friend=ABCD2345 opens it with the code filled in.
+   Friends has its own page in the sidebar. A link like rivlpoker.com/?friend=ABCD2345 opens it with the code filled in.
    From a casual room's lobby you can invite friends to it; they get a pop-up to join. From Match History you can
-   send a friend request to someone you played with; they accept it here or from a pop-up. */
+   send a friend request to someone you played with; they accept it on this page or from a pop-up. */
 (()=>{
   const $=id=>document.getElementById(id);
   if(!$('friends'))return;
@@ -108,16 +108,16 @@
     $('frNewCode').dataset.confirm='';$('frNewCode').textContent='Get a new code';
     act('/api/friends/new-code',{},'You have a new friend code. Friends you already added stay.');
   };
-  // Signed out: the account sign-in is further down the same Profile page.
-  $('frSignIn')?.addEventListener('click',e=>{e.preventDefault();$('accountPanel')?.scrollIntoView({behavior:'smooth',block:'center'});$('accountName')?.focus({preventScroll:true})});
-  // Refresh when Profile opens, and every minute while it stays open and on screen, so "active now" stays current.
-  const onProfile=()=>document.getElementById('profile')?.classList.contains('active');
-  const open=()=>{status('');confirmId=null;load();clearInterval(poll);poll=setInterval(()=>{if(!onProfile())clearInterval(poll);else if(document.visibilityState==='visible')load()},60000)};
-  document.addEventListener('rivl:view',e=>{if(e.detail==='profile')open()});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&onProfile())load()});
-  // Signing in or out on Profile shows or hides the friends list straight away.
-  document.addEventListener('rivl:account',()=>{if(onProfile())load()});
-  // Invite friends from a casual room's lobby, online friends first. The list is the same one Profile shows.
+  // Signed out: sign in on Profile, then come back.
+  $('frSignIn')?.addEventListener('click',e=>{e.preventDefault();if(typeof show==='function')show('profile');$('accountPanel')?.scrollIntoView({block:'center'});$('accountName')?.focus({preventScroll:true})});
+  // Refresh when Friends opens, and every minute while it stays open and on screen, so "active now" stays current.
+  const onFriends=()=>$('friends').classList.contains('active');
+  const open=()=>{status('');confirmId=null;load();clearInterval(poll);poll=setInterval(()=>{if(!onFriends())clearInterval(poll);else if(document.visibilityState==='visible')load()},60000)};
+  document.addEventListener('rivl:view',e=>{if(e.detail==='friends')open()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&onFriends())load()});
+  // Signing in or out shows or hides the friends list straight away.
+  document.addEventListener('rivl:account',()=>{if(onFriends())load()});
+  // Invite friends from a casual room's lobby, online friends first. The list is the same one the Friends page shows.
   const sent=new Set();let inviteRoom='';
   const inviteStatus=(t,ok)=>{const el=$('roomInviteStatus');el.textContent=t||'';el.classList.toggle('ok',!!ok)};
   function paintInvite(){
@@ -130,7 +130,7 @@
     const note=text=>{const p=document.createElement('p');p.className='fr-empty';p.textContent=text;list.append(p)};
     if(!account())return note('Sign in on your Profile to invite friends.');
     if(!data)return note('Loading your friends…');
-    if(!data.friends.length)return note('No friends yet. Add friends on your Profile, then invite them here.');
+    if(!data.friends.length)return note('No friends yet. Add friends on the Friends page, then invite them here.');
     for(const f of [...data.friends].sort((a,b)=>b.online-a.online)){
       const row=document.createElement('div');row.className='room-invite-row';
       const pic=avatar(f);if(f.online)pic.classList.add('online');
@@ -177,7 +177,7 @@
   document.addEventListener('rivl:invites',e=>{
     invites=Array.isArray(e.detail?.invites)?e.detail.invites:[];
     const next=Array.isArray(e.detail?.requests)?e.detail.requests:[];
-    // A new request also refreshes the list, so Profile and Match History show it straight away.
+    // A new request also refreshes the list, so Friends and Match History show it straight away.
     if(next.some(q=>!requests.some(x=>x.id===q.id))&&!busy)load();
     requests=next;showToast();
   });
@@ -200,7 +200,7 @@
     status:()=>$('frStatus').textContent
   };
 
-  // ?friend=CODE from an invite link: open Profile at Friends with the code ready to add.
+  // ?friend=CODE from an invite link: open Friends with the code ready to add.
   const invited=new URLSearchParams(location.search).get('friend');
   if(invited){
     $('frInput').value=invited.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
