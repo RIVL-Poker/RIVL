@@ -266,6 +266,7 @@
         seats.append(item);
         window.rivlTable?.bbCount(item,avatar,p.stack,g.bigBlind);
       });
+      window.rivlTable?.markers(table);
       if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
       renderRoomPanel();
       // Large showdown banner. Use only publicly revealed cards from the server.

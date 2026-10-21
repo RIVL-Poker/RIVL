@@ -2196,15 +2196,22 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
 }
 @media(max-width:600px){#roomGame .poker-table>.rivl-pvp-myseat{top:calc(100% + 30px)!important}}
 
-/* Dealer and blind badges sit in the BB count tag under each seat, never on top of a player's profile picture. */
+/* Dealer and blind markers are discs on the felt (see markers() in muck.js), so nothing sits on the avatar or BB tag. */
 .is-sb>.avatar::before,.is-bb>.avatar::before,.is-dealer>.avatar::after{content:none!important}
-.bb-count{display:inline-flex;align-items:center;gap:3px}
-.is-sb>.bb-count::before,.is-bb>.bb-count::before,.is-dealer>.bb-count::after{
-  display:inline-grid;place-items:center;min-width:1.5em;height:1.25em;padding:0 2px;margin:0 -3px;border-radius:.65em;box-sizing:border-box;
-  font:900 .85em/1 Inter,Arial,sans-serif;letter-spacing:0}
-.is-sb>.bb-count::before{content:'SB';background:#2c5fa8;color:#fff;margin-right:0}
-.is-bb>.bb-count::before{content:'BB';background:#f6d48e;color:#160e04;margin-right:0}
-.is-dealer>.bb-count::after{content:'D';background:#f4efe4;color:#111;margin-left:0;border-radius:50%;min-width:1.25em}
+.table-marker{--size:38px;position:absolute;left:0;top:0;width:var(--size);height:var(--size);margin:calc(var(--size)/-2) 0 0 calc(var(--size)/-2);border-radius:50%;
+  display:grid;place-items:center;font-style:normal;pointer-events:none;z-index:6;opacity:0;transform:scale(.6);
+  transition:opacity .25s ease,transform .25s ease;
+  background:radial-gradient(circle at 50% 35%,var(--hi),var(--face) 62%,var(--lo));
+  box-shadow:0 0 0 1.5px var(--rim),inset 0 0 0 calc(var(--size)*.09) var(--face),inset 0 0 0 calc(var(--size)*.09 + 1.5px) var(--ring),inset 0 -2px 3px #0005,0 3px 7px #000c,0 1px 2px #000a}
+.table-marker.is-on{opacity:1;transform:none;transition:opacity .25s ease,transform .25s ease,left .45s cubic-bezier(.3,.7,.3,1),top .45s cubic-bezier(.3,.7,.3,1)}
+.table-marker>b{font:900 calc(var(--size)*.36)/1 Inter,Arial,sans-serif;letter-spacing:-.02em;color:var(--ink);text-shadow:0 1px 0 var(--glow)}
+.marker-dealer{--hi:#ffffff;--face:#f1ebdf;--lo:#cfc5b2;--rim:#8a6a36;--ring:#c79a52;--ink:#15110c;--glow:#fff8}
+.marker-dealer>b{font-size:calc(var(--size)*.5)}
+.marker-sb{--hi:#5d93dc;--face:#2c5fa8;--lo:#1b3c6d;--rim:#0d203d;--ring:#a9c8f3;--ink:#fff;--glow:#0007}
+.marker-bb{--hi:#ffe9b8;--face:#e7b965;--lo:#a8762c;--rim:#4a3112;--ring:#fff1cf;--ink:#1d1206;--glow:#fff6}
+@media(max-width:850px){.table-marker{--size:32px}}
+@media(max-width:600px){.table-marker{--size:27px}.poker-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"])>.table-marker{--size:24px}}
+@media(prefers-reduced-motion:reduce){.table-marker,.table-marker.is-on{transition:opacity .2s ease}}
 
 /* Phone online tables use the bot practice table: the Cairo artwork is drawn tall, the table box is pinned to
    its painted rim (see the body.in-game #table phone rules above), and the seats ring just outside it. */
