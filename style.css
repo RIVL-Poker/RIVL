@@ -2426,3 +2426,25 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
    bigger, on the bot table and every online table. zoom scales the whole block, so its spacing stays in proportion. */
 body.in-game #table .actions,#roomGame #roomActions{zoom:.85}
 body.in-game #table .myseat>.holecards,#roomGame .rivl-pvp-myseat>.holecards{zoom:1.15}
+/* Ranked/online desktop action bar: the quick-bet and +/- buttons were picking up the 55px generic button height and the
+   pot box stacked three rows, so the whole bar stood ~150px tall. Sized to match the bot table's bar. */
+@media (min-width:751px){
+  #roomGame .rivl-bet-actions>button{min-height:0}
+  #roomGame .rivl-pvp-raise{padding:6px 10px;gap:4px;justify-content:center}
+  #roomGame .rivl-pvp-raise .amount-row{gap:5px}
+  #roomGame .rivl-pvp-raise .amount-row>*{height:32px;min-height:0;padding:0 10px;font-size:17px}
+  #roomGame .rivl-pvp-raise input[type=range]{height:12px;margin:2px 0}
+  #roomGame .rivl-pvp-raise .quick-bets{gap:5px}
+  #roomGame .rivl-pvp-raise .quick-bets button{height:24px;min-height:0;padding:0}
+  #roomGame .rivl-bet-actions .rivl-pot-stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px;row-gap:2px;align-content:center;padding:8px 12px}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>.rivl-pot-stats-divider{display:none}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>:nth-child(1){grid-area:1/1}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>:nth-child(2){grid-area:2/1}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>:nth-child(4){grid-area:1/2}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>:nth-child(5){grid-area:2/2}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>:nth-child(7){grid-area:3/1/3/3;margin-top:4px}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>:nth-child(8){grid-area:4/1/4/3}
+  #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-value{font-size:19px}
+  #roomGame .rivl-bet-actions .rivl-pot-stats :is(.rivl-pot-stats-chip,.rivl-pov-chip-icon){display:none}
+  #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-percent{font-size:18px}
+}
