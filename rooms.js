@@ -172,7 +172,7 @@
       const opponents=g.players.filter(p=>p&&(!me||p.seat!==me.seat)).sort((a,b)=>after(a)-after(b));
       $('roomMyName').textContent=me?.name||'Spectator';
       paintSeatAvatar($('roomMyAvatar'),snapshot.seats[me?.seat]||me);const mySpot=$('roomMyAvatar').parentElement;for(const [cls,seat] of [['is-dealer',g.dealer],['is-sb',g.sbSeat],['is-bb',g.bbSeat]])mySpot.classList.toggle(cls,!!me&&me.seat===seat);
-      $('roomMyStack').textContent=(me?.stack??0).toLocaleString()+' chips';
+      $('roomMyStack').textContent=window.rivlAmounts.fmtUnit(me?.stack??0,g.bigBlind);
       // Like bot practice, your clock always sits beside your cards and counts down only on your turn.
       const myTurn=!!me&&g.turn===me.seat&&g.phase!=='showdown';$('roomTimer').hidden=!me;$('roomTimer').classList.toggle('is-live',myTurn);
       // Ranked: three +5 second extensions per match, usable on your own turn.
@@ -215,8 +215,7 @@
       $('roomPot').textContent=g.pot;
       const amt=(n)=>window.rivlAmounts.fmt(n,g.bigBlind);
       $('roomPotTotal').textContent=amt(g.pot);$('roomPotLabel').textContent=amt(g.pot);window.rivlAmounts.paint();
-      $('roomPotTotal').textContent=Number(g.pot||0).toLocaleString();
-      $('roomBalance').textContent=Number(me?.stack??0).toLocaleString();
+      $('roomBalance').textContent=amt(me?.stack??0);
       const myContribution=Number(g.players.find(p=>p.seat===snapshot.mySeat)?.contribution||0);
       $('roomPotEquity').textContent=g.pot?Math.round(100*myContribution/g.pot)+'%':'0%';
       const potEl=$('roomPotChips');if(potEl.dataset.pot!==String(g.pot||0)){potEl.dataset.pot=g.pot||0;potEl.innerHTML=window.rivlChips.pileHTML(g.pot)}
@@ -227,7 +226,7 @@
         const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
         item.dataset.seat=p.seat;item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
-        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
+        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=amt(p.stack)+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
         if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}appendReport(item,snapshot.seats[p.seat]);
         const cards=g.shown?.[p.seat];

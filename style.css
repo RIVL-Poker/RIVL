@@ -2336,7 +2336,7 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
 body.in-game #table .poker-table>.pot,#roomGame .rivl-pvp-table>.pot{z-index:6}
 /* "1.5 BB" is wider than a chip count: let the pot total shrink inside its half of the bot stats box. */
 body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
-#botPotTotal{white-space:nowrap;min-width:0;font-size:min(1em,max(.72em,1.6vw))}
+#botPotTotal,#rivlPovBalance{white-space:nowrap;min-width:0;font-size:min(1em,max(.72em,1.6vw))}
 /* Phone bot table: the pot sits straight above the board, so its readout goes above the chip pile, clear of the cards. */
 @media(max-width:600px){
   body.in-game #table .pot .pot-amount{top:auto;bottom:calc(100% + 1px);left:50%;transform:translateX(-50%)}
@@ -2348,3 +2348,14 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
 #roomGame .rivl-pot-stats .rivl-pov-chip-icon{display:inline-grid;place-items:center;flex:none;width:20px;height:20px;border:2px solid #dba84f;border-radius:50%;background:#24180d;color:#f2bd5b;font-size:12px;line-height:1}
 /* Always render account-backed seat photos inside the circular nameplates. */
 #roomGame .rivl-pvp-seat .avatar img.rivl-avatar-photo,#roomGame .rivl-pvp-myseat .avatar img.rivl-avatar-photo{display:block!important;width:100%!important;height:100%!important;max-width:100%;max-height:100%;object-fit:cover;border-radius:50%;opacity:1!important;visibility:visible!important}
+/* Phone online tables: the HUD now also shows your balance, so use short labels to keep pot, balance and equity on one line. */
+@media(max-width:600px){
+  #roomGame .rivl-bet-actions .rivl-pot-stats{gap:5px!important;padding:0 7px!important;max-width:100%;overflow:hidden}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>.rivl-pot-stats-label{font-size:0!important}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>.rivl-pot-stats-label::after{font-size:9px;letter-spacing:.06em}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>.rivl-pot-stats-label:nth-child(1)::after{content:'POT'}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>.rivl-pot-stats-label:nth-child(4)::after{content:'BALANCE'}
+  #roomGame .rivl-bet-actions .rivl-pot-stats>.rivl-pot-stats-label:nth-child(7)::after{content:'EQUITY'}
+  #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-value,#roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-percent{font-size:13px!important;white-space:nowrap}
+  #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-divider{margin:0 1px}
+}

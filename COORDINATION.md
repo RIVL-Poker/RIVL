@@ -104,3 +104,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Ranked blinds now rise on the match clock every 2.5 minutes (`RANKED_BLINDS` in `worker/rooms.js`): 15/30, 25/50, 50/100, 100/200, 150/300, 250/500 on 1,000 stacks. No new hand is dealt after 14 minutes; the match then ends on chip count. Casual and private rooms keep blinds every 8 hands; the freeroll is unchanged.
 - The room snapshot carries `blindClock` (level, next blinds, `nextAt`, `lastDealAt`); the BLINDS label counts down to the next level.
 - New `amounts.js`: bets, the pot, the call button and the pot total can show in chips or big blinds. Tap the pot readout under the chip pile to switch; remembered per browser (`rivlAmountUnit`). Applies to bot practice and all online tables. Stacks were left alone (Kaden is working on chip counts).
+
+### 2026-10-21 03:45 UTC · Claude
+- The chips/BB toggle now also covers stacks: opponents' seat labels, your stack, and the Balance in the pot HUD (bot practice and online). The BB tag under each avatar stays in big blinds.
+- Fixed a merge leftover from #108/#109 that overwrote the online pot total with chips, and gave the phone online HUD short labels (POT · BALANCE · EQUITY) so all three fit on one line.
