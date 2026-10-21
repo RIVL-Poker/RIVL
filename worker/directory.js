@@ -351,7 +351,7 @@ export class Directory {
           const players=body.players.filter(p=>Number(p.place)>=1&&Number(p.place)<=entrants);
           const winner=players.find(p=>Number(p.place)===1);
           const winnerName=winner?this.one('SELECT name FROM accounts WHERE id=?',String(winner.id))?.name||'Unknown':'Unknown';
-          this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',id,Date.parse(night+'T21:00:00-05:00')||Date.now(),'Freeroll',entrants,winnerName,0,0);
+          this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',id,Date.now(),'Freeroll',entrants,winnerName,0,0);
           for(const p of players){
             const name=this.one('SELECT name FROM accounts WHERE id=?',String(p.id))?.name||'Unknown';
             this.sql.exec('INSERT OR IGNORE INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change) VALUES (?,?,?,?,?,?,?,?)',id,String(p.id),name,Number(p.place),null,null,0,null);
@@ -391,7 +391,7 @@ export class Directory {
   // Ranked rooms only: Glicko-2 among signed-in players. Against each opponent the score is 60% finishing place
   // and 40% decision accuracy, as in bot practice; with fewer than 3 graded decisions on either side it is place only.
   // Ratings and grades are computed on the server, never trusted from browsers.
-  recordResults({matchId,players}){
+  recordResults({matchId,players,duration=0,hands=0}){
     if(!matchId||!Array.isArray(players))return {error:'Bad results'};
     if(this.one('SELECT id FROM matches WHERE id=?',String(matchId)))return {duplicate:true,changes:[]};
     const rows=players.map(p=>({p,a:this.one('SELECT * FROM accounts WHERE id=?',String(p.id))})).filter(x=>x.a);
@@ -405,7 +405,7 @@ export class Directory {
     const updates=unique.map(({p,a})=>({a,p,place:Number(p.place),next:glicko({r:a.rr,rd:a.rrd,vol:a.rvol},unique.filter(o=>o.a.id!==a.id).map(o=>({r:o.a.rr,rd:o.a.rrd,w,s:score(p,o.p)})))}));
     for(const u of updates)this.sql.exec('UPDATE accounts SET rr=?,rrd=?,rvol=?,rgames=rgames+1,rwins=rwins+?,last_played=? WHERE id=?',u.next.r,u.next.rd,u.next.vol,u.place===1?1:0,now,u.a.id);
     const winner=updates.find(u=>u.place===1);
-    this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',String(matchId),now,'Ranked',updates.length,winner?.a.name||'Unknown',Math.max(0,Math.round(Number(arguments[0]?.duration)||0)),Math.max(0,Math.round(Number(arguments[0]?.hands)||0)));
+    this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',String(matchId),now,'Ranked',updates.length,winner?.a.name||'Unknown',Math.max(0,Math.round(Number(duration)||0)),Math.max(0,Math.round(Number(hands)||0)));
     for(const u of updates){
       const acc=graded(u.p)?Math.round(Number(u.p.acc)*10)/10:null;
       this.sql.exec('INSERT INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change) VALUES (?,?,?,?,?,?,?,?)',String(matchId),u.a.id,u.a.name,u.place,Number.isFinite(Number(u.p.chips))?Number(u.p.chips):null,acc,Number(u.p.decisions)||0,Math.round(u.next.r-u.a.rr));
