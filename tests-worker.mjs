@@ -96,6 +96,34 @@ for(let match=0;match<60;match++){
   checks++;
 }
 
+// All-in runout: hands are turned up, then the board comes one street at a time before anyone wins.
+{
+  const {room,players}=await setup(0,2);
+  await say(room,players[0].ws,{type:'startMatch'});
+  const g=room.room.game,seatOf=pl=>room.room.members[pl.token].seat,at=s=>players.find(pl=>seatOf(pl)===s);
+  const first=g.turn;
+  await say(room,at(first).ws,{type:'action',action:'allin'});
+  const caller=g.turn,shortStack=g.players.find(p=>p.seat===caller);
+  shortStack.stack=300; // the caller covers less than the shove, so part of it is uncalled
+  const total=chips(g);
+  await say(room,at(caller).ws,{type:'action',action:'call'});
+  assert.equal(g.phase,'preflop');assert.equal(g.board.length,0,'no cards are dealt the moment the call goes in');
+  assert.ok(g.runout&&g.turn===-1,'nobody acts during the runout');
+  assert.equal(g.pot,2*g.players.find(p=>p.seat===caller).contribution,'the uncalled part of the shove is returned before the runout');
+  const snap=room.publicState(players[0].token).game;
+  assert.equal(Object.keys(snap.shown).length,2,'both all-in hands are shown during the runout');
+  assert.ok(!snap.result,'no winner is announced yet');
+  const seen=[];
+  for(let i=0;i<10&&g.phase!=='showdown';i++){
+    await room.alarm();assert.equal(g.board.length,seen.at(-1)??0,'an early alarm waits for the runout pause');
+    g.deadline=0;await room.alarm();seen.push(g.board.length);
+    if(g.phase!=='showdown')assert.ok(!room.publicState(players[0].token).game.result,'still no winner mid-runout');
+  }
+  assert.deepEqual(seen,[3,4,5,5],'flop, turn, river, then the result');
+  assert.equal(g.phase,'showdown');assert.ok(g.result);assert.equal(chips(g),total,'runout conserves chips');
+  checks++;
+}
+
 // Deterministic hand-ranking and tied-showdown edge cases.
 {
   const {room,hostWs}=await setup(0,3);

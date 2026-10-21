@@ -10,7 +10,7 @@ import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
 import {CRAWLER_RE} from './stats.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
-const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=11000,RANKED_NEXT_HAND_MS=6000,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
+const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=11000,RANKED_NEXT_HAND_MS=6000,RUNOUT_MS=1200,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
 // Bots take a fresh random 2–5 seconds on every decision, so play reads like a person thinking.
 // The cap sits just under 5 seconds so alarm and network delay never push a move past 5.
 const botThinkMs=()=>BOT_THINK_MIN_MS+Math.floor(Math.random()*(BOT_THINK_MAX_MS-BOT_THINK_MIN_MS));
@@ -301,7 +301,7 @@ export class Room {
   publicState(token){
     const g=this.room.game,m=this.room.members[token];
     const onlineSeats=new Set(this.sockets().map(([,t])=>this.room.members[t]?.seat));
-    const shown=g?.phase==='showdown'&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
+    const shown=(g?.phase==='showdown'||g?.runout)&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),
@@ -472,7 +472,7 @@ export class Room {
   }
   compare(a,b){for(let i=0;i<Math.max(a.length,b.length);i++){const d=(a[i]||0)-(b[i]||0);if(d)return d}return 0}
   finishHand(){
-    const g=this.room.game;g.turn=-1;g.deadline=0;g.phase='showdown';
+    const g=this.room.game;g.turn=-1;g.deadline=0;g.phase='showdown';g.runout=false;
     const contenders=g.players.filter(p=>!p.folded);
     while(g.board.length<5){if(g.board.length===0||g.board.length===3||g.board.length===4)g.deck.pop();g.board.push(g.deck.pop())}
     const values=new Map(contenders.map(p=>[p.seat,this.handValue([...g.hands[p.seat],...g.board])]));
@@ -505,12 +505,26 @@ export class Room {
     const alive=g.players.filter(p=>!p.folded);
     // A bot that wins without a showdown turns its cards over; a person keeps theirs hidden, as at a real table.
     if(alive.length===1){alive[0].stack+=g.pot;g.winners=[{seat:alive[0].seat,name:alive[0].name,amount:g.pot}];g.result=alive[0].name+' wins '+g.pot+' (everyone folded)';g.pot=0;g.phase='showdown';g.shown=alive[0].bot?[alive[0].seat]:[];g.turn=-1;g.deadline=0;return}
-    if(g.phase==='river'||alive.filter(p=>!p.allIn).length<2){this.finishHand();return}
+    if(g.phase==='river'){this.finishHand();return}
+    // Once no more betting is possible the hands are turned face up and the board is dealt one street at a time,
+    // so every card is on the table before the winner is announced. The first pause lets players see the hands.
+    if(alive.filter(p=>!p.allIn).length<2){
+      const started=g.runout;g.runout=true;g.shown=alive.map(p=>p.seat);g.turn=-1;g.deadline=Date.now()+RUNOUT_MS;
+      for(const p of g.players)p.bet=0;
+      g.currentBet=0;
+      if(!started){
+        // Hand back an uncalled bet now, so the pot on the table is only what the hands are playing for.
+        const top=Math.max(...g.players.map(p=>p.contribution)),leaders=g.players.filter(p=>p.contribution===top);
+        if(leaders.length===1){const p=leaders[0],back=top-Math.max(0,...g.players.filter(x=>x!==p).map(x=>x.contribution));p.stack+=back;p.contribution-=back;g.pot-=back;p.allIn=p.stack===0}
+        return;
+      }
+    }
     g.deck.pop();const count=g.phase==='preflop'?3:1;
     for(let i=0;i<count;i++)g.board.push(g.deck.pop());
     g.phase=g.phase==='preflop'?'flop':g.phase==='flop'?'turn':'river';
     for(const p of g.players)p.bet=0;
     g.currentBet=0;g.minRaise=g.bigBlind;g.acted=[];g.raiseLocked=[];g.streetRaises=0;
+    if(g.runout)return;
     g.turn=this.next(g.dealer,i=>g.players.some(p=>p.seat===i&&!p.folded&&!p.allIn));
     g.deadline=Date.now()+TURN_MS;
   }
@@ -577,6 +591,7 @@ export class Room {
     const g=this.room.game;if(!g||g.phase==='showdown')return;
     let guard=0;
     while(guard++<200){
+      if(g.runout){if(Date.now()<g.deadline-50)break;this.endStreet();if(g.phase==='showdown')break;continue}
       const alive=g.players.filter(p=>!p.folded),active=alive.filter(p=>!p.allIn);
       if(alive.length<2||active.length===0||active.length===1&&active[0].bet===g.currentBet){this.endStreet();if(g.phase==='showdown')break;continue}
       const p=g.players.find(x=>x.seat===g.turn);
@@ -622,7 +637,7 @@ export class Room {
     }
     if(Date.now()<g.deadline-50){await this.armAlarm(g.deadline);return}
     const p=g.players.find(x=>x.seat===g.turn),legal=p&&this.legal(p.seat);
-    if(p?.bot)this.autoAdvance();
+    if(p?.bot||g.runout)this.autoAdvance();
     else if(legal){
       this.applyAction(p.seat,legal.check?'check':'fold');
       if(++p.timeouts>=2)p.away=true;
