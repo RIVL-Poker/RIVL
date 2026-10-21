@@ -26,6 +26,9 @@ export class Directory {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS lobby(code TEXT PRIMARY KEY,host TEXT,humans INTEGER,players INTEGER,updated INTEGER NOT NULL)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS usage(day TEXT PRIMARY KEY,rooms INTEGER NOT NULL DEFAULT 0,hands INTEGER NOT NULL DEFAULT 0,accounts INTEGER NOT NULL DEFAULT 0)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS matches(id TEXT PRIMARY KEY,t INTEGER NOT NULL)`);
+    this.sql.exec('CREATE TABLE IF NOT EXISTS game_history(id TEXT PRIMARY KEY,t INTEGER NOT NULL,mode TEXT NOT NULL,players INTEGER NOT NULL,winner TEXT NOT NULL,duration INTEGER NOT NULL DEFAULT 0,hands INTEGER NOT NULL DEFAULT 0)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS game_history_players(game TEXT NOT NULL,account TEXT NOT NULL,name TEXT NOT NULL,place INTEGER NOT NULL,chips INTEGER,accuracy REAL,decisions INTEGER NOT NULL DEFAULT 0,elo_change INTEGER,PRIMARY KEY(game,account))');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS game_history_recent ON game_history(t DESC)');
     // Ranked Elo is a fresh ladder kept apart from the older all-rooms rating (r, rd, vol, games, wins).
     const cols=new Set(this.rows('PRAGMA table_info(accounts)').map(c=>c.name));
     for(const [name,def] of [['rr','REAL NOT NULL DEFAULT 1500'],['rrd','REAL NOT NULL DEFAULT 350'],['rvol','REAL NOT NULL DEFAULT 0.06'],['rgames','INTEGER NOT NULL DEFAULT 0'],['rwins','INTEGER NOT NULL DEFAULT 0'],['elo_offset','INTEGER NOT NULL DEFAULT 0'],['avatar','TEXT NOT NULL DEFAULT \'\''],['avatar_blocked','INTEGER NOT NULL DEFAULT 0']])
