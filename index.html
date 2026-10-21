@@ -430,6 +430,22 @@
                     </form>
                     <p class="muted">Reports are anonymous. We only receive what you type, the category and your browser type, never your email, account or IP address.</p>
                 </div>
+                <div class="panel rivl-support-panel rivl-player-report-panel">
+                    <div class="rivl-report-heading"><span class="rivl-report-mark" aria-hidden="true">♠</span><div><h3>REPORT A PLAYER</h3><p class="muted">Help keep RIVL respectful. Reports go privately to support for review.</p></div></div>
+                    <form id="playerReportForm">
+                        <label for="playerReportCategory">REASON FOR REPORT</label>
+                        <select id="playerReportCategory" required><option value="" disabled selected>Select a reason</option><option value="Offensive gamertag">Offensive gamertag</option><option value="Offensive chat">Offensive chat</option><option value="Inappropriate profile picture">Inappropriate profile picture</option></select>
+                        <label for="playerReportName">PLAYER GAMERTAG</label>
+                        <input id="playerReportName" type="text" maxlength="40" required autocomplete="off" placeholder="Name shown at the table">
+                        <label for="playerReportRoom">ROOM CODE (OPTIONAL)</label>
+                        <input id="playerReportRoom" type="text" maxlength="20" placeholder="Room code, if known">
+                        <label for="playerReportDetails">WHAT HAPPENED?</label>
+                        <textarea id="playerReportDetails" rows="5" maxlength="2000" minlength="10" required placeholder="Describe what happened, and when. For chat, include the message."></textarea>
+                        <button type="submit" class="gold" id="playerReportSend">SUBMIT PLAYER REPORT</button>
+                        <p id="playerReportStatus" class="muted" role="status" aria-live="polite"></p>
+                    </form>
+                    <p class="muted rivl-report-note">Reports are reviewed and do not automatically penalize a player. Never share your sign-in code.</p>
+                </div>
                 <div class="panel rivl-support-panel">
                     <h3>CONTACT US</h3>
                     <p>For account help, privacy requests, appeals or anything else, email <a href="mailto:support@rivlpoker.com">support@rivlpoker.com</a>.</p>
@@ -442,7 +458,7 @@
                 <div class="panel rivl-support-panel">
                     <h3>FAIR PLAY &amp; COMMUNITY RULES</h3>
                     <p>Ranked matches affect your online Elo; casual and bot games do not. No collusion, outside help during Ranked, multiple accounts or bug exploits. Keep names, chat and photos free of hate, harassment, sexual content, spam and other people's private information.</p>
-                    <p>Report a photo with REPORT PHOTO on the player's seat. To report chat or a name, email us the room code, the player's table name and roughly when it happened. Breaking the rules can lead to removed content, reset ratings or a closed account.</p>
+                    <p>Use REPORT A PLAYER above for offensive names, chat or photos. You can also report a photo directly from a player's seat. Breaking the rules can lead to removed content, reset ratings or a closed account.</p>
                 </div>
                 <div class="panel rivl-support-panel">
                     <h3>YOUR ACCOUNT &amp; DATA</h3>

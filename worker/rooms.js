@@ -5,7 +5,7 @@ export {Tournament} from './tournament.js';
 import {nightOf} from './tournament.js';
 import {gradeDecision} from './grading.js';
 import {verifyGoogleToken} from './google.js';
-import {cleanReport,sendBugReport,BUG_MAX_CHARS} from './bug-report.js';
+import {cleanReport,sendBugReport,BUG_MAX_CHARS,cleanPlayerReport,sendPlayerReport} from './bug-report.js';
 import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
@@ -146,6 +146,17 @@ export default {
         const claims=await verifyGoogleToken(body.credential,env.GOOGLE_CLIENT_ID);
         if(body.name!=null&&!body.key&&await limited(env.ACCOUNT_LIMITER,request))return json({error:'Too many new accounts from your network. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/google',{sub:claims.sub,name:body.name,key:body.key}));
+      }
+      if(url.pathname==='/api/player-report'){
+        if(await limited(env.BUG_LIMITER,request))return json({error:'Too many reports from your network. Try again later.'},429);
+        const report=cleanPlayerReport(await readBody(request,5000));
+        if(report.error)return json({error:report.error},400);
+        if(!env.BUG_REPORT_EMAIL)return json({error:'Reports are temporarily unavailable. Email support@rivlpoker.com.'},503);
+        try{
+          const {EmailMessage}=env.EmailMessage?{EmailMessage:env.EmailMessage}:await import('cloudflare:email');
+          await sendPlayerReport(env,report,url.origin,EmailMessage);
+        }catch(err){console.error('player report send failed',err?.message);return json({error:'Report could not be sent. Please try again later.'},502)}
+        return json({ok:true});
       }
       if(url.pathname==='/api/bug-report'){
         if(await limited(env.BUG_LIMITER,request))return json({error:'Too many reports from your network. Try again in a minute.'},429);

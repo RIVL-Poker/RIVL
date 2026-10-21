@@ -45,3 +45,23 @@ export async function sendBugReport(env,report,origin,EmailMessage){
   const raw=buildEmail({from,to,origin,...report});
   await env.BUG_REPORT_EMAIL.send(new EmailMessage(from,to,raw));
 }
+
+
+export const PLAYER_REPORT_CATEGORIES=['Offensive gamertag','Offensive chat','Inappropriate profile picture'];
+export function cleanPlayerReport(body){
+  const category=String(body?.category||'');
+  if(!PLAYER_REPORT_CATEGORIES.includes(category))return {error:'Choose a valid report reason.'};
+  const player=String(body?.player||'').trim().replace(/[\r\n]/g,' ');
+  const room=String(body?.room||'').trim().replace(/[\r\n]/g,' ');
+  const details=String(body?.details||'').replace(/\r\n?/g,'\n').trim();
+  if(!player||player.length>40)return {error:'Enter the reported player’s gamertag (up to 40 characters).'};
+  if(room.length>20)return {error:'Room code is too long.'};
+  if(details.length<10||details.length>2000)return {error:'Description must be 10–2000 characters.'};
+  return {category,player,room,details};
+}
+export async function sendPlayerReport(env,report,origin,EmailMessage){
+  const from=env.BUG_REPORT_FROM||'support@rivlpoker.com',to=env.BUG_REPORT_TO||from;
+  const details='Reported player: '+report.player+'\nRoom code: '+(report.room||'not supplied')+'\n\n'+report.details;
+  const raw=buildEmail({from,to,category:'Player misconduct - '+report.category,details,browser:'Support player report',origin});
+  await env.BUG_REPORT_EMAIL.send(new EmailMessage(from,to,raw));
+}
