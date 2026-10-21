@@ -114,6 +114,12 @@ export default {
         if(url.pathname==='/api/freeroll/board')return send(await cached(env,'/freeroll/board?night='+nightOf(),30000));
         if(url.pathname==='/api/lobby')return send(await cached(env,'/lobby',5000));
         if(url.pathname==='/api/leaderboard')return send(await cached(env,'/leaderboard',10000));
+        if(url.pathname==='/api/history')return send(await cached(env,'/history',15000));
+        if(url.pathname==='/api/history/game'){
+          const id=url.searchParams.get('id')||'';
+          if(id.length>100)return json({error:'Invalid game'},400);
+          return send(await dir(env,'/history/game?id='+encodeURIComponent(id)));
+        }
         if(url.pathname==='/api/leaderboard/league'){
           const r=Math.round(Number(url.searchParams.get('r'))/10)*10;
           if(!Number.isFinite(r)||r<0||r>5000)return json({error:'Missing rating.'},400);
@@ -362,8 +368,8 @@ export class Room {
     const place={};let next=1;for(const group of order){for(const s of group)place[s]=next;next+=group.length}
     // Each Ranked player's decision accuracy (weighted like bot practice) goes with their place.
     const accuracy=seat=>{const d=m.grades?.[seat];return d?.n?{acc:d.s/d.w,decisions:d.n}:{acc:null,decisions:0}};
-    const players=Object.entries(m.accounts).map(([seat,id])=>({id,place:place[seat]??next,...accuracy(seat)}));
-    if(players.length>=2)this.room.pendingResults={matchId:m.id,players};
+    const players=Object.entries(m.accounts).map(([seat,id])=>({id,place:place[seat]??next,chips:standing.find(p=>p.seat===Number(seat))?.stack??0,...accuracy(seat)}));
+    if(players.length>=2)this.room.pendingResults={matchId:m.id,players,duration:Date.now()-m.startedAt,hands:this.room.game?.hand||0};
     else if(this.room.game)this.room.game.note='Unrated: at least two signed-in players are needed for a rated match.';
     this.room.match=null;
   }

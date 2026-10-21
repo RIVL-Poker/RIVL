@@ -89,6 +89,70 @@
     }catch(err){const p=document.createElement('p');p.className='muted';p.textContent=err.message;rows.replaceChildren(p)}
   }
 
+
+  let historyGames=[],historyFilter='All';
+  const historyDate=t=>new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+  const historyNumber=n=>n==null?'—':Number(n).toLocaleString();
+  async function showHistoryGame(id,container){
+    const panel=container.querySelector('.rivl-history-detail');
+    if(!panel)return;
+    if(!panel.hidden){panel.hidden=true;return}
+    panel.hidden=false;panel.textContent='Loading player results…';
+    try{
+      const data=await call('/api/history/game?id='+encodeURIComponent(id));
+      panel.replaceChildren();
+      const header=document.createElement('div');header.className='rivl-history-player rivl-history-player-head';
+      for(const text of ['PLACE','PLAYER','FINAL CHIPS','ACCURACY','DECISIONS','ELO +/-']){const cell=document.createElement('span');cell.textContent=text;header.append(cell)}
+      panel.append(header);
+      for(const p of data.players||[]){
+        const row=document.createElement('div');row.className='rivl-history-player';
+        const cells=[p.place===1?'♛ 1st':'#'+p.place,p.name,historyNumber(p.chips),p.accuracy==null?'—':Number(p.accuracy).toFixed(1)+'%',p.decisions||'—',p.elo_change==null?'—':(p.elo_change>0?'+':'')+p.elo_change];
+        for(const value of cells){const cell=document.createElement('span');cell.textContent=value;row.append(cell)}
+        if(p.place===1)row.classList.add('rivl-history-winner');
+        panel.append(row);
+      }
+    }catch(err){panel.textContent=err.message||'Could not load match details.'}
+  }
+  function paintHistory(){
+    const root=$('historyGames');if(!root)return;
+    root.replaceChildren();
+    const games=historyGames.filter(g=>historyFilter==='All'||g.mode===historyFilter);
+    if(!games.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='No completed '+(historyFilter==='All'?'online matches':historyFilter.toLowerCase()+' games')+' saved yet.';root.append(empty);return}
+    for(const g of games){
+      const card=document.createElement('div');card.className='rivl-history-game';
+      const toggle=document.createElement('button');toggle.type='button';toggle.className='rivl-history-game-toggle';toggle.setAttribute('aria-label','Show results for '+g.mode+' match');
+      const meta=document.createElement('div');meta.className='rivl-history-game-main';
+      const mode=document.createElement('strong');mode.textContent=g.mode.toUpperCase()+' · '+g.players+' PLAYERS';
+      const when=document.createElement('small');when.textContent=historyDate(g.t);
+      meta.append(mode,when);
+      const stats=document.createElement('div');stats.className='rivl-history-game-stats';
+      const winner=document.createElement('span');winner.textContent='♛ '+g.winner;
+      const duration=document.createElement('span');duration.textContent=g.duration?Math.round(g.duration/60000)+' MIN':'— MIN';
+      const hands=document.createElement('span');hands.textContent=g.hands?g.hands+' HANDS':'— HANDS';
+      const arrow=document.createElement('span');arrow.textContent='⌄';arrow.className='rivl-history-arrow';
+      stats.append(winner,duration,hands,arrow);toggle.append(meta,stats);
+      const detail=document.createElement('div');detail.className='rivl-history-detail';detail.hidden=true;
+      toggle.addEventListener('click',()=>{const opening=detail.hidden;showHistoryGame(g.id,card);toggle.setAttribute('aria-expanded',String(opening))});
+      toggle.setAttribute('aria-expanded','false');
+      card.append(toggle,detail);root.append(card);
+    }
+  }
+  async function loadHistory(){
+    const root=$('historyGames');if(!root)return;
+    try{const data=await call('/api/history');historyGames=Array.isArray(data.games)?data.games:[];paintHistory()}
+    catch(err){root.textContent=err.message||'Unable to load match history.'}
+  }
+  function initHistory(){
+    $('historyRefresh')?.addEventListener('click',loadHistory);
+    document.querySelectorAll('[data-history-filter]').forEach(b=>b.addEventListener('click',()=>{
+      historyFilter=b.dataset.historyFilter;
+      document.querySelectorAll('[data-history-filter]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b))});
+      paintHistory();
+    }));
+    document.querySelectorAll('.nav[data-view="leaderboard"]').forEach(b=>b.addEventListener('click',loadHistory));
+    loadHistory();
+  }
+
   function init(){
     render();refresh();onScreen();
     document.addEventListener('visibilitychange',onScreen);
@@ -115,6 +179,7 @@
     document.querySelectorAll('.nav[data-view="leaderboard"]').forEach(b=>b.addEventListener('click',loadLeaderboard));
     document.querySelectorAll('.nav[data-view="profile"]').forEach(b=>b.addEventListener('click',refresh));
     loadLeaderboard();
+    initHistory();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
