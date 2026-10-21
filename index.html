@@ -399,6 +399,16 @@
                     <div class="online-row head"><span>#</span><span>PLAYER</span><span>LEAGUE</span><span>ELO</span><span>MATCHES</span><span>WINS</span></div>
                     <div id="onlineRows"><p class="muted">Loading…</p></div>
                 </div>
+                <div class="panel rivl-history-panel">
+                    <div class="ladder-top"><h3>♠ MATCH HISTORY</h3><button type="button" class="outline" id="historyRefresh">REFRESH</button></div>
+                    <p class="muted">Recent completed online matches. Select a game to see everyone who played and their results. History is saved starting with this update.</p>
+                    <div class="rivl-history-filters" role="group" aria-label="Filter match history">
+                        <button type="button" class="active" data-history-filter="All" aria-pressed="true">ALL</button>
+                        <button type="button" data-history-filter="Ranked" aria-pressed="false">RANKED</button>
+                        <button type="button" data-history-filter="Freeroll" aria-pressed="false">TOURNAMENTS</button>
+                    </div>
+                    <div id="historyGames" aria-live="polite"><p class="muted">Loading history…</p></div>
+                </div>
             </section>
             <section id="themes" class="view content-view">
                 <h1>TABLE THEMES</h1>
