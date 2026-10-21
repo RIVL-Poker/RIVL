@@ -790,7 +790,7 @@ console.log('PASS: '+checks+' room server checks');
       const total=size*FREEROLL.stack;
       const rooms=()=>[...env.ROOMS.instances.values()].filter(r=>r.room?.tourney);
       const sockets=new Map();
-      let steps=0,maxSeen=0;
+      let steps=0,maxSeen=0;const extUsed=new Map();
       while(t.status==='running'&&steps++<200000){
         now+=2500;
         // Every seated player stays connected (a reconnect after a move uses the new seat token).
@@ -800,6 +800,7 @@ console.log('PASS: '+checks+' room server checks');
           assert.ok(members.length<=9,'never more than nine at a table');
           for(const [token,m] of members){
             assert.ok(!seen.has(m.accountId),'nobody sits at two tables');seen.set(m.accountId,room.room.code);
+            assert.equal(room.room.tourney.ext?.[m.accountId]||0,extUsed.get(m.accountId)||0,'time extensions used follow the player between tables');
             const ws=sockets.get(token);if(!ws||ws.readyState!==1)sockets.set(token,await connect(room,room.fakeState,token));
           }
         }
@@ -816,6 +817,14 @@ console.log('PASS: '+checks+' room server checks');
           const g=room.room.game;if(room.room.tourney.done)continue;
           if(g&&g.phase!=='showdown'){
             const m=Object.entries(room.room.members).find(([,x])=>x.seat===g.turn),l=room.legal(g.turn);
+            // Players sometimes add time first: five +5 second extensions each for the whole freeroll.
+            if(m&&l&&Math.random()<.15){
+              const ws=sockets.get(m[0]),before=g.deadline,id=m[1].accountId,used=extUsed.get(id)||0;
+              assert.equal(ws.last('state')?.state.extensionsLeft??5-used,5-used,'the table shows how many extensions are left');
+              await say(room,ws,{type:'extend'});
+              if(used<5){extUsed.set(id,used+1);assert.equal(g.deadline,before+5000,'a freeroll extension adds five seconds')}
+              else{assert.equal(g.deadline,before,'no sixth extension');assert.match(ws.last('error').error,/this tournament/)}
+            }
             if(m&&l&&Math.random()<.95){
               const r=Math.random(),msg=r<.3?{action:'fold'}:r<.55?{action:l.check?'check':'call'}:r<.55+allin&&l.canRaise?{action:'allin'}:{action:l.check?'check':'call'};
               await say(room,sockets.get(m[0]),{type:'action',...msg});

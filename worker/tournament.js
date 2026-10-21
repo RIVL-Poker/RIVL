@@ -80,7 +80,7 @@ export class Tournament {
     }
     throw Error('Could not open a freeroll table');
   }
-  seatFor(p){return {id:p.id,name:p.name,avatar:p.avatar,token:p.token,stack:p.stack}}
+  seatFor(p){return {id:p.id,name:p.name,avatar:p.avatar,token:p.token,stack:p.stack,ext:p.ext||0}}
   // Point a player at a table with a fresh seat token, then tell that table (after the caller saves).
   assign(p,n){p.table=n;p.token=crypto.randomUUID();p.seated=false;return p}
   sendSeats(n,players){
@@ -164,6 +164,8 @@ export class Tournament {
       if(p.place!=null){out[p.id]={place:p.place};continue}
       if(p.table!==n){moves[p.id]={table:p.table};continue}
       const stack=Math.max(0,Math.floor(Number(r.stack)||0));p.stack=stack;p.handStart=Math.floor(Number(r.start)||stack);
+      // Time extensions used so far travel with the player to their next table.
+      p.ext=Math.max(p.ext||0,Math.floor(Number(r.ext)||0));
     }
     if(t.status==='running'){
       // Everyone who busted on the same hand shares the places below the survivors; a bigger starting stack places higher.
