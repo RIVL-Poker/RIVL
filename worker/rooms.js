@@ -51,8 +51,8 @@ async function cachedTourney(env,night){
 }
 // Ranked is matchmaking only: tables fill from the queue, start on their own, and are never joined by code.
 const RANKED_SIZES=[3,6,9],RANKED_COUNTDOWN_MS=15000;
-// Ranked players can add 5 seconds to their own turn clock, three times per match.
-const RANKED_EXTENSIONS=3,EXTENSION_MS=5000;
+// Players can add 5 seconds to their own turn clock: three times per Ranked match, five times per freeroll.
+const RANKED_EXTENSIONS=3,FREEROLL_EXTENSIONS=5,EXTENSION_MS=5000;
 const rankedSize=room=>RANKED_SIZES.includes(Number(room?.rankedMax))?Number(room.rankedMax):6;
 const RANKED_SIGN_IN='Sign in or create an account to play Ranked.';
 const CLOSED_MESSAGE='Online play has used its free capacity for today. Bot practice still works. New rooms open again after midnight UTC.';
@@ -265,7 +265,7 @@ export class Room {
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),
-      extensionsLeft:this.room.ranked&&this.room.match?.ranked&&m?Math.max(0,RANKED_EXTENSIONS-(this.room.match.extensions?.[m.seat]||0)):null,startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
+      extensionsLeft:this.extensionsLeft(m),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
       tourney:this.room.tourney?{table:this.room.tourney.table,info:this.room.tourney.info||null,blinds:this.room.tourney.blinds||null,done:!!this.room.tourney.done}:null,
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,sbSeat:g.sbSeat??-1,bbSeat:g.bbSeat??-1,
@@ -284,6 +284,12 @@ export class Room {
     }
   }
   matchOver(g=this.room?.game){return !g||g.result==='Match complete'}
+  // Freeroll extensions follow the player from table to table (the Tournament keeps the count); Ranked ones reset each match.
+  extensionsLeft(m){
+    const room=this.room;if(!m)return null;
+    if(room.tourney)return room.tourney.done?null:Math.max(0,FREEROLL_EXTENSIONS-(room.tourney.ext?.[m.accountId]||0));
+    return room.ranked&&room.match?.ranked?Math.max(0,RANKED_EXTENSIONS-(room.match.extensions?.[m.seat]||0)):null;
+  }
   humansAway(g){return g.players.filter(p=>!p.bot&&!p.left).every(p=>p.away)}
   ratedSeats(){return Object.values(this.room.members).filter(m=>m.accountId)}
   // Only Ranked rooms change Elo; Quick Play and private rooms are unranked.
@@ -588,7 +594,7 @@ export class Room {
     const seat=had?had[1].seat:room.seats.findIndex(s=>s===null);
     if(seat<0)return false;
     if(had)delete room.members[had[0]];
-    else room.tourney.stacks[id]=Math.max(0,Math.floor(Number(p.stack)||0));
+    else{room.tourney.stacks[id]=Math.max(0,Math.floor(Number(p.stack)||0));(room.tourney.ext||={})[id]=Math.max(0,Math.floor(Number(p.ext)||0))}
     const name=cleanName(p.name,'Player');
     room.members[token]={name,seat,accountId:id};
     room.seats[seat]={type:'human',name,avatar:/^data:image\//.test(p.avatar||'')?p.avatar:name[0].toUpperCase(),isHost:false,verified:true};
@@ -635,7 +641,7 @@ export class Room {
     const players=Object.values(room.members).map(m=>{
       const p=g?.players.find(x=>x.seat===m.seat&&x.name===m.name);
       if(p)t.stacks[m.accountId]=p.stack;
-      return {id:m.accountId,stack:t.stacks[m.accountId]??0,start:p?.start??t.stacks[m.accountId]??0};
+      return {id:m.accountId,stack:t.stacks[m.accountId]??0,start:p?.start??t.stacks[m.accountId]??0,ext:t.ext?.[m.accountId]||0};
     });
     const plan=await this.tourneyCall('/report',{table:t.table,players,halted});
     if(!plan){t.wakeAt=Date.now()+10000;t.waiting=true;await this.save();return}
@@ -648,7 +654,7 @@ export class Room {
         :plan.out?.[id]?{kind:'out',place:plan.out[id].place,entrants}
         :plan.moves?.[id]?{kind:'moved',table:plan.moves[id].table}:{kind:'moved',table:0};
       this.tNotify(token,note);
-      delete room.members[token];room.seats[m.seat]=null;delete t.stacks[id];
+      delete room.members[token];room.seats[m.seat]=null;delete t.stacks[id];if(t.ext)delete t.ext[id];
     }
     for(const s of plan.seats||[])this.seatT(s);
     if(plan.finished){
@@ -788,11 +794,13 @@ export class Room {
         return this.removeMember(token,'You left the room');
       }
       if(msg.type==='extend'){
-        if(!room.ranked||!room.match?.ranked||this.matchOver(room.game))throw Error('Time extensions are for Ranked matches');
+        const left=this.extensionsLeft(member);
+        if(left==null||this.matchOver(room.game))throw Error('Time extensions are for Ranked matches and the freeroll');
         if(!this.legal(member.seat))throw Error('You can add time only on your turn');
-        const used=room.match.extensions||={};
-        if((used[member.seat]||0)>=RANKED_EXTENSIONS)throw Error('No time extensions left this match');
-        used[member.seat]=(used[member.seat]||0)+1;room.game.deadline+=EXTENSION_MS;
+        if(left<=0)throw Error(room.tourney?'No time extensions left this tournament':'No time extensions left this match');
+        if(room.tourney){const used=room.tourney.ext||={};used[member.accountId]=(used[member.accountId]||0)+1}
+        else{const used=room.match.extensions||={};used[member.seat]=(used[member.seat]||0)+1}
+        room.game.deadline+=EXTENSION_MS;
         const p=room.game.players.find(x=>x.seat===member.seat);if(p)p.timeouts=0;
         await this.save();return;
       }
