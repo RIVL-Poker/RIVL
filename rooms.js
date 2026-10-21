@@ -38,15 +38,28 @@
     if(roomChat.some(m=>m.id===entry.id))return;
     roomChat=[...roomChat,entry].slice(-40);
     if(roomTab==='chat')renderRoomPanel();
+    renderLobbyChat();
+  }
+  function renderLobbyChat(){
+    const feed=$('roomLobbyChatFeed');if(!feed)return;
+    feed.replaceChildren();
+    if(!roomChat.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='No messages yet. Say hello!';feed.append(empty)}
+    for(const m of roomChat){
+      const line=document.createElement('div');line.className='rivl-lobby-chat-line'+(m.seat===snapshot?.mySeat?' mine':'');
+      const name=document.createElement('strong');name.textContent=m.name+': ';
+      const body=document.createElement('span');body.textContent=m.text;
+      line.append(name,body);feed.append(line);
+    }
+    feed.scrollTop=feed.scrollHeight;
   }
   function sendChat(event){
     event.preventDefault();
-    const input=$('roomChatInput'),text=input?.value.trim();
+    const input=event.target?.id==='roomLobbyChatForm' ? $('roomLobbyChatInput') : $('roomChatInput'),text=input?.value.trim();
     if(!text||!snapshot||socket?.readyState!==WebSocket.OPEN)return;
     if(text.length>CHAT_LIMIT)return;
     send({type:'chat',text});input.value='';input.focus();
   }
-  document.addEventListener('submit',event=>{if(event.target?.id==='roomChatForm')sendChat(event)});
+  document.addEventListener('submit',event=>{if(event.target?.id==='roomChatForm'||event.target?.id==='roomLobbyChatForm')sendChat(event)});
   function renderRoomPanel(){
     const target=$('roomTabContent');if(!target)return;
     const g=snapshot?.game;
@@ -119,6 +132,8 @@
     const fr=snapshot.tourney;
     $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=fr?'· FREEROLL TABLE '+fr.table:snapshot.ranked?'· RANKED '+(snapshot.rankedMax||6)+' PLAYERS':roomCode;
     const playing=!!snapshot.started&&!!snapshot.game;
+    $('roomLobbyChat').hidden=playing;
+    if(!playing)renderLobbyChat();
     const disclaimer=document.querySelector('.room-disclaimer');
     if(disclaimer)disclaimer.textContent=fr?'Nightly Freeroll · free to play, no real money, no Elo change. Your seat is kept if you refresh or lose connection.':(snapshot.ranked?'Ranked':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
     const heading=document.querySelector('.crumb');
@@ -374,7 +389,7 @@
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
-      if(message.type==='state'){const before=snapshot;snapshot=message.state;keepPhotos(before,snapshot);if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render();document.dispatchEvent(new Event('rivl:room'))}
+      if(message.type==='state'){const before=snapshot;snapshot=message.state;keepPhotos(before,snapshot);if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];renderLobbyChat();isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render();document.dispatchEvent(new Event('rivl:room'))}
       else if(message.type==='chat')addChatMessage(message.message);
       else if(message.type==='freeroll'){resetView('');window.rivlFreeroll?.handle(message)}
       else if(message.type==='removed'){const ranked=!!snapshot?.ranked||rankedEntry,reason=message.reason||'You are no longer in that room.';resetView(reason);if(ranked){dropRankedHistory();showRankedMenu(reason)}}
