@@ -376,7 +376,7 @@ export class Directory {
         return this.reply({ok:allowed,status:this.status()});
       }
       return this.reply({error:'Not found'},404);
-    }catch(e){return this.reply({error:e.message||'Directory error'},500)}
+    }catch(e){console.error('Directory request failed:',path,e);return this.reply({error:e.message||'Directory error'},500)}
   }
   // Everyone in the league of rating r, nearest to r first (50 at most). A league with under 10 players
   // falls back to the 10 players nearest r on the whole ladder.
