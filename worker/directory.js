@@ -2,6 +2,7 @@
    and a daily usage budget that keeps the game inside Cloudflare's free plan. */
 import {glicko} from './glicko.js';
 import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
+import {startOf} from './tournament.js';
 
 // rating.js (loaded by grading.js) defines the Ranked leagues shared with the site.
 const R=globalThis.RivlRating;
@@ -66,6 +67,9 @@ export class Directory {
     // Nightly freeroll results: one row per player per night. Points are entrants minus place plus one, summed by month.
     this.sql.exec('CREATE TABLE IF NOT EXISTS freeroll_results(night TEXT NOT NULL,account TEXT NOT NULL,place INTEGER NOT NULL,entrants INTEGER NOT NULL,points INTEGER NOT NULL,PRIMARY KEY(night,account))');
     this.sql.exec('CREATE INDEX IF NOT EXISTS freeroll_results_place ON freeroll_results(place,night)');
+    // Freerolls finished before game history existed get their history card from the saved results.
+    for(const {night} of this.rows("SELECT DISTINCT night FROM freeroll_results WHERE 'freeroll:'||night NOT IN (SELECT id FROM game_history)"))
+      this.freerollHistory(night,startOf(night),0);
     // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
     this.boards=new Map();
   }
@@ -349,17 +353,7 @@ export class Directory {
           const place=Math.floor(Number(p?.place));if(!place||place<1||place>entrants)continue;
           this.sql.exec('INSERT OR IGNORE INTO freeroll_results(night,account,place,entrants,points) VALUES (?,?,?,?,?)',night,String(p.id),place,entrants,entrants-place+1);
         }
-        const id='freeroll:'+night;
-        if(!this.one('SELECT id FROM game_history WHERE id=?',id)){
-          const players=body.players.filter(p=>Number(p.place)>=1&&Number(p.place)<=entrants);
-          const winner=players.find(p=>Number(p.place)===1);
-          const winnerName=winner?this.one('SELECT name FROM accounts WHERE id=?',String(winner.id))?.name||'Unknown':'Unknown';
-          this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',id,Date.now(),'Freeroll',entrants,winnerName,0,0);
-          for(const p of players){
-            const name=this.one('SELECT name FROM accounts WHERE id=?',String(p.id))?.name||'Unknown';
-            this.sql.exec('INSERT OR IGNORE INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change) VALUES (?,?,?,?,?,?,?,?)',id,String(p.id),name,Number(p.place),null,null,0,null);
-          }
-        }
+        this.freerollHistory(night,Date.now(),body.duration);
         this.boards.clear();return this.reply({ok:true});
       }
       if(path==='/freeroll/board'){
@@ -380,6 +374,15 @@ export class Directory {
       }
       return this.reply({error:'Not found'},404);
     }catch(e){console.error('Directory request failed:',path,e);return this.reply({error:e.message||'Directory error'},500)}
+  }
+  // One game history card per freeroll night, built from its saved results (so a backfill matches a live finish).
+  freerollHistory(night,t,duration){
+    const id='freeroll:'+night;
+    if(this.one('SELECT id FROM game_history WHERE id=?',id))return;
+    const players=this.rows('SELECT f.account,f.place,f.entrants,a.name FROM freeroll_results f LEFT JOIN accounts a ON a.id=f.account WHERE f.night=? ORDER BY f.place',night);
+    if(!players.length)return;
+    this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',id,t,'Freeroll',players[0].entrants,players.find(p=>p.place===1)?.name||'Unknown',Math.max(0,Math.round(Number(duration)||0)),0);
+    for(const p of players)this.sql.exec('INSERT OR IGNORE INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change) VALUES (?,?,?,?,?,?,?,?)',id,p.account,p.name||'Unknown',p.place,null,null,0,null);
   }
   // Everyone in the league of rating r, nearest to r first (50 at most). A league with under 10 players
   // falls back to the 10 players nearest r on the whole ladder.
