@@ -2380,3 +2380,19 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
   #roomGame .rivl-pvp-gamebar>div{min-width:0}
   #roomGame .rivl-pvp-gamebar>div:nth-child(2) strong{display:block;font-size:14px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+
+
+/* Cairo gold-and-walnut player reporting form. */
+.rivl-player-report-panel{border-color:#8a6a3a!important;background:linear-gradient(150deg,#20170f,#100d0a 70%)!important}
+.rivl-report-heading{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.rivl-report-heading h3{margin:0 0 5px!important;letter-spacing:.16em;color:#f1c878}
+.rivl-report-heading p{margin:0}
+.rivl-report-mark{display:grid;place-items:center;width:46px;height:46px;flex:none;border:1px solid #c99b4d;border-radius:50%;background:#2b1d10;color:#eac179;font-size:25px}
+.rivl-player-report-panel form{display:grid;gap:9px;max-width:650px}
+.rivl-player-report-panel form label{font-size:11px;font-weight:800;letter-spacing:.13em;color:#e9bd73;margin-top:7px}
+.rivl-player-report-panel form input,.rivl-player-report-panel form select,.rivl-player-report-panel form textarea{width:100%;box-sizing:border-box;background:#100e0c;color:#f6ead5;border:1px solid #765732;border-radius:8px;padding:12px 14px;font:inherit;outline:none}
+.rivl-player-report-panel form input:focus,.rivl-player-report-panel form select:focus,.rivl-player-report-panel form textarea:focus{border-color:#eac179;box-shadow:0 0 0 2px #d3a45430}
+.rivl-player-report-panel form textarea{resize:vertical;line-height:1.5}
+.rivl-player-report-panel form button{margin-top:8px;min-height:48px;font-weight:900;letter-spacing:.08em}
+.rivl-player-report-panel form button:disabled{opacity:.55;cursor:wait}
+.rivl-report-note{font-size:12px;margin:14px 0 0;line-height:1.5}
