@@ -38,7 +38,7 @@
   function setAccount(account,key,via){const was=state?.key;state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render();if(state?.key!==was){if(state)onScreen();document.dispatchEvent(new Event('rivl:account'))}}
   // Presence for friends' "active now": a heartbeat every minute while this page is on screen, and a last
   // message when it's hidden or closed. A background tab or a locked phone sends nothing, so it drops off.
-  // The reply carries any game invites from friends, which friends.js shows (rivl:invites).
+  // The reply carries game invites and friend requests, which friends.js shows (rivl:invites).
   const HEARTBEAT_MS=60*1000;let beat=null;
   function presence(away){
     if(!state||!API)return;
@@ -46,7 +46,7 @@
     if(away&&navigator.sendBeacon){try{if(navigator.sendBeacon(url,body))return}catch{}}
     // A plain-text body keeps this a simple request; the server reads it as JSON either way.
     fetch(url,{method:'POST',body,keepalive:true}).then(r=>r.ok?r.json():null)
-      .then(d=>{if(!away&&d?.invites)document.dispatchEvent(new CustomEvent('rivl:invites',{detail:d.invites}))}).catch(()=>{});
+      .then(d=>{if(!away&&d)document.dispatchEvent(new CustomEvent('rivl:invites',{detail:{invites:d.invites,requests:d.requests}}))}).catch(()=>{});
   }
   function onScreen(){
     clearInterval(beat);beat=null;
@@ -104,15 +104,31 @@
       const header=document.createElement('div');header.className='rivl-history-player rivl-history-player-head';
       for(const text of ['PLACE','PLAYER','FINAL CHIPS','ACCURACY','DECISIONS','ELO +/-']){const cell=document.createElement('span');cell.textContent=text;header.append(cell)}
       panel.append(header);
+      // In a game you played, every other player gets a friend button (friendButton below).
+      const mine=!!state&&(data.players||[]).some(p=>p.id===state.id);
       for(const p of data.players||[]){
         const row=document.createElement('div');row.className='rivl-history-player';
         const cells=[p.place===1?'♛ 1st':'#'+p.place,p.name,historyNumber(p.chips),p.accuracy==null?'—':Number(p.accuracy).toFixed(1)+'%',p.decisions||'—',p.elo_change==null?'—':(p.elo_change>0?'+':'')+p.elo_change];
         for(const value of cells){const cell=document.createElement('span');cell.textContent=value;row.append(cell)}
+        if(mine&&p.id){const add=document.createElement('button');add.type='button';add.className='rivl-history-add';add.dataset.id=p.id;add.dataset.game=id;row.children[1].append(add);paintFriendButton(add)}
         if(p.place===1)row.classList.add('rivl-history-winner');
         panel.append(row);
       }
     }catch(err){panel.textContent=err.message||'Could not load match details.'}
   }
+  // The friend button on a Match History player: YOU, FRIENDS, REQUESTED, ACCEPT (they asked you) or ADD FRIEND.
+  function paintFriendButton(b){
+    const fr=window.rivlFriends?.data?.(),id=b.dataset.id;
+    if(!fr){b.hidden=true;window.rivlFriends?.load();return}
+    const relation=id===state?.id?'you':fr.friends.some(f=>f.id===id)?'friends':fr.outgoing?.includes(id)?'requested':fr.incoming?.some(f=>f.id===id)?'accept':'add';
+    b.hidden=relation==='you';b.disabled=relation==='friends'||relation==='requested';
+    b.textContent={friends:'FRIENDS ✓',requested:'REQUESTED',accept:'ACCEPT REQUEST',add:'+ ADD FRIEND'}[relation]||'';
+    b.className='rivl-history-add'+(relation==='add'||relation==='accept'?' gold':'');
+    b.onclick=async()=>{b.disabled=true;b.textContent='SENDING…';
+      const r=await(relation==='accept'?window.rivlFriends.accept(id):window.rivlFriends.request(id,b.dataset.game));
+      if(!r){b.disabled=false;b.textContent='TRY AGAIN';b.title=window.rivlFriends.status?.()||''}};
+  }
+  document.addEventListener('rivl:friends',()=>document.querySelectorAll('.rivl-history-add').forEach(paintFriendButton));
   function paintHistory(){
     const root=$('historyGames');if(!root)return;
     root.replaceChildren();

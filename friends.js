@@ -1,7 +1,8 @@
 /* RIVL friends: every account has a public friend code (never the secret sign-in code). Share yours, enter a
    friend's to add each other, and see their league, Elo, when they were last on and their daily puzzle streak.
    The list is a section of Profile. A link like rivlpoker.com/?friend=ABCD2345 opens it with the code filled in.
-   From a casual room's lobby you can invite friends to it; they get a pop-up to join. */
+   From a casual room's lobby you can invite friends to it; they get a pop-up to join. From Match History you can
+   send a friend request to someone you played with; they accept it here or from a pop-up. */
 (()=>{
   const $=id=>document.getElementById(id);
   if(!$('friends'))return;
@@ -24,7 +25,27 @@
     else el.textContent=(f.name||'?')[0].toUpperCase();
     return el;
   }
-  function render(){renderList();paintInvite()}
+  function render(){renderList();renderRequests();paintInvite();document.dispatchEvent(new Event('rivl:friends'))}
+  // Requests waiting on your answer, above your friends list.
+  function renderRequests(){
+    const panel=$('frRequests'),list=$('frReqList');if(!panel)return;
+    const incoming=account()&&data?.incoming||[];
+    panel.hidden=!incoming.length;list.replaceChildren();
+    $('frReqCount').textContent=incoming.length?`${incoming.length} WAITING`:'';
+    for(const f of incoming){
+      const row=document.createElement('div');row.className='fr-row';
+      const main=document.createElement('div');main.className='fr-main';
+      const name=document.createElement('strong');name.textContent=f.name;
+      const league=document.createElement('span');league.className='fr-league league-'+f.leagueKey;league.textContent=`${f.league} · ${Number(f.rating||0).toLocaleString()} Elo`;
+      window.rivlLeagueIcons?.decorate(league,f.leagueKey,{prepend:true});
+      main.append(name,league);
+      const yes=document.createElement('button');yes.type='button';yes.className='gold';yes.textContent='ACCEPT';yes.onclick=()=>accept(f);
+      const no=document.createElement('button');no.type='button';no.className='outline';no.textContent='DECLINE';no.onclick=()=>act('/api/friends/decline',{id:f.id},`Declined ${f.name}'s request.`);
+      const buttons=document.createElement('div');buttons.className='fr-req-actions';buttons.append(yes,no);
+      row.append(avatar(f),main,buttons);list.append(row);
+    }
+  }
+  const accept=f=>act('/api/friends/accept',{id:f.id},r=>`${r.added} is now your friend.`);
   function renderList(){
     const acc=account();
     $('frSignedOut').hidden=!!acc;$('frSignedIn').hidden=!acc;
@@ -61,7 +82,7 @@
     const acc=account();if(!acc||busy)return;busy=true;
     try{
       const r=await window.rivlAccount.call(path,{key:acc.key,...extra});
-      data=r;loadedAt=Date.now();render();
+      data=r;loadedAt=Date.now();requests=requests.filter(q=>(r.incoming||[]).some(f=>f.id===q.id));render();showToast();
       if(done)status(typeof done==='function'?done(r):done,true);
       return r;
     }catch(e){status(e.message);if(e.status===401)window.rivlAccount.refresh?.()}
@@ -134,28 +155,50 @@
   // Keep the lobby's list current: load it when a casual lobby opens, then at most once a minute as the room updates.
   document.addEventListener('rivl:room',()=>{if(window.rivlRooms?.casual?.()&&account()&&!busy&&Date.now()-loadedAt>60000)load();else paintInvite()});
 
-  // A friend's invite: a pop-up over any page with JOIN and NO THANKS. Invites arrive with the presence heartbeat.
-  let invites=[],shown=null;
+  // A friend's invite or a friend request: a pop-up over any page. Both arrive with the presence heartbeat.
+  // Invites come first (JOIN / NO THANKS); requests offer ACCEPT / LATER, and LATER hides one until the next visit.
+  let invites=[],requests=[],shown=null;const later=new Set();
   function showToast(){
     const t=$('inviteToast');if(!t)return;
-    shown=invites.find(i=>i.code!==window.rivlRooms?.code?.())||null;
+    const inv=invites.find(i=>i.code!==window.rivlRooms?.code?.());
+    shown=inv?{...inv,kind:'invite'}:(()=>{const q=requests.find(q=>!later.has(q.id));return q?{...q,kind:'request'}:null})();
     t.hidden=!shown;if(!shown)return;
+    const req=shown.kind==='request';
+    $('inviteToastWhat').textContent=req?'wants to be your friend':'invited you to a casual game';
+    $('inviteToastJoin').textContent=req?'ACCEPT':'JOIN';$('inviteToastNo').textContent=req?'LATER':'NO THANKS';
     $('inviteToastName').textContent=shown.name;
     const pic=avatar(shown);$('inviteToastPic').replaceChildren(...pic.childNodes);
   }
   function dismiss(i){
-    invites=invites.filter(x=>x!==i);showToast();
+    if(i.kind==='request'){later.add(i.id);showToast();return}
+    invites=invites.filter(x=>x.from!==i.from);showToast();
     const acc=account();if(acc)window.rivlAccount.call('/api/friends/dismiss-invite',{key:acc.key,from:i.from}).catch(()=>{});
   }
-  document.addEventListener('rivl:invites',e=>{invites=Array.isArray(e.detail)?e.detail:[];showToast()});
-  document.addEventListener('rivl:account',()=>{invites=[];showToast()});
+  document.addEventListener('rivl:invites',e=>{
+    invites=Array.isArray(e.detail?.invites)?e.detail.invites:[];
+    const next=Array.isArray(e.detail?.requests)?e.detail.requests:[];
+    // A new request also refreshes the list, so Profile and Match History show it straight away.
+    if(next.some(q=>!requests.some(x=>x.id===q.id))&&!busy)load();
+    requests=next;showToast();
+  });
+  document.addEventListener('rivl:account',()=>{invites=[];requests=[];later.clear();showToast()});
   $('inviteToastNo')?.addEventListener('click',()=>shown&&dismiss(shown));
   $('inviteToastJoin')?.addEventListener('click',()=>{
     const i=shown;if(!i)return;
+    if(i.kind==='request'){requests=requests.filter(q=>q.id!==i.id);showToast();accept(i);return}
     // Leaving a bot match mid-hand ends it unrated, so ask first, the same as the sidebar does.
     if(typeof game!=='undefined'&&game&&typeof confirmLeave==='function'){if(!confirmLeave())return;stop()}
     dismiss(i);window.rivlRooms?.join(i.code);
   });
+
+  // Match History asks for the friends list to decide each player's button, and sends requests through here.
+  window.rivlFriends={
+    data:()=>account()&&data||null,
+    load:()=>{if(account()&&!busy&&Date.now()-loadedAt>15000)load()},
+    request:(id,game)=>act('/api/friends/request',{id,game},r=>r.added?`${r.added} is now your friend.`:`Friend request sent to ${r.requested}.`),
+    accept:id=>{const f=data?.incoming?.find(x=>x.id===id);return f&&accept(f)},
+    status:()=>$('frStatus').textContent
+  };
 
   // ?friend=CODE from an invite link: open Profile at Friends with the code ready to add.
   const invited=new URLSearchParams(location.search).get('friend');
