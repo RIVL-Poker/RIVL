@@ -116,7 +116,7 @@
                     <div class="skyline">♠ RIVL · CAIRO TABLE ♠</div>
                     <div class="poker-table rivl-pvp-table" id="roomPokerTable">
                       <div id="roomGamePlayers" class="rivl-pvp-opponents"></div>
-                      <div class="pot"><strong id="roomPot" class="rivl-sr-only">0</strong><div id="roomPotChips" class="pot-chips" aria-hidden="true"></div><button type="button" class="pot-amount" title="Show bets and the pot in chips or big blinds"><span>POT</span><b id="roomPotLabel">0</b><i><em data-unit="chips">CHIPS</em><em data-unit="bb">BB</em></i></button></div>
+                      <div class="pot"><strong id="roomPot" class="rivl-sr-only">0</strong><div id="roomPotChips" class="pot-chips" aria-hidden="true"></div><span class="pot-amount"><span>POT</span><b id="roomPotLabel">0</b></span></div>
                       <div id="roomBoard" class="community rivl-pvp-board"></div>
                       <div class="myseat rivl-pvp-myseat">
                         <div id="roomHoleCards" class="holecards"></div>
@@ -145,7 +145,7 @@
                     <h3 id="roomWinner" aria-live="polite"></h3>
                     <div id="roomRatings" aria-live="polite"></div>
                     <button id="roomNext" class="gold" hidden>BACK TO LOBBY</button>
-                    <div class="bottom-toggle rivl-room-panel-toggle"><button id="roomTogglePanel" type="button" aria-expanded="false">⌃ &nbsp; OPEN GAME PANEL</button></div>
+                    <div class="bottom-toggle rivl-room-panel-toggle"><button id="roomTogglePanel" type="button" aria-expanded="false">⌃ &nbsp; OPEN GAME PANEL</button><span class="unit-toggle-wrap"><button type="button" class="unit-toggle" title="Show bets, stacks and the pot in chips or big blinds"><em data-unit="chips">CHIPS</em><em data-unit="bb">BB</em></button></span></div>
                     <div id="roomGamePanel" class="game-panel collapsed">
                       <div class="tabs">
                         <button class="tab selected" data-room-tab="chat">CHAT</button>
@@ -198,7 +198,7 @@
                         </div>
                         <div class="pot"><strong id="pot" class="rivl-sr-only">15</strong>
                             <div id="potChips" class="pot-chips" aria-hidden="true"></div>
-                            <button type="button" class="pot-amount" title="Show bets and the pot in chips or big blinds"><span>POT</span><b id="potLabel">0</b><i><em data-unit="chips">CHIPS</em><em data-unit="bb">BB</em></i></button>
+                            <span class="pot-amount"><span>POT</span><b id="potLabel">0</b></span>
                         </div>
                         <div id="winFx" class="win-fx" aria-live="polite"></div>
                         <div id="chipFlight" class="chip-flight" aria-hidden="true"></div>
@@ -234,7 +234,7 @@
                     <aside class="rivl-pot-stats" aria-label="Pot statistics"><div class="rivl-pov-pot-balance-row"><div class="rivl-pov-stat"><div class="rivl-pot-stats-label">POT TOTAL</div><div class="rivl-pot-stats-value"><span class="rivl-pot-stats-chip" aria-hidden="true"></span><strong id="botPotTotal">0</strong></div></div><div class="rivl-pov-stat rivl-pov-balance-stat"><div class="rivl-pot-stats-label">BALANCE</div><div class="rivl-pot-stats-value"><span class="rivl-pov-chip-icon" aria-hidden="true">♠</span><strong id="rivlPovBalance">1,000</strong></div></div></div><div class="rivl-pot-stats-divider"></div><div class="rivl-pot-stats-label">MY EQUITY IN POT</div><strong class="rivl-pot-stats-percent" id="botPotEquity">0%</strong></aside>
                 </div>
                 <div class="bottom-toggle"><button id="togglePanel" aria-expanded="false">⌃ &nbsp; OPEN GAME
-                        PANEL</button></div>
+                        PANEL</button><span class="unit-toggle-wrap"><button type="button" class="unit-toggle" title="Show bets, stacks and the pot in chips or big blinds"><em data-unit="chips">CHIPS</em><em data-unit="bb">BB</em></button></span></div>
                 <div id="gamePanel" class="game-panel collapsed">
                     <div class="tabs"><button class="tab" data-tab="chat">CHAT</button><button class="tab selected"
                             data-tab="history">HAND HISTORY</button><button class="tab" data-tab="stats">PLAYER
