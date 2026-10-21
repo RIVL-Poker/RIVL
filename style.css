@@ -2312,21 +2312,15 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
   #roomGame .rivl-pvp-seat.shown-above .rivl-shown{top:auto;bottom:calc(100% + 4px)}
 }
 
-/* Pot readout under the chip pile. Tapping it switches bets and the pot between chips and big blinds (amounts.js). */
+/* Pot readout under the chip pile, in the unit picked with the CHIPS | BB pill (amounts.js). */
 .pot .pot-amount{position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:5px;
-  margin:0;padding:2px 3px 2px 8px;border-radius:999px;border:1px solid #b8862f;background:#1b140ce6;color:#f6d48e;white-space:nowrap;
-  font:800 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.03em;pointer-events:auto;cursor:pointer;box-shadow:0 1px 4px #000b}
+  margin:0;padding:2px 8px;border-radius:999px;border:1px solid #b8862f;background:#1b140ce6;color:#f6d48e;white-space:nowrap;
+  font:800 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.03em;pointer-events:none;box-shadow:0 1px 4px #000b}
 .pot .pot-amount>span{font-size:9px;color:#c9b48d;letter-spacing:.1em}
 .pot .pot-amount>b{font-weight:800;color:#fbe3ae;font-variant-numeric:tabular-nums}
-.pot .pot-amount>i{display:inline-flex;font-style:normal;border-radius:999px;background:#0c0905;padding:1px}
-.pot .pot-amount em{font-style:normal;font-size:8px;letter-spacing:.06em;padding:1px 5px;border-radius:999px;color:#8f8576}
-.pot .pot-amount em.is-on{background:#f6d48e;color:#160e04}
-.pot .pot-amount:hover{border-color:var(--gold)}
-.pot .pot-amount:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media(max-width:600px){
-  .pot .pot-amount{gap:3px;padding:1px 2px 1px 6px;font-size:10px}
+  .pot .pot-amount{gap:3px;padding:1px 6px;font-size:10px}
   .pot .pot-amount>span{font-size:8px}
-  .pot .pot-amount em{font-size:7px;padding:1px 4px}
 }
 .blind-clock{color:#f6d48e}
 .blind-clock-short{display:none}
@@ -2334,7 +2328,7 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
   .blind-clock-long{display:none}.blind-clock-short{display:inline}
   .pot .pot-amount{left:0;transform:none}
 }
-/* The board's box reaches past its cards, so the pot sits above it to keep the readout tappable. */
+/* The board's box reaches past its cards, so the pot sits above it. */
 body.in-game #table .poker-table>.pot,#roomGame .rivl-pvp-table>.pot{z-index:6}
 /* "1.5 BB" is wider than a chip count: let the pot total shrink inside its half of the bot stats box. */
 body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
@@ -2454,4 +2448,17 @@ body.in-game #table .myseat>.holecards,#roomGame .rivl-pvp-myseat>.holecards{zoo
   #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-value{font-size:19px}
   #roomGame .rivl-bet-actions .rivl-pot-stats :is(.rivl-pot-stats-chip,.rivl-pov-chip-icon){display:none}
   #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-percent{font-size:18px}
+}
+/* CHIPS | BB switch: a small pill at the right end of the game-panel strip under every table (amounts.js). */
+:is(body.in-game #table,#roomGame) .bottom-toggle{position:relative}
+:is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle-wrap{position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:2;display:flex}
+:is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle{display:inline-flex;align-items:center;gap:0;height:22px;min-height:0;width:auto;margin:0;padding:2px;
+  border:1px solid #6f5130;border-radius:999px;background:#0e0b08;color:#8f8576;cursor:pointer;box-shadow:none}
+:is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle em{font:800 9px/1 Inter,Arial,sans-serif;font-style:normal;letter-spacing:.08em;padding:4px 8px;border-radius:999px;transition:background .15s,color .15s}
+:is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle em.is-on{background:linear-gradient(#ffdda0,#c68d46);color:#170f06}
+:is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle:hover{border-color:#c49a5a;color:#d8c7a8}
+:is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media(max-width:600px){
+  :is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle-wrap{right:6px}
+  :is(body.in-game #table,#roomGame) .bottom-toggle .unit-toggle em{padding:4px 6px;font-size:8px}
 }

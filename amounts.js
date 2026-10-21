@@ -1,6 +1,6 @@
 // Bets and the pot can be shown in chips or in big blinds. The choice is remembered in this browser and applies to
 // bot practice and every online table (Ranked, Casual, freeroll). Stacks, bets and the pot all follow it; the BB tag
-// under each avatar always stays in big blinds. Tapping the pot readout on the table switches it.
+// under each avatar always stays in big blinds. The CHIPS | BB pill at the bottom right of each table switches it.
 (()=>{
   const KEY='rivlAmountUnit',listeners=new Set();
   let unit='chips';try{if(localStorage.getItem(KEY)==='bb')unit='bb'}catch{}
@@ -17,12 +17,13 @@
     el.textContent=bb?text.slice(0,-3):text;if(bb){const u=document.createElement('small');u.className='amount-unit';u.textContent='BB';el.append(u)}
   }
   function paint(){
-    for(const b of document.querySelectorAll('.pot-amount')){
-      b.setAttribute('aria-label','Pot '+b.querySelector('b').textContent+'. Show amounts in '+(unit==='bb'?'chips':'big blinds'));
+    for(const b of document.querySelectorAll('.unit-toggle')){
+      b.setAttribute('aria-label','Amounts shown in '+(unit==='bb'?'big blinds':'chips')+'. Switch to '+(unit==='bb'?'chips':'big blinds'));
       b.querySelectorAll('[data-unit]').forEach(s=>s.classList.toggle('is-on',s.dataset.unit===unit));
     }
   }
   function set(next){unit=next==='bb'?'bb':'chips';try{localStorage.setItem(KEY,unit)}catch{}paint();listeners.forEach(f=>{try{f(unit)}catch{}})}
-  document.addEventListener('click',e=>{if(e.target.closest?.('.pot-amount'))set(unit==='bb'?'chips':'bb')});
+  document.addEventListener('click',e=>{if(e.target.closest?.('.unit-toggle'))set(unit==='bb'?'chips':'bb')});
+  paint();
   window.rivlAmounts={unit:()=>unit,fmt,fmtUnit,fill,raiseLabel,set,paint,onChange:f=>listeners.add(f)};
 })();
