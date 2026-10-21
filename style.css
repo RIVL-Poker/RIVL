@@ -2359,3 +2359,11 @@ body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
   #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-value,#roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-percent{font-size:13px!important;white-space:nowrap}
   #roomGame .rivl-bet-actions .rivl-pot-stats .rivl-pot-stats-divider{margin:0 1px}
 }
+/* BB mode in the pot and balance boxes: a small "BB" after the number, so "10.5 BB" takes about the room "1,000" did. */
+.rivl-pot-stats .amount-unit{font-size:.58em;font-weight:800;letter-spacing:.04em;margin-left:.2em;color:#e8b96b}
+.rivl-pot-stats .rivl-pot-stats-value{overflow:hidden}
+/* The bot table's pot | balance row is narrow on desktop: in BB mode drop the chip icons and split it evenly so neither number is cut off. */
+@media(min-width:601px){
+  body.in-game #table .actions .rivl-pov-pot-balance-row:has(.amount-unit){grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  body.in-game #table .actions .rivl-pov-pot-balance-row .rivl-pot-stats-value:has(.amount-unit)>:is(.rivl-pot-stats-chip,.rivl-pov-chip-icon){display:none!important}
+}
