@@ -99,3 +99,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Dealer, SB and BB badges moved off every avatar into the BB count tag under the seat, in both modes, so profile pictures show in full.
 - Fixed online seat spots: 9-player desktop seats were pushed off the rim by old head-first rules; phones and portrait tablets now use the bot practice table and seat ring.
 - Known, same in both modes: on 9-player desktop the bottom-left seat sits partly behind your clock.
+
+### 2026-10-21 03:30 UTC · Claude
+- Ranked blinds now rise on the match clock every 2.5 minutes (`RANKED_BLINDS` in `worker/rooms.js`): 15/30, 25/50, 50/100, 100/200, 150/300, 250/500 on 1,000 stacks. No new hand is dealt after 14 minutes; the match then ends on chip count. Casual and private rooms keep blinds every 8 hands; the freeroll is unchanged.
+- The room snapshot carries `blindClock` (level, next blinds, `nextAt`, `lastDealAt`); the BLINDS label counts down to the next level.
+- New `amounts.js`: bets, the pot, the call button and the pot total can show in chips or big blinds. Tap the pot readout under the chip pile to switch; remembered per browser (`rivlAmountUnit`). Applies to bot practice and all online tables. Stacks were left alone (Kaden is working on chip counts).

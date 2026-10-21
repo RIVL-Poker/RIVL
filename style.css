@@ -2310,6 +2310,38 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
   #roomGame .rivl-pvp-seat.shown-above .rivl-shown{top:auto;bottom:calc(100% + 4px)}
 }
 
+/* Pot readout under the chip pile. Tapping it switches bets and the pot between chips and big blinds (amounts.js). */
+.pot .pot-amount{position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:5px;
+  margin:0;padding:2px 3px 2px 8px;border-radius:999px;border:1px solid #b8862f;background:#1b140ce6;color:#f6d48e;white-space:nowrap;
+  font:800 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.03em;pointer-events:auto;cursor:pointer;box-shadow:0 1px 4px #000b}
+.pot .pot-amount>span{font-size:9px;color:#c9b48d;letter-spacing:.1em}
+.pot .pot-amount>b{font-weight:800;color:#fbe3ae;font-variant-numeric:tabular-nums}
+.pot .pot-amount>i{display:inline-flex;font-style:normal;border-radius:999px;background:#0c0905;padding:1px}
+.pot .pot-amount em{font-style:normal;font-size:8px;letter-spacing:.06em;padding:1px 5px;border-radius:999px;color:#8f8576}
+.pot .pot-amount em.is-on{background:#f6d48e;color:#160e04}
+.pot .pot-amount:hover{border-color:var(--gold)}
+.pot .pot-amount:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media(max-width:600px){
+  .pot .pot-amount{gap:3px;padding:1px 2px 1px 6px;font-size:10px}
+  .pot .pot-amount>span{font-size:8px}
+  .pot .pot-amount em{font-size:7px;padding:1px 4px}
+}
+.blind-clock{color:#f6d48e}
+.blind-clock-short{display:none}
+@media(max-width:600px){
+  .blind-clock-long{display:none}.blind-clock-short{display:inline}
+  .pot .pot-amount{left:0;transform:none}
+}
+/* The board's box reaches past its cards, so the pot sits above it to keep the readout tappable. */
+body.in-game #table .poker-table>.pot,#roomGame .rivl-pvp-table>.pot{z-index:6}
+/* "1.5 BB" is wider than a chip count: let the pot total shrink inside its half of the bot stats box. */
+body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
+#botPotTotal{white-space:nowrap;min-width:0;font-size:min(1em,max(.72em,1.6vw))}
+/* Phone bot table: the pot sits straight above the board, so its readout goes above the chip pile, clear of the cards. */
+@media(max-width:600px){
+  body.in-game #table .pot .pot-amount{top:auto;bottom:calc(100% + 1px);left:50%;transform:translateX(-50%)}
+  body.in-game #table .pot .pot-amount>span{display:none}
+}
 /* Online ranked, private and freeroll: retain the HUD even when no action is legal. */
 #roomGame #roomActions.is-waiting > :not(.rivl-pot-stats){visibility:hidden!important;pointer-events:none!important}
 #roomGame #roomActions.is-waiting > .rivl-pot-stats{visibility:visible!important}

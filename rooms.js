@@ -213,6 +213,8 @@
       if(previousPhase!=='showdown'&&g.phase==='showdown')pvpSound('win');
       previousPhase=g.phase;
       $('roomPot').textContent=g.pot;
+      const amt=(n)=>window.rivlAmounts.fmt(n,g.bigBlind);
+      $('roomPotTotal').textContent=amt(g.pot);$('roomPotLabel').textContent=amt(g.pot);window.rivlAmounts.paint();
       $('roomPotTotal').textContent=Number(g.pot||0).toLocaleString();
       $('roomBalance').textContent=Number(me?.stack??0).toLocaleString();
       const myContribution=Number(g.players.find(p=>p.seat===snapshot.mySeat)?.contribution||0);
@@ -225,7 +227,7 @@
         const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
         item.dataset.seat=p.seat;item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
-        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+p.bet:'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
+        const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=p.stack.toLocaleString()+(p.left?' · LEFT':p.away?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
         if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}appendReport(item,snapshot.seats[p.seat]);
         const cards=g.shown?.[p.seat];
@@ -265,7 +267,7 @@
         winnerOverlay.append(heading);
         if(Array.isArray(winnerCards)&&winnerCards.length===2){const cards=document.createElement('div');cards.className='rivl-winner-cards';winnerCards.forEach(code=>cards.append(cardNode(code)));winnerOverlay.append(cards)}
         winnerOverlay.append(hand);
-        if(winner&&Number.isFinite(Number(winner.amount))){const gain=document.createElement('small');gain.className='rivl-victory-gain';gain.textContent=winner.name+' +'+Number(winner.amount).toLocaleString();winnerOverlay.append(gain)}
+        if(winner&&Number.isFinite(Number(winner.amount))){const gain=document.createElement('small');gain.className='rivl-victory-gain';gain.textContent=winner.name+' +'+amt(winner.amount);winnerOverlay.append(gain)}
         winnerOverlay.classList.add('visible');}
       }else{roomWinKey='';clearTimeout(roomWinTimer);winnerOverlay.classList.remove('visible')}
       $('roomWinner').textContent=g.result||'';
@@ -284,7 +286,7 @@
       $('roomActions').hidden=false;
       $('roomActions').classList.toggle('is-waiting',!l);
       if(l){
-        $('roomCall').textContent=l.call?'CALL '+l.call:'CHECK';
+        $('roomCall').textContent=l.call?'CALL '+amt(l.call):'CHECK';
         $('roomRaise').disabled=!l.canRaise;
         $('roomAllin').disabled=!l.canRaise&&l.raiseToMax>l.call;
         const amount=$('roomRaiseAmount'),slider=$('roomRaiseSlider');
@@ -295,7 +297,7 @@
         if(betKey!==roomBetKey||Number(amount.value)<first||Number(amount.value)>last||Number(amount.value)%5)amount.value=first;
         roomBetKey=betKey;
         slider.value=amount.value;$('roomAmountLabel').textContent=amount.value;
-        $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips · 12-second turn';
+        $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips'+(window.rivlAmounts.unit()==='bb'?' ('+amt(l.raiseToMin)+'–'+amt(l.raiseToMax)+')':'')+' · 12-second turn';
       }else{roomBetKey='';$('roomBetInfo').textContent=fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
       const tick=()=>{
@@ -305,10 +307,19 @@
         $('roomTimer').style.background=myTurn?'conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)':'';
         const sec=Math.ceil(ms/1000);if(g.turn===me?.seat&&sec<=5&&sec>0&&sec!==lastTick){pvpSound('tick');lastTick=sec}
         $('roomTimerText').textContent=myTurn?Math.ceil(ms/1000):'–';
+        $('roomBlindsLabel').innerHTML=blindClockText(snapshot.blindClock);
       };
       tick();clockTimer=setInterval(tick,200);
-    }else clearInterval(clockTimer);
+    }else{clearInterval(clockTimer);$('roomBlindsLabel').textContent='BLINDS'}
   }
+  // Ranked blinds rise on the match clock: count down to the next level, then to the last hand.
+  function blindClockText(bc){
+    if(!bc)return 'BLINDS';
+    const tag=(long,short,t)=>'BLINDS<span class="blind-clock"><span class="blind-clock-long"> · '+long+' '+t+'</span><span class="blind-clock-short"> '+short+t+'</span></span>';
+    const now=Date.now()+clockOffset,left=at=>{const s=Math.max(0,Math.ceil((at-now)/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+    return bc.nextAt>now?tag('UP IN','↑',left(bc.nextAt)):bc.lastDealAt>now?tag('LAST HAND IN','LAST HAND ',left(bc.lastDealAt)):tag('FINAL HAND','FINAL','');
+  }
+  window.rivlAmounts?.onChange(()=>render());
   let queueTimer=null,rankedEntry=false;
   function rankedQueueText(){
     const seated=snapshot.seats.filter(Boolean).length,max=snapshot.rankedMax||6;

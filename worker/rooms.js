@@ -15,6 +15,11 @@ const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=11000,IDLE_MS=6*
 const botThinkMs=()=>BOT_THINK_MIN_MS+Math.floor(Math.random()*(BOT_THINK_MAX_MS-BOT_THINK_MIN_MS));
 // Blinds rise every 8 hands so a match reaches a finish.
 const BLINDS=[[10,20],[15,30],[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000]];
+// Ranked blinds go up on the clock, every 2.5 minutes, from 33 big blinds deep (1,000 chips at 15/30) down to two
+// by the last level, so a typical match ends around 10 minutes. No new hand is dealt after 14 minutes; the
+// match then ends on chip count once that hand finishes, so a match never runs much past 15.
+const RANKED_BLINDS=[[15,30],[25,50],[50,100],[100,200],[150,300],[250,500]],RANKED_LEVEL_MS=150000,RANKED_LAST_DEAL_MS=14*60000;
+const rankedLevel=startedAt=>Math.min(RANKED_BLINDS.length-1,Math.floor(Math.max(0,Date.now()-startedAt)/RANKED_LEVEL_MS));
 const HAND_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
 
 function allowedOrigin(request,env){
@@ -265,7 +270,7 @@ export class Room {
     return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),
-      extensionsLeft:this.extensionsLeft(m),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),
+      extensionsLeft:this.extensionsLeft(m),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),blindClock:this.blindClock(),
       tourney:this.room.tourney?{table:this.room.tourney.table,info:this.room.tourney.info||null,blinds:this.room.tourney.blinds||null,done:!!this.room.tourney.done}:null,
       game:g?{phase:g.phase,handNumber:g.handNumber,pot:g.pot,board:g.board,players:g.players.map(p=>({seat:p.seat,name:p.name,bot:p.bot,stack:p.stack,bet:p.bet,folded:p.folded,allIn:p.allIn,away:!!p.away,left:!!p.left,contribution:p.contribution})),
         holeCards:m?g.hands[m.seat]||null:null,shown,turn:g.turn,deadline:g.deadline,currentBet:g.currentBet,minRaise:g.minRaise,smallBlind:g.smallBlind,bigBlind:g.bigBlind,dealer:g.dealer,sbSeat:g.sbSeat??-1,bbSeat:g.bbSeat??-1,
@@ -284,6 +289,12 @@ export class Room {
     }
   }
   matchOver(g=this.room?.game){return !g||g.result==='Match complete'}
+  // Ranked level clock for the table header: the next blinds and when they arrive, and when the last hand is dealt.
+  blindClock(){
+    const t=this.room?.match?.ranked&&this.room.match.startedAt;if(!t||this.matchOver())return null;
+    const level=rankedLevel(t),last=level>=RANKED_BLINDS.length-1;
+    return {level:level+1,next:last?null:RANKED_BLINDS[level+1],nextAt:last?0:t+(level+1)*RANKED_LEVEL_MS,lastDealAt:t+RANKED_LAST_DEAL_MS};
+  }
   // Freeroll extensions follow the player from table to table (the Tournament keeps the count); Ranked ones reset each match.
   extensionsLeft(m){
     const room=this.room;if(!m)return null;
@@ -351,7 +362,7 @@ export class Room {
     const usage=await this.dir('/usage/hand',{newMatch:true});
     if(usage&&!usage.ok)throw Error(CLOSED_MESSAGE);
     room.startsAt=0;
-    room.match={id:crypto.randomUUID(),ranked:!!room.ranked,out:[],left:[],accounts:Object.fromEntries(Object.values(room.members).filter(m=>m.accountId).map(m=>[m.seat,m.accountId]))};
+    room.match={id:crypto.randomUUID(),ranked:!!room.ranked,startedAt:Date.now(),out:[],left:[],accounts:Object.fromEntries(Object.values(room.members).filter(m=>m.accountId).map(m=>[m.seat,m.accountId]))};
     room.game=null;this.startHand();
   }
   // A Ranked table counts down once two players sit, and starts at once when full.
@@ -380,11 +391,12 @@ export class Room {
     const carried=i=>old?.players.find(p=>p.seat===i);
     const participants=this.room.tourney?this.tParticipants(old):this.room.seats.flatMap((s,i)=>s?[{seat:i,name:s.name,bot:s.type==='bot',stack:old?carried(i)?.stack??0:1000,bet:0,contribution:0,folded:false,allIn:false,away:!!carried(i)?.away,timeouts:carried(i)?.timeouts||0}]:[]).filter(p=>p.stack>0);
     if(old)this.eliminate(old.players.filter(p=>!participants.some(x=>x.seat===p.seat)).map(p=>p.seat));
-    if(participants.length<2||!participants.some(p=>!p.bot)){
-      if(old){old.phase='showdown';old.result='Match complete';old.turn=-1;old.deadline=0;old.nextHandAt=0;this.finishMatch(participants)}
+    const ranked=this.room.match?.ranked&&this.room.match.startedAt,timeUp=!!old&&!!ranked&&Date.now()-ranked>=RANKED_LAST_DEAL_MS;
+    if(participants.length<2||!participants.some(p=>!p.bot)||timeUp){
+      if(old){old.phase='showdown';old.result='Match complete';old.turn=-1;old.deadline=0;old.nextHandAt=0;if(timeUp&&participants.length>1)old.note='Time is up: places go by chip count.';this.finishMatch(participants)}
       return;
     }
-    const handNumber=(old?.handNumber||0)+1,[smallBlind,bigBlind]=this.room.tourney?.blinds||BLINDS[Math.min(BLINDS.length-1,Math.floor((handNumber-1)/8))];
+    const handNumber=(old?.handNumber||0)+1,[smallBlind,bigBlind]=this.room.tourney?.blinds||(ranked?RANKED_BLINDS[rankedLevel(ranked)]:BLINDS[Math.min(BLINDS.length-1,Math.floor((handNumber-1)/8))]);
     const g={phase:'preflop',handNumber,pot:0,board:[],players:participants,hands:{},deck:this.randomDeck(),turn:-1,deadline:0,currentBet:0,minRaise:bigBlind,smallBlind,bigBlind,acted:[],raiseLocked:[],streetRaises:0,winners:[],result:'',dealer:-1,nextHandAt:0,shown:[]};
     const alive=i=>participants.some(p=>p.seat===i);
     g.dealer=this.next(old?.dealer??8,alive);
