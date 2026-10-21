@@ -248,7 +248,7 @@ for(let match=0;match<60;match++){
 // ---------- Directory: accounts, online ratings, lobby, free-plan budget ----------
 function fakeSql(){
   const db=new DatabaseSync(':memory:');
-  return {exec(q,...b){const st=db.prepare(q);const rows=/^\s*SELECT/i.test(q)?st.all(...b):(st.run(...b),[]);return {toArray:()=>rows}}};
+  return {exec(q,...b){const st=db.prepare(q);const rows=/^\s*(SELECT|PRAGMA)/i.test(q)?st.all(...b):(st.run(...b),[]);return {toArray:()=>rows}}};
 }
 function makeEnv(vars={}){
   const ns=(make)=>{const instances=new Map();return {instances,idFromName:n=>n,get:id=>{if(!instances.has(id))instances.set(id,make());const obj=instances.get(id);return {fetch:(url,init)=>obj.fetch(new Request(url,init))}}}};
@@ -907,6 +907,19 @@ console.log('PASS: '+checks+' room server checks');
     const told=[...big.sockets.values()].flatMap(ws=>ws.messages.filter(m=>m.type==='freeroll'));
     assert.ok(told.some(m=>m.kind==='out'&&m.place>1)&&told.some(m=>m.kind==='finished'&&m.place===1),'knock-outs and the win are announced');
     assert.ok(told.some(m=>m.kind==='moved'&&m.table>0),'players are moved to balance tables');
+    // The night shows in game history with every player's place, and a freeroll saved before history existed is backfilled.
+    const hist=(await api(big.env,'/api/history')).data.games.find(g=>g.id==='freeroll:'+big.t.night);
+    assert.ok(hist&&hist.mode==='Freeroll'&&hist.players===40&&hist.duration>0,'the freeroll is in game history');
+    const detail=(await api(big.env,'/api/history/game?id='+encodeURIComponent(hist.id))).data;
+    assert.equal(detail.players.length,40);assert.equal(detail.players[0].place,1);assert.equal(detail.players[0].name,hist.winner);
+    const dir=big.env.DIRECTORY.instances.get('global');
+    dir.sql.exec('DELETE FROM game_history');dir.sql.exec('DELETE FROM game_history_players');
+    const reopened=new Directory({storage:{sql:dir.sql}},big.env);
+    const back=reopened.rows('SELECT * FROM game_history');
+    assert.equal(back.length,1);assert.equal(back[0].winner,hist.winner);assert.equal(back[0].players,40);
+    assert.equal(reopened.rows('SELECT * FROM game_history_players').length,40,'the backfill restores every player');
+    new Directory({storage:{sql:dir.sql}},big.env);
+    assert.equal(reopened.rows('SELECT * FROM game_history').length,1,'the backfill runs once');
     for(const n of [17,10,2])await freeroll(n);
     await freeroll(40,{late:20});
     await freeroll(1);

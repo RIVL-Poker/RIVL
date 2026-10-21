@@ -141,7 +141,7 @@ export class Tournament {
   }
   async record(){
     const t=this.t;if(t.recorded||t.status!=='finished'||!this.env.DIRECTORY)return;
-    const r=await this.env.DIRECTORY.get(this.env.DIRECTORY.idFromName('global')).fetch('https://dir/freeroll/results',{method:'POST',body:JSON.stringify({night:t.night,entrants:Object.keys(t.players).length,players:Object.values(t.players).map(p=>({id:p.id,place:p.place}))})});
+    const r=await this.env.DIRECTORY.get(this.env.DIRECTORY.idFromName('global')).fetch('https://dir/freeroll/results',{method:'POST',body:JSON.stringify({night:t.night,duration:(t.finishedAt||Date.now())-t.startAt,entrants:Object.keys(t.players).length,players:Object.values(t.players).map(p=>({id:p.id,place:p.place}))})});
     if(r.ok){t.recorded=true;await this.save()}
   }
   plan(n,extra={}){
