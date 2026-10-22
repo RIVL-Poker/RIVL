@@ -59,4 +59,6 @@ assert(R.grade(R.analyze(post(['4♠','6♥'],['K♦','K♠','K♥','3♦','J♠
 const lg=r=>R.tier(r).name;
 assert(lg(0)==='Prospect'&&lg(349)==='Prospect'&&lg(350)==='Challenger'&&lg(699)==='Challenger'&&lg(700)==='Elite'&&lg(1050)==='Master'&&lg(1400)==='Grandmaster'&&lg(1749)==='Grandmaster'&&lg(1750)==='Champion'&&lg(3500)==='Champion','league bands');
 assert(R.tier(525).progress===.5&&R.tier(350).next===700&&R.tier(3000).next===null,'league progress');
+// Online rooms also draw .seat elements, so the bot table must only ever paint its own seats.
+assert(!/querySelector(All)?\('\.(seat|myseat)/.test(source),'bot table seat lookups stay inside #table');
 console.log('PASS: 12 poker engine checks + 17 rating checks');
