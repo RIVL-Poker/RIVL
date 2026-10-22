@@ -595,7 +595,8 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
 {
   const env=makeEnv({STATS_KEY:'k'.repeat(32)});
   const ann=(await api(env,'/api/accounts',{name:'Ann'})).data;
-  const dir=env.DIRECTORY.instances.get('global'),old=Date.now()-5*86400000;
+  // Midday UTC, so the game an hour later falls on the same day whenever the tests run.
+  const dir=env.DIRECTORY.instances.get('global'),old=new Date(Date.now()-5*86400000).setUTCHours(12,0,0,0);
   dir.sql.exec('UPDATE accounts SET created=?',old);
   dir.sql.exec("INSERT INTO game_history(id,t,mode,players,winner) VALUES ('g1',?,'Ranked',2,'Ann')",old+3600000);
   dir.sql.exec("INSERT INTO game_history_players(game,account,name,place) VALUES ('g1',?,'Ann',1)",ann.account.id);
@@ -1113,7 +1114,8 @@ console.log('PASS: '+checks+' room server checks');
 {
   const env=makeEnv({STATS_KEY:'k'.repeat(32)});
   const ann=(await api(env,'/api/accounts',{name:'Ann'})).data;
-  const dir=env.DIRECTORY.instances.get('global'),old=Date.now()-5*86400000;
+  // Midday UTC, so the game an hour later falls on the same day whenever the tests run.
+  const dir=env.DIRECTORY.instances.get('global'),old=new Date(Date.now()-5*86400000).setUTCHours(12,0,0,0);
   dir.sql.exec('UPDATE accounts SET created=?',old);
   dir.sql.exec("INSERT INTO game_history(id,t,mode,players,winner) VALUES ('g1',?,'Ranked',2,'Ann')",old+3600000);
   dir.sql.exec("INSERT INTO game_history_players(game,account,name,place) VALUES ('g1',?,'Ann',1)",ann.account.id);
