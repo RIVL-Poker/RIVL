@@ -350,7 +350,10 @@ function grade(A,type,amount){
   return{label,glyph:GLYPH[label],acc,weight,lossBB,chosen:chosen.label,best:best.label,eq:A.eq,text:`${why} ${verdict}`,hand:A.hand,street:A.street};
 }
 
-/* Bots pick from the same option list, with skill-based noise and a style bias. */
+/* Bots pick from the same option list, with skill-based noise and a style bias.
+   Once a street has been raised, bots skip the bare min-raise (no 20, 30, 40... ladders) and stop raising
+   after BOT_RAISES_PER_STREET raises, so a betting round closes in a lap or two as at a real table. */
+const BOT_RAISES_PER_STREET=3;
 const BOTS={
   Ace:{noise:.06,aggr:.02,r:1650},Rico:{noise:.14,aggr:.06,r:1520},Luna:{noise:.09,aggr:-.02,r:1580},
   Nash:{noise:.20,aggr:0,r:1440},Mula:{noise:.28,aggr:.04,r:1350},Jett:{noise:.12,aggr:.10,r:1480},
@@ -362,6 +365,7 @@ function chooseBot(g,i){
   let pick=A.opts[1],bestScore=-Infinity;
   A.opts.forEach(o=>{
     if(o.type==='fold'&&A.toCall===0)return;
+    if(o.type==='raise'&&((g.streetRaises||0)>=BOT_RAISES_PER_STREET||g.currentBet>A.bb&&o.T===A.minTotal&&o.T<A.maxTotal))return;
     const s=o.ev+prof.noise*denom*gauss()+(o.type==='raise'?prof.aggr*denom:0);
     if(s>bestScore){bestScore=s;pick=o}
   });

@@ -48,7 +48,7 @@ function alive(i){return game.players[i].stack>0}
 function nextEligible(after){for(let k=1;k<=game.players.length;k++){let i=(after+k)%game.players.length,p=game.players[i];if(!p.folded&&!p.allin&&p.stack>0)return i}return -1}
 function nextWithChips(after){for(let k=1;k<=game.players.length;k++){let i=(after+k)%game.players.length;if(alive(i))return i}return -1}
 function pay(i,amt){let p=game.players[i],n=Math.min(p.stack,amt);p.stack-=n;p.bet+=n;p.committed+=n;game.pot+=n;if(n>0)sound('chip');if(!p.stack)p.allin=true;return n}
-function newHand(){if(!game||game.finished)return;cancelDealTimers();clearTimeout(botTimer);stopCountdown();lastWarningSecond=null;turnTimer=12;let g=game,active=g.players.filter(p=>p.stack>0);if(active.length<2){g.finished=true;finishMatch();return}g.hand++;g.handPending=false;g.deck=shuffle();g.board=[];g.shown=[];previousBoardCount=0;g.street=0;g.pot=0;g.currentBet=0;g.minRaise=10;g.players.forEach(p=>{p.bet=0;p.committed=0;p.folded=p.stack<=0;p.allin=false;p.acted=false;p.raiseLocked=false;p.line=0;p.handStart=p.stack;p.hole=p.stack>0?[g.deck.pop(),g.deck.pop()]:[]});sound('card');setTimeout(()=>sound('card'),140);g.dealer=nextWithChips(g.dealer);let blinds=BLINDS[blindLevel(g)];g.minRaise=blinds[1];g.bb=blinds[1];let sb=nextWithChips(g.dealer),bb=nextWithChips(sb);if(active.length===2){sb=g.dealer;bb=nextWithChips(sb)}g.sbSeat=sb;g.bbSeat=bb;pay(sb,blinds[0]);pay(bb,blinds[1]);g.currentBet=Math.max(g.players[sb].bet,g.players[bb].bet);g.players.forEach(p=>{p.acted=false;p.raiseLocked=false});note(`Hand ${g.hand}: blinds ${blinds.join('/')} · dealer ${g.players[g.dealer].name}`);g.turn=nextEligible(bb);render();advanceTurn()}
+function newHand(){if(!game||game.finished)return;cancelDealTimers();clearTimeout(botTimer);stopCountdown();lastWarningSecond=null;turnTimer=12;let g=game,active=g.players.filter(p=>p.stack>0);if(active.length<2){g.finished=true;finishMatch();return}g.hand++;g.handPending=false;g.deck=shuffle();g.board=[];g.shown=[];previousBoardCount=0;g.street=0;g.pot=0;g.currentBet=0;g.minRaise=10;g.streetRaises=0;g.players.forEach(p=>{p.bet=0;p.committed=0;p.folded=p.stack<=0;p.allin=false;p.acted=false;p.raiseLocked=false;p.line=0;p.handStart=p.stack;p.hole=p.stack>0?[g.deck.pop(),g.deck.pop()]:[]});sound('card');setTimeout(()=>sound('card'),140);g.dealer=nextWithChips(g.dealer);let blinds=BLINDS[blindLevel(g)];g.minRaise=blinds[1];g.bb=blinds[1];let sb=nextWithChips(g.dealer),bb=nextWithChips(sb);if(active.length===2){sb=g.dealer;bb=nextWithChips(sb)}g.sbSeat=sb;g.bbSeat=bb;pay(sb,blinds[0]);pay(bb,blinds[1]);g.currentBet=Math.max(g.players[sb].bet,g.players[bb].bet);g.players.forEach(p=>{p.acted=false;p.raiseLocked=false});note(`Hand ${g.hand}: blinds ${blinds.join('/')} · dealer ${g.players[g.dealer].name}`);g.turn=nextEligible(bb);render();advanceTurn()}
 function livePlayers(){return game.players.filter(p=>!p.folded)}
 function actionable(){return game.players.filter(p=>!p.folded&&!p.allin&&p.stack>0)}
 function roundDone(){let act=actionable();return act.every(p=>p.acted&&p.bet===game.currentBet)}
@@ -63,7 +63,7 @@ function nextStreet(){
  // In an all-in runout every hand is turned up and each street gets a beat, so the full board is seen before the winner.
  const runout=runningOut();if(runout)g.shown=livePlayers().map(p=>g.players.indexOf(p)).filter(i=>i>0);
  const cards=Array.from({length:cardsToDeal},()=>g.deck.pop());
- g.currentBet=0;
+ g.currentBet=0;g.streetRaises=0;
  g.players.forEach(p=>{p.bet=0;p.acted=false;p.raiseLocked=false});
  // No player or bot may act while the board cards are being revealed.
  g.turn=-1;render();
@@ -106,7 +106,7 @@ function action(i,type,amount=0){
  else if(type==='check'||type==='call'){let paid=pay(i,toCall);p.acted=true;note(`${p.name} ${toCall?'calls '+paid+(paid<toCall?' (all-in)':''):'checks'}`)}
  else if(type==='raise'){
    let old=g.currentBet,priorActed=g.players.map(x=>x.acted),paid=pay(i,amount-p.bet);
-   g.currentBet=p.bet;let increment=g.currentBet-old;
+   g.currentBet=p.bet;g.streetRaises=(g.streetRaises||0)+1;let increment=g.currentBet-old;
    if(increment>=g.minRaise){g.minRaise=increment;g.players.forEach((x,j)=>{if(j!==i&&!x.folded&&!x.allin){x.acted=false;x.raiseLocked=false}})}
    else {g.players.forEach((x,j)=>{if(j!==i&&!x.folded&&!x.allin&&priorActed[j]){x.acted=false;x.raiseLocked=true}})}
    p.acted=true;note(`${p.name} raises to ${p.bet}${p.allin?' (all-in)':''}`);
