@@ -2,7 +2,7 @@
    One Tournament object per night owns sign-ups, the blind clock, chip counts and who sits where. The tables are
    ordinary Room objects in tournament mode: after every hand a table reports its stacks here and is told who to
    keep, who to seat, who moves to another table and who is out. No real money, no Elo; just places and points. */
-export const FREEROLL={cap:40,stack:2000,levelMs:6*60000,regOpensMs:10*60000,lateRegMs:10*60000,tableSize:9,maxMs:4*3600000,startHour:21,zone:'America/Chicago'};
+export const FREEROLL={cap:40,stack:2000,levelMs:6*60000,regOpensMs:25*60000,lateRegMs:10*60000,tableSize:9,maxMs:4*3600000,startHour:21,zone:'America/Chicago'};
 // Blinds by level (six minutes each). With 2,000-chip stacks (40 big blinds) a typical field finishes in about 15 minutes.
 export const FREEROLL_BLINDS=[[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[400,800],[500,1000],[700,1400],[1000,2000],[1500,3000],[2000,4000],[3000,6000],[4000,8000],[6000,12000],[8000,16000],[10000,20000],[15000,30000],[20000,40000],[30000,60000],[50000,100000]];
 const FIRST_HAND_MS=20000,WATCH_MS=60000,STALE_MS=3*60000;
@@ -43,7 +43,7 @@ export class Tournament {
     return this.t;
   }
   async save(){await this.state.storage.put('t',this.t)}
-  // Registration opens 10 minutes before the start and stays open for the first ten minutes of play.
+  // Registration opens 25 minutes before the start and stays open for the first ten minutes of play.
   phase(now=Date.now()){
     const t=this.t;
     if(t.status==='running'||t.status==='finished'||t.status==='cancelled')return t.status;
@@ -211,7 +211,7 @@ export class Tournament {
       if(!a?.id)return this.reply({error:'Sign in to play the freeroll.'},401);
       if(t.players[a.id])return this.reply(this.view(now));
       const late=status==='running'&&now<t.startAt+FREEROLL.lateRegMs;
-      if(status==='scheduled')return this.reply({error:'Sign-up opens 10 minutes before the start.'},409);
+      if(status==='scheduled')return this.reply({error:'Sign-up opens 25 minutes before the start.'},409);
       if(status!=='registering'&&!late)return this.reply({error:status==='finished'||status==='cancelled'||status==='running'?'Sign-up for tonight has closed.':'The freeroll is starting. Sign-up has closed.'},409);
       if(Object.keys(t.players).length>=FREEROLL.cap)return this.reply({error:`Tonight's freeroll is full (${FREEROLL.cap} players).`},409);
       const p={id:a.id,name:a.name,avatar:/^data:image\//.test(a.avatar||'')?a.avatar:'',stack:FREEROLL.stack,table:0,token:'',seated:false,place:null,handStart:FREEROLL.stack,at:now};
