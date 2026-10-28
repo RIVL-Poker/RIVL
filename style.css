@@ -2639,3 +2639,7 @@ html.sidebar-open .nav .nav-icon{width:15px;height:15px;vertical-align:-2px}
 .rivl-lobby-chat-form input:focus{outline:2px solid #d6a351;outline-offset:1px}
 .rivl-lobby-chat-form button{min-width:92px;border-radius:8px;font-weight:800}
 @media(max-width:550px){#roomLobbyChat.rivl-lobby-chat{padding:14px}.rivl-lobby-chat-head{align-items:flex-start;flex-direction:column}.rivl-lobby-chat-form button{min-width:72px}}
+/* Bot profile pictures (bot-avatars.js). The picture is clipped to the circle on the img itself, so the
+   dealer and blind badges on the avatar's ::before/::after still show. */
+.seat .avatar.has-bot-photo{padding:0;overflow:visible}
+.seat .avatar .rivl-bot-photo{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
