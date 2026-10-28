@@ -1,7 +1,8 @@
 /* RIVL scripted practice: 10 set hands against 4 bots, always dealt in this order.
-   Seats: 0 You, 1 Ace, 2 Rico, 3 Luna, 4 Nash. The bots still choose their own bets,
-   so who folds and how big the pot gets can change, but the cards never do. Anyone who
-   busts rebuys for 1,000 before the next hand, so every seat gets all 10 hands.
+   Seats: 0 You, 1 Ace, 2 Rico, 3 Luna, 4 Nash. The bots see only their own cards and play
+   the move the grader rates best (RivlRating.chooseBest), with no randomness, so the same
+   moves from you replay the same hand. Blinds stay 5/10 and anyone under 1,000 chips tops up
+   to 1,000 before each hand, so every hand is played 100 big blinds deep by all five seats.
    "best" is who holds the best hand if everyone goes to the river. */
 window.RIVL_SCRIPTED_HANDS=[
   {title:'Aces vs kings',best:'You (set of aces on the river)',

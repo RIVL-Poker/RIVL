@@ -56,6 +56,14 @@ assert(pf(['7♠','2♦'],8,{...early,6:F,7:{bet:5,line:1}},'fold',0,10)==='Mist
 const post=(hole,board,pot,bet,line)=>({bb:10,minRaise:10,currentBet:bet,pot,board,hand:1,street:1,players:[{name:'You',hole,bet:0,stack:900,folded:false,allin:false,line:1},{name:'Ace',hole:['2♣','3♦'],bet,stack:900,folded:false,allin:false,line}]});
 assert(R.grade(R.analyze(post(['K♠','Q♦'],['K♥','7♣','2♦'],100,0,1),0,1500),'raise',900).label!=='Best','a 9x-pot shove with top pair is not the best play');
 assert(R.grade(R.analyze(post(['4♠','6♥'],['K♦','K♠','K♥','3♦','J♠'],205,100,2),0,1500),'fold').label!=='Brilliant','folding trips the board gives everyone is not brilliant');
+// Set Hands bots (chooseBest): the chart's play preflop, legal sizes, no deep jams, the same move every time.
+const cb=(g,i)=>{const d=R.chooseBest(g,i);return d.type+(d.amount?' '+d.amount:'')};
+assert(cb(P9(['A♠','A♦'],0,{}),0)==='raise 25'&&cb(P9(['7♠','2♦'],0,{}),0)==='fold','best bot opens aces to 2.5 BB and folds 72o');
+const sq=P9(['K♠','J♠'],7,{0:{bet:25,line:2,f:1},1:F,2:F,3:F,4:F,5:F,6:{bet:75,line:2}},5);sq.streetRaises=2;
+assert(cb(sq,7)==='fold','best bot folds KJs to a button 3-bet even after the opener has folded');
+const set=post(['K♠','K♦'],['K♥','7♣','2♦'],100,0,1),sd=R.chooseBest(set,0);
+assert(sd.type==='raise'&&sd.amount<900&&sd.amount%5===0&&cb(set,0)===cb(set,0),'best bot bets top set with a legal size, not a 9x-pot jam, and repeats itself');
+assert(cb(post(['4♠','5♥'],['K♦','Q♠','9♥'],200,200,2),0)==='fold','best bot folds air to a pot-sized bet');
 const lg=r=>R.tier(r).name;
 assert(lg(0)==='Prospect'&&lg(349)==='Prospect'&&lg(350)==='Challenger'&&lg(699)==='Challenger'&&lg(700)==='Elite'&&lg(1050)==='Master'&&lg(1400)==='Grandmaster'&&lg(1749)==='Grandmaster'&&lg(1750)==='Champion'&&lg(3500)==='Champion','league bands');
 assert(R.tier(525).progress===.5&&R.tier(350).next===700&&R.tier(3000).next===null,'league progress');
@@ -103,4 +111,4 @@ SH.forEach((h,k)=>{const all=[...h.hole.flat(),...h.board];assert(h.hole.length=
     const d=ctx.window.rivlScriptedDeck(k+1,ps);assert(new Set(d).size===52,'scripted deck '+(k+1)+' is a full deck');
     ps.forEach((p,i)=>{if(p.stack>0)assert.strictEqual(String([d.pop(),d.pop()]),String(h.hole[i]),'scripted hand '+(k+1)+' seat '+i)});
     assert.strictEqual(String([d.pop(),d.pop(),d.pop(),d.pop(),d.pop()]),String(h.board),'scripted hand '+(k+1)+' board')}});
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks');

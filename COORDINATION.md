@@ -134,3 +134,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Play → Bot Practice has a fourth table, "5 PLAYERS · SET HANDS": you vs 4 bots (Ace, Rico, Luna, Nash) through 10 scripted hands, always dealt in the same order. The 3/6/9 bot tables are unchanged.
 - The cards live in `scripted-hands.js` (hole cards per seat plus the board, with a title and who holds the best hand). Bots still pick their own bets. Anyone who busts rebuys for 1,000 so every seat gets all 10 hands; the match ends after hand 10 and is unrated.
 - `style.css` gained 5-seat bot table positions (the 6-seat layout without the head seat).
+
+### 2026-10-28 03:45 UTC · Claude
+- Set Hands bots now play `RivlRating.chooseBest` instead of `chooseBot`: the preflop chart's play at the book size, then the top-EV option with no noise or style bias. All-in is only on the menu when it is no bigger than a pot-sized raise, and against a bet and a raise on one street they continue only if they beat the top half of the betting ranges. Every decision is seeded, so the same moves from you replay the same hand. The 3/6/9 bot tables keep `chooseBot`.
+- Set Hands also keeps the blinds at 5/10 and tops anyone under 1,000 chips back up to 1,000 before each hand.
+- Found in the grader (not changed): the preflop chart counts raisers still in the hand, so a 3-bet after the opener folds is graded as a single raise; and postflop it rates a flop or turn all-in with a big hand above a pot-sized bet, so normal value bets can grade as mistakes.
