@@ -26,7 +26,7 @@
   const stop=(p,T)=>p.raise.stops.find(x=>x[0]===T);
   function raiseGrade(p,T){
     const [,l,lossBB,ev,fold,eqC]=stop(p,T),label=LABELS[l];
-    return {label,glyph:GLYPH[label],lossBB,ev,note:`They fold about ${fold}% of the time. When they call, you have about ${eqC}%.`};
+    return {label,glyph:GLYPH[label],lossBB,ev,note:`They fold about ${fold}% of the time. When they call, ${eqC<1?'you almost never win':`you have about ${eqC}%`}.`};
   }
   // "raise:2400" is a raise to 24 BB.
   const raisedTo=a=>a&&a.startsWith('raise:')?+a.slice(6):null;
