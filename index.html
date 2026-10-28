@@ -17,7 +17,7 @@
             <div class="brand">♠ <span>RIVL</span></div>
             <nav><button class="nav active" data-view="play">♠ &nbsp; Play</button><button class="nav" data-view="freeroll">★ &nbsp; Freeroll</button><button class="nav" data-view="leaderboard">♛ &nbsp;
                     Leaderboard</button><button class="nav" data-view="friends"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.4-7 7.5-7s7.5 2.8 7.5 7"/></svg>&nbsp; Friends</button><button class="nav"
-                    data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button><button class="nav" data-view="support">? &nbsp; Support</button></nav>
+                    data-view="profile">◉ &nbsp; Profile</button><button class="nav" data-view="themes">▧ &nbsp; Table Themes</button><button class="nav" data-view="support"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="17.2" r=".5"/></svg>&nbsp; Support</button></nav>
             <div class="season"><small id="sideTier">ELO</small>
                 <h2 id="sideRating">0</h2>
                 <p id="sideRatingLabel">Sign in to play Ranked</p>
@@ -487,6 +487,80 @@
                         <a class="outline" href="terms.html" target="_blank" rel="noopener">TERMS OF USE</a>
                     </div>
                 </div>
+                <div class="panel rivl-support-panel br-door-panel" id="brDoorPanel">
+                    <div class="br-door-front">
+                        <h3>ABOUT RIVL</h3>
+                        <p>RIVL is built by poker players who have made every mistake in the book at least twice. Thanks for playing.</p>
+                        <p class="br-knock-hint"><button type="button" class="br-knock" id="brKnock" aria-label="Spade">♠</button><span>Some doors only open if you knock.</span></p>
+                    </div>
+                    <div class="br-door-reveal" id="brDoor" hidden>
+                        <div class="br-door-leaf" aria-hidden="true"><span>♠</span></div>
+                        <div class="br-door-inside">
+                            <small>YOU FOUND IT</small>
+                            <h3>THE BACK ROOM</h3>
+                            <p>24 hands that break most players. One decision each.</p>
+                            <button type="button" class="gold" id="brEnter">STEP INSIDE</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="backroom" class="view content-view br-room">
+                <button class="rivl-back outline" id="brBack" type="button">← BACK TO SUPPORT</button>
+                <p class="br-eyebrow">♠ MEMBERS ONLY</p>
+                <h1>THE BACK ROOM</h1>
+                <p class="br-intro">24 hands that break most players. Every one starts at the decision. Take your time.</p>
+                <div class="br-progress">
+                    <div class="br-progress-top"><span id="brCount">HAND 1 / 24</span><span id="brScore">0 BEST PLAYS</span></div>
+                    <div class="br-dots" id="brDots" role="list"></div>
+                </div>
+                <div class="pz-head br-head"><p id="brTitle" class="pz-title br-title"></p>
+                    <div class="pz-nav"><button type="button" class="outline" id="brPrev">← PREV</button><button type="button" class="outline" id="brNext">NEXT →</button></div></div>
+                <div class="pz-layout" id="brPlay">
+                    <div class="panel pz-spot" id="brSpot">
+                        <div class="pz-felt br-felt">
+                            <div class="pz-tags"><span id="brDifficulty" class="pz-diff" hidden></span><span id="brDepth">HEADS-UP · 100 BB DEEP</span></div>
+                            <div class="pz-seat pz-villain"><div class="pz-hidden-cards"><span class="pz-card back sm"></span><span class="pz-card back sm"></span></div><div class="pz-seat-tag"><span class="pz-pos" id="brVillainPos">BB</span><span>Opponent</span></div></div>
+                            <div class="pz-bet" id="brVillainBet"></div>
+                            <div class="pz-center"><div class="pz-street" id="brStreet">FLOP</div><div class="pz-board" id="brBoard"></div><div class="pz-pot">POT <b id="brPot">–</b></div></div>
+                            <div class="pz-bet pz-hero-bet" id="brHeroBet" hidden></div>
+                            <div class="pz-seat pz-me"><div class="pz-hand" id="brHand"></div><div class="pz-seat-tag"><span class="pz-pos" id="brHeroPos">BTN</span><span>You · <span id="brStack"></span></span></div></div>
+                        </div>
+                        <ol class="pz-story" id="brStory"></ol>
+                        <h3 class="pz-q">WHAT’S YOUR MOVE?</h3>
+                        <div id="brChoices" hidden></div>
+                        <div class="br-bar" id="brBar">
+                            <div class="br-bar-row">
+                                <button type="button" class="br-act br-fold" id="brFold"><span>FOLD</span><kbd>F</kbd></button>
+                                <button type="button" class="br-act br-call" id="brCall"><span id="brCallLabel">CALL</span><small id="brCallNeed"></small><kbd>C</kbd></button>
+                            </div>
+                            <div class="br-raise" id="brRaise">
+                                <div class="br-raise-top"><span>RAISE TO</span><b id="brRaiseTo">–</b><em id="brRaisePct"></em></div>
+                                <div class="br-slide"><button type="button" class="br-step" id="brLess" aria-label="Smaller raise">−</button><div class="br-track"><input type="range" id="brSlider" class="br-slider" min="0" max="1000" step="1" value="0" aria-label="Raise size"><span class="br-best-mark" id="brBestMark" hidden>BEST</span></div><button type="button" class="br-step" id="brMore" aria-label="Bigger raise">+</button></div>
+                                <div class="br-presets" id="brPresets"></div>
+                                <button type="button" class="br-act br-raise-go" id="brRaiseGo"><span id="brRaiseLabel">RAISE</span><kbd>R</kbd></button>
+                            </div>
+                            <p class="br-noraise" id="brNoRaise" hidden>They are all-in, so there is nothing to raise. Call or fold.</p>
+                        </div>
+                    </div>
+                    <div class="panel pz-result br-result" id="brResult" hidden aria-live="polite">
+                        <div class="br-reveal"><span class="br-tag" id="brTag"></span></div>
+                        <div id="brVerdict" class="pz-verdict"></div>
+                        <div class="br-math" id="brMath"></div>
+                        <div id="brWhy" class="pz-why"></div>
+                        <h3 class="pz-sub">EVERY OPTION</h3>
+                        <div id="brOptions" class="pz-options"></div>
+                        <button type="button" class="gold br-next" id="brNextHand">NEXT HAND →</button>
+                    </div>
+                </div>
+                <div class="panel br-final" id="brFinal" hidden aria-live="polite">
+                    <small>THE BACK ROOM · FINAL SCORE</small>
+                    <div class="br-final-score"><b id="brFinalScore">0</b><span>/ 24</span></div>
+                    <h2 id="brFinalRank"></h2>
+                    <p id="brFinalText"></p>
+                    <div class="br-final-grades" id="brFinalGrades"></div>
+                    <div class="br-final-actions"><button type="button" class="gold" id="brShare">SHARE SCORE</button><button type="button" class="outline" id="brReview">REVIEW HANDS</button><button type="button" class="outline" id="brRestart">START OVER</button></div>
+                    <p class="br-share-status" id="brShareStatus" role="status"></p>
+                </div>
             </section>
         </main>
     </div>
@@ -531,6 +605,8 @@
     <script src="rooms.js"></script>
     <script src="table-themes.js"></script>
     <script src="puzzle.js"></script>
+    <script src="backroom-spots.js"></script>
+    <script src="backroom.js"></script>
     <script src="friends.js"></script>
     <script src="freeroll.js"></script>
 </body>

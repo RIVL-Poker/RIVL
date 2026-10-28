@@ -1,12 +1,74 @@
 /* RIVL daily puzzle: one poker decision a day, the same for everyone. Pick fold, call or raise, then see the
    grade for every option, how other players answered, and your streak. Signed-in answers are saved on the
    server (first answer of the day counts); signed-out players keep their answers in this browser. */
+/* The spot table and the answer screen, shared by the daily puzzle and the Back Room (backroom.js). Each page
+   names its elements with its own prefix: pzBoard, pzHand… for the puzzle, brBoard, brHand… for the Back Room. */
+window.RivlPuzzleView=(()=>{
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const card=c=>`<span class="pz-card${'♥♦'.includes(c[1])?' red':''}"><b>${c[0]==='T'?'10':c[0]}</b><i>${c[1]}</i></span>`;
+  // Story lines name cards like "K♦"; show them as small inline cards.
+  const storyLine=t=>esc(t).replace(/\b([2-9TJQKA])([♠♥♦♣])/g,(m,r,s)=>`<span class="pz-mini${'♥♦'.includes(s)?' red':''}">${r==='T'?'10':r}${s}</span>`);
+  const bb=x=>`${+(x/100).toFixed(1)} BB`;
+  const cap=t=>t[0].toUpperCase()+t.slice(1);
+  const POS={BTN:'button',CO:'cutoff',HJ:'hijack',UTG:'under the gun',SB:'small blind',BB:'big blind'};
+  const GOOD=new Set(['Brilliant','Best','Excellent']);
+  const gclass=label=>'g-'+String(label).toLowerCase();
+  const signed=x=>x>0?`+${x}`:x<0?`−${-x}`:'0';
+  // "Flop K♦ 3♦ Q♦: the big blind bets…" becomes a street tag, the new cards and what happened.
+  function storyItem(t,i,all){
+    const m=t.match(/^(Flop|Turn|River) ([^:]+): (.*)$/);
+    const tag=m?m[1].toUpperCase():'PREFLOP',cards=m?m[2].split(' ').map(c=>storyLine(c)).join(''):'',text=m?m[3]:t;
+    return `<li class="${i===all.length-1?'now':''}"><span class="pz-tag">${tag}</span>${cards?`<span class="pz-story-cards">${cards}</span>`:''}<span class="pz-story-text">${storyLine(cap(text))}</span></li>`;
+  }
+  // The felt, the story so far and the choice buttons; pick(choice) runs when one is pressed.
+  function paintSpot(pre,p,pick){
+    const $=id=>document.getElementById(pre+id),raise=p.heroBet>0;
+    $('Difficulty').hidden=!p.difficulty;$('Difficulty').textContent=(p.difficulty||'').toUpperCase();$('Difficulty').dataset.level=(p.difficulty||'').toLowerCase();
+    $('Street').textContent=p.street.toUpperCase();
+    $('Pot').textContent=bb(p.pot);
+    $('Board').innerHTML=p.board.map((c,i)=>card(c).replace('class="pz-card',`style="--i:${i}" class="pz-card deal`)).join('')+'<span class="pz-card back"></span>'.repeat(5-p.board.length);
+    $('Hand').innerHTML=p.hero.map(card).join('');
+    $('VillainPos').textContent=p.villainPos||'';$('VillainPos').title=POS[p.villainPos]||'';
+    $('HeroPos').textContent=p.heroPos||'';$('HeroPos').title=POS[p.heroPos]||'';
+    $('VillainBet').innerHTML=`<span class="pz-chip"></span>${raise?'Raises to':'Bets'} ${bb(p.bet)}`;
+    $('HeroBet').hidden=!raise;$('HeroBet').innerHTML=raise?`<span class="pz-chip"></span>You bet ${bb(p.heroBet)}`:'';
+    $('Stack').textContent=`${bb(p.stack-p.heroBet)} behind`;
+    $('Story').innerHTML=p.story.map(storyItem).join('');
+    const keys={fold:'F',call:'C',raise:'R'};
+    $('Choices').innerHTML=p.choices.map(c=>`<button type="button" class="pz-choice" data-choice="${c.key}"><span>${esc(c.label)}</span><kbd>${keys[c.key]}</kbd></button>`).join('');
+    $('Choices').querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>pick(b.dataset.choice));
+  }
+  // The verdict, the why and every option's grade. Returns false (and hides the answer) when there is no result yet.
+  function paintResult(pre,p,r){
+    const $=id=>document.getElementById(pre+id),box=$('Result');
+    $('Spot').classList.toggle('answered',!!r);
+    if(!r){box.hidden=true;return false}
+    box.hidden=false;
+    const mine=r.grades[r.choice],right=r.choice===r.best,ok=GOOD.has(mine.label);
+    $('Choices').querySelectorAll('[data-choice]').forEach(b=>{b.disabled=true;b.classList.toggle('picked',b.dataset.choice===r.choice);b.classList.toggle('best',b.dataset.choice===r.best)});
+    const bestLabel=p.choices.find(c=>c.key===r.best).label;
+    $('Verdict').className=`pz-verdict ${gclass(mine.label)} ${right?'good':ok?'ok':'bad'}`;
+    $('Verdict').innerHTML=`<span class="pz-glyph">${esc(mine.glyph)}</span><div><strong>${esc(mine.label.toUpperCase())}</strong><span>${right?'You found the best play.':`The best play was <span class="pz-best-name">${esc(bestLabel)}</span>. Yours gave up about ${mine.lossBB} BB.`}</span></div>`;
+    const w=r.why;
+    $('Why').innerHTML=w?[['YOUR HAND',w.hand],['THEIR BET',w.range],['THE PLAY',w.lesson]].map(([h,t])=>`<div><h4>${h}</h4><p>${storyLine(t)}</p></div>`).join('')
+      :`<div><h4>THE PLAY</h4><p>Against the hands they would bet like this, you had about ${Math.round(r.eq*100)}% equity. Calling needed ${Math.round(r.need*100)}% to break even.</p></div>`;
+    const counts=r.counts,total=counts?Object.values(counts).reduce((a,b)=>a+b,0):0;
+    $('Options').innerHTML=p.choices.map(c=>{
+      const g=r.grades[c.key],share=total?Math.round(100*(counts[c.key]||0)/total):null;
+      return `<div class="pz-option ${gclass(g.label)}${c.key===r.best?' best':''}${c.key===r.choice?' mine':''}">
+        <div class="pz-option-top"><span class="pz-option-name">${esc(c.label)}${c.key===r.choice?' <em>YOUR PICK</em>':''}</span><span class="pz-grade"><b>${esc(g.glyph)}</b>${esc(g.label)}</span></div>
+        ${g.ev!=null?`<div class="pz-option-ev">${c.key==='fold'?'<span>0 BB</span> the baseline':`<span>${signed(g.ev)} BB</span> on average compared with folding`}${g.lossBB?` · gives up ${g.lossBB} BB`:''}</div>`:g.lossBB?`<div class="pz-option-ev">Gives up ${g.lossBB} BB</div>`:''}
+        ${g.note?`<p class="pz-option-note">${esc(g.note)}</p>`:''}
+        ${share===null?'':`<div class="pz-bar"><span style="width:${share}%"></span></div><small>${share}% of players chose this</small>`}</div>`;
+    }).join('');
+    return true;
+  }
+  return {esc,bb,card,GOOD,gclass,paintSpot,paintResult};
+})();
 (()=>{
   const $=id=>document.getElementById(id);
   if(!$('puzzle'))return;
   const LOCAL='rivlPuzzleAnswers',SITE='rivlpoker.com';
-  const NAMES={fold:'Fold',call:'Call',raise:'Raise'};
-  const GOOD=new Set(['Brilliant','Best','Excellent']);
   let puzzle=null,result=null,today=null,busy=false,timer=null,todayInfo=null;
   const local=()=>{try{return JSON.parse(localStorage.getItem(LOCAL)||'{}')}catch{return {}}};
   const saveLocal=(day,choice)=>{try{const all=local();all[day]=choice;const keep=Object.keys(all).sort().slice(-60);localStorage.setItem(LOCAL,JSON.stringify(Object.fromEntries(keep.map(k=>[k,all[k]]))))}catch{}};
@@ -17,69 +79,23 @@
     if(!r.ok)throw Error(data.error||'Puzzle unavailable right now.');return data;
   }
   const post=(path,body)=>window.rivlAccount.call(path,body);
-  const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const card=c=>`<span class="pz-card${'♥♦'.includes(c[1])?' red':''}"><b>${c[0]==='T'?'10':c[0]}</b><i>${c[1]}</i></span>`;
-  // Story lines name cards like "K♦"; show them as small inline cards.
-  const storyLine=t=>esc(t).replace(/\b([2-9TJQKA])([♠♥♦♣])/g,(m,r,s)=>`<span class="pz-mini${'♥♦'.includes(s)?' red':''}">${r==='T'?'10':r}${s}</span>`);
-  const bb=x=>`${+(x/100).toFixed(1)} BB`;
+  const V=window.RivlPuzzleView,esc=V.esc,bb=V.bb;
   const dateLabel=day=>new Date(day+'T12:00:00Z').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
   const shiftDay=(day,n)=>new Date(Date.parse(day+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);
   const status=t=>{$('pzStatus').textContent=t||''};
-
-  const POS={BTN:'button',CO:'cutoff',BB:'big blind'};
-  // "Flop K♦ 3♦ Q♦: the big blind bets…" becomes a street tag, the new cards and what happened.
-  function storyItem(t,i,all){
-    const m=t.match(/^(Flop|Turn|River) ([^:]+): (.*)$/);
-    const tag=m?m[1].toUpperCase():'PREFLOP',cards=m?m[2].split(' ').map(c=>storyLine(c)).join(''):'',text=m?m[3]:t;
-    return `<li class="${i===all.length-1?'now':''}"><span class="pz-tag">${tag}</span>${cards?`<span class="pz-story-cards">${cards}</span>`:''}<span class="pz-story-text">${storyLine(cap(text))}</span></li>`;
-  }
-  const cap=t=>t[0].toUpperCase()+t.slice(1);
   function renderSpot(){
-    const p=puzzle,raise=p.heroBet>0;
+    const p=puzzle;
     $('pzTitle').textContent=`#${p.number} · ${dateLabel(p.day)}`;
-    $('pzDifficulty').hidden=!p.difficulty;$('pzDifficulty').textContent=(p.difficulty||'').toUpperCase();$('pzDifficulty').dataset.level=(p.difficulty||'').toLowerCase();
-    $('pzStreet').textContent=p.street.toUpperCase();
-    $('pzPot').textContent=bb(p.pot);
-    $('pzBoard').innerHTML=p.board.map((c,i)=>card(c).replace('class="pz-card',`style="--i:${i}" class="pz-card deal`)).join('')+'<span class="pz-card back"></span>'.repeat(5-p.board.length);
-    $('pzHand').innerHTML=p.hero.map(card).join('');
-    $('pzVillainPos').textContent=p.villainPos||'';$('pzVillainPos').title=POS[p.villainPos]||'';
-    $('pzHeroPos').textContent=p.heroPos||'';$('pzHeroPos').title=POS[p.heroPos]||'';
-    $('pzVillainBet').innerHTML=`<span class="pz-chip"></span>${raise?'Raises to':'Bets'} ${bb(p.bet)}`;
-    $('pzHeroBet').hidden=!raise;$('pzHeroBet').innerHTML=raise?`<span class="pz-chip"></span>You bet ${bb(p.heroBet)}`:'';
-    $('pzStack').textContent=`${bb(p.stack-p.heroBet)} behind`;
-    $('pzStory').innerHTML=p.story.map(storyItem).join('');
-    const keys={fold:'F',call:'C',raise:'R'};
-    $('pzChoices').innerHTML=p.choices.map(c=>`<button type="button" class="pz-choice" data-choice="${c.key}"><span>${esc(c.label)}</span><kbd>${keys[c.key]}</kbd></button>`).join('');
-    $('pzChoices').querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>answer(b.dataset.choice));
+    V.paintSpot('pz',p,answer);
     $('pzPrev').disabled=p.number<=1;
     $('pzNext').hidden=p.today;$('pzBackToday').hidden=p.today;
     $('pzPractice').hidden=p.today;
     $('pzShareStatus').textContent='';
   }
-  const gclass=label=>'g-'+String(label).toLowerCase();
-  const signed=x=>x>0?`+${x}`:x<0?`−${-x}`:'0';
   function renderResult(){
-    const p=puzzle,r=result,box=$('pzResult');
-    $('pzSpot').classList.toggle('answered',!!r);
-    if(!r){box.hidden=true;return}
-    box.hidden=false;
-    const mine=r.grades[r.choice],right=r.choice===r.best,ok=GOOD.has(mine.label);
-    $('pzChoices').querySelectorAll('[data-choice]').forEach(b=>{b.disabled=true;b.classList.toggle('picked',b.dataset.choice===r.choice);b.classList.toggle('best',b.dataset.choice===r.best)});
-    const bestLabel=p.choices.find(c=>c.key===r.best).label;
-    $('pzVerdict').className=`pz-verdict ${gclass(mine.label)} ${right?'good':ok?'ok':'bad'}`;
-    $('pzVerdict').innerHTML=`<span class="pz-glyph">${esc(mine.glyph)}</span><div><strong>${esc(mine.label.toUpperCase())}</strong><span>${right?'You found the best play.':`The best play was <span class="pz-best-name">${esc(bestLabel)}</span>. Yours gave up about ${mine.lossBB} BB.`}</span></div>`;
-    const w=r.why;
-    $('pzWhy').innerHTML=w?[['YOUR HAND',w.hand],['THEIR BET',w.range],['THE PLAY',w.lesson]].map(([h,t])=>`<div><h4>${h}</h4><p>${esc(t)}</p></div>`).join('')
-      :`<div><h4>THE PLAY</h4><p>Against the hands they would bet like this, you had about ${Math.round(r.eq*100)}% equity. Calling needed ${Math.round(r.need*100)}% to break even.</p></div>`;
+    const p=puzzle,r=result;
+    if(!V.paintResult('pz',p,r))return;
     const counts=r.counts,total=counts?Object.values(counts).reduce((a,b)=>a+b,0):0;
-    $('pzOptions').innerHTML=p.choices.map(c=>{
-      const g=r.grades[c.key],share=total?Math.round(100*(counts[c.key]||0)/total):null;
-      return `<div class="pz-option ${gclass(g.label)}${c.key===r.best?' best':''}${c.key===r.choice?' mine':''}">
-        <div class="pz-option-top"><span class="pz-option-name">${esc(c.label)}${c.key===r.choice?' <em>YOUR PICK</em>':''}</span><span class="pz-grade"><b>${esc(g.glyph)}</b>${esc(g.label)}</span></div>
-        ${g.ev!=null?`<div class="pz-option-ev">${c.key==='fold'?'<span>0 BB</span> the baseline':`<span>${signed(g.ev)} BB</span> on average compared with folding`}${g.lossBB?` · gives up ${g.lossBB} BB`:''}</div>`:g.lossBB?`<div class="pz-option-ev">Gives up ${g.lossBB} BB</div>`:''}
-        ${g.note?`<p class="pz-option-note">${esc(g.note)}</p>`:''}
-        ${share===null?'':`<div class="pz-bar"><span style="width:${share}%"></span></div><small>${share}% of players chose this</small>`}</div>`;
-    }).join('');
     $('pzCount').textContent=total?`${total.toLocaleString()} signed-in ${total===1?'player has':'players have'} answered${p.today?' today':''}.`:p.today?'You are among the first to answer today.':'';
     const s=r.stats;
     $('pzStats').hidden=!s;
