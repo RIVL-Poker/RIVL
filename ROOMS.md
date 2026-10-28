@@ -38,5 +38,8 @@ The `DAILY_*` values in `wrangler.toml` cap online play per UTC day (defaults: 1
 - Joining a match that is already running (join between matches instead)
 - Hand history download
 
+## Spectators
+Freeroll tables can be watched by anyone from the Freeroll page while the tournament runs. Any other table can be watched only by a signed-in friend of someone seated there (WATCH on the Friends page), and only while that friend stays. Spectators see what a player without a seat would: the board, bets, stacks and any hand shown at showdown, never hole cards. They cannot act or chat, and each table takes at most 25. Players see how many are watching.
+
 ## Live table chat
 Authenticated seated human players can chat in private rooms, public unranked tables, and Ranked matchmaking tables using the Chat tab in the expandable game panel. Messages are sent over the room's existing WebSocket, attributed by the server to the authenticated seat, and visible only to that room. The latest 40 messages survive reconnects while the room exists. Chat is limited to 180 characters per message and one message every 1.5 seconds per player; text is rendered as plain text, never HTML. No direct messages or cross-table chat.

@@ -279,7 +279,7 @@ function fakeSql(){
   return {exec(q,...b){const st=db.prepare(q);const rows=/^\s*(SELECT|PRAGMA)/i.test(q)?st.all(...b):(st.run(...b),[]);return {toArray:()=>rows}}};
 }
 function makeEnv(vars={}){
-  const ns=(make)=>{const instances=new Map();return {instances,idFromName:n=>n,get:id=>{if(!instances.has(id))instances.set(id,make());const obj=instances.get(id);return {fetch:(url,init)=>obj.fetch(new Request(url,init))}}}};
+  const ns=(make)=>{const instances=new Map();return {instances,idFromName:n=>n,idFromString:s=>s,get:id=>{if(!instances.has(id))instances.set(id,make());const obj=instances.get(id);return {fetch:(url,init)=>obj.fetch(new Request(url,init))}}}};
   const env={...vars};
   env.DIRECTORY=ns(()=>new Directory({storage:{sql:fakeSql()}},env));
   env.ROOMS=ns(()=>{const state=fakeState();const room=new Room(state,env);room.fakeState=state;return room});
@@ -950,6 +950,7 @@ console.log('PASS: '+checks+' room server checks');
       if(size-late<2){assert.equal(t.status,'cancelled');return {env,t}}
       assert.equal(t.status,'running');
       assert.equal(Object.keys(t.tables).length,Math.ceil((size-late)/9),'one table per nine players');
+      assert.deepEqual(T().view().watch.map(w=>w.room).sort(),Object.values(t.tables).map(x=>x.code).sort(),'every running table can be watched');
       assert.equal((await api(env,'/api/freeroll/unregister',{key:accts[1].key})).status,409,'no dropping out once it starts');
       const seat=(await api(env,'/api/freeroll/seat',{key:accts[1].key})).data;
       assert.ok(seat.code&&seat.token,'a seated player gets their table');
@@ -1125,6 +1126,82 @@ console.log('PASS: '+checks+' room server checks');
   const d=new Date(old).toISOString().slice(0,10);
   assert.equal(reopened.one('SELECT first_day FROM stats_players WHERE who=?','a:'+ann.account.id).first_day,d);
   assert.equal(reopened.one('SELECT played FROM stats_days WHERE who=? AND day=?','a:'+ann.account.id,d).played,1,'an old Ranked game counts as playing online');
+  checks++;
+}
+
+// Spectators: anyone can watch a freeroll table; they never get hole cards before showdown and cannot act or chat.
+{
+  const state=fakeState(),room=new Room(state,{});
+  await post(room,'/t/setup',{code:'FRTAB1',tid:'2026-10-28',table:1,startsAt:Date.now()});
+  assert.equal((await post(room,'/t/add',{players:[{id:'a1',name:'Ann',token:'ta',stack:2000},{id:'b1',name:'Bob',token:'tb',stack:2000}]})).status,200);
+  const ann=await connect(room,state,'ta'),bob=await connect(room,state,'tb');
+  room.startHand();await room.save();
+  const eye=fakeSocket();state.acceptWebSocket(eye);
+  await say(room,eye,{type:'watch'});
+  const view=eye.last('state').state,g=room.room.game;
+  assert.ok(view.watching&&view.mySeat===-1,'the spectator has no seat');
+  assert.equal(view.game.holeCards,null,'no hole cards for a spectator');
+  assert.equal(view.game.legal,null,'a spectator never has a turn');
+  assert.deepEqual(view.game.shown,{},'nothing is shown before showdown');
+  for(const hand of Object.values(g.hands))assert.ok(!JSON.stringify(eye.messages).includes(JSON.stringify(hand)),'no hole cards anywhere in what a spectator receives');
+  assert.equal(ann.last('state').state.watchers,1,'players see how many are watching');
+  assert.equal(ann.last('state').state.watching,false);
+  const turnWs=g.turn===room.room.members.ta.seat?ann:bob;
+  await say(room,eye,{type:'action',action:'fold'});
+  assert.match(eye.last('error').error,/Spectators/,'spectators cannot act');
+  await say(room,eye,{type:'chat',text:'hi'});
+  assert.match(eye.last('error').error,/Spectators/,'or chat');
+  assert.ok(!g.players.some(p=>p.folded),'nothing changed at the table');
+  assert.equal(room.sockets().length,2,'a spectator is not counted as a seated player');
+  // Showdown: the hands that reach it are shown, the same as for players.
+  await say(room,turnWs,{type:'action',action:'allin'});
+  await say(room,turnWs===ann?bob:ann,{type:'action',action:'call'});
+  for(let i=0;i<10&&g.phase!=='showdown';i++){g.deadline=0;await room.tAlarm()}
+  assert.equal(g.phase,'showdown');
+  assert.equal(Object.keys(eye.last('state').state.game.shown).length,2,'hands shown at showdown reach spectators');
+  assert.equal(eye.last('state').state.game.holeCards,null);
+  // A table has a spectator limit.
+  for(let i=0;i<24;i++){const w=fakeSocket();state.acceptWebSocket(w);await say(room,w,{type:'watch'})}
+  const extra=fakeSocket();state.acceptWebSocket(extra);await say(room,extra,{type:'watch'});
+  assert.equal(extra.last('removed').watch,true);assert.equal(extra.readyState,3,'the 26th spectator is turned away');
+  checks++;
+}
+// Watching a friend: only a friend of someone seated can watch any other table, and only while that friend is there.
+{
+  const env=makeEnv();
+  const [ada,ben,cyd]=await Promise.all(['Ada','Ben','Cyd'].map(async n=>(await api(env,'/api/accounts',{name:n})).data));
+  const code=(await api(env,'/api/rooms',{key:ada.key})).data.code,room=roomOf(env,code),state=room.fakeState;
+  const adaWs=await sit(env,code,room.room.hostToken);
+  await say(room,adaWs,{type:'addBot',seat:1,level:'Beginner'});
+  const dan=(await post(room,'/join',{name:'Dan'})).data,danWs=await connect(room,state,dan.token);
+  const guest=fakeSocket();state.acceptWebSocket(guest);await say(room,guest,{type:'watch'});
+  assert.match(guest.last('removed').reason,/Sign in/,'watching a friend needs a sign-in');
+  const cydWs=fakeSocket();state.acceptWebSocket(cydWs);await say(room,cydWs,{type:'watch',key:cyd.key});
+  assert.match(cydWs.last('removed').reason,/friend is playing/,'a stranger cannot watch a private room');
+  const adaCode=(await api(env,'/api/friends',{key:ada.key})).data.code;
+  await api(env,'/api/friends/add',{key:ben.key,code:adaCode});
+  assert.equal((await api(env,'/api/watch',{key:ben.key,friend:ada.account.id})).status,404,'not at a table yet');
+  // Ada's heartbeat says she is at a table: Ben's Friends list offers WATCH without ever getting the room code.
+  await api(env,'/api/presence',{key:ada.key,table:code});
+  const listed=(await api(env,'/api/friends',{key:ben.key})).data.friends[0];
+  assert.equal(listed.watchable,true);assert.ok(!JSON.stringify(listed).includes(code),'the room code is never sent to friends');
+  assert.equal((await api(env,'/api/watch',{key:cyd.key,friend:ada.account.id})).status,403,'only friends');
+  assert.equal((await api(env,'/api/watch',{friend:ada.account.id})).status,401);
+  const w=(await api(env,'/api/watch',{key:ben.key,friend:ada.account.id})).data;
+  assert.equal(w.room,String(env.ROOMS.idFromName(code)));assert.equal(w.name,'Ada');assert.equal(w.kind,'casual');
+  const benWs=fakeSocket();state.acceptWebSocket(benWs);await say(room,benWs,{type:'watch',key:ben.key});
+  assert.ok(benWs.last('state').state.watching,'a friend can watch');
+  await say(room,adaWs,{type:'startMatch'});
+  const s=benWs.last('state').state;
+  assert.equal(s.game.holeCards,null);assert.equal(s.game.legal,null);assert.deepEqual(s.game.shown,{});
+  assert.ok(!JSON.stringify(benWs.messages).includes(JSON.stringify(room.room.game.hands[0])),'Ada’s cards never reach Ben');
+  await say(room,benWs,{type:'startMatch'});assert.match(benWs.last('error').error,/Spectators/,'host controls are off for spectators');
+  // A heartbeat from anywhere else clears the table, and a friend who leaves takes their spectators with them.
+  await api(env,'/api/presence',{key:ada.key});
+  assert.equal((await api(env,'/api/friends',{key:ben.key})).data.friends[0].watchable,false);
+  await say(room,adaWs,{type:'leave'});
+  assert.ok(room.room,'the table plays on with Dan');assert.equal(danWs.readyState,1);
+  assert.equal(benWs.readyState,3,'the spectator leaves with their friend');assert.match(benWs.last('removed').reason,/friend has left/);
   checks++;
 }
 
