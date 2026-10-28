@@ -2,7 +2,8 @@
    square image (about 160x160, face centred) to assets/bots/ and list it here by
    the bot's name. Bots without an entry keep their letter avatar. */
 (()=>{
-  const PHOTOS={Ace:'assets/bots/ace.jpg'};
+  const OTHERS='assets/bots/others.jpg';
+  const PHOTOS={Ace:'assets/bots/ace.jpg',Rico:OTHERS,Luna:OTHERS,Nash:OTHERS,Mula:OTHERS,Jett:OTHERS,Nova:OTHERS,Blaze:OTHERS};
   function apply(avatar,name){
     if(!avatar)return;
     const src=PHOTOS[name],img=avatar.querySelector(':scope>.rivl-bot-photo');
