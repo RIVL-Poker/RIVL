@@ -21,10 +21,24 @@ function gradeAction(i,type,amount){
   if(type==='raise')p.line=2;else if(type==='call'&&toCall>0)p.line=Math.max(p.line||0,1);
 }
 
+/* Float the grade just above the highest seat, in the open sky over the table,
+   so it never covers the hero's cards or the dealer and blind markers. Phones keep their own spot from style.css. */
+function placeGradeFx(el){
+  if(matchMedia('(max-width:600px)').matches){el.style.top=el.style.bottom='';return}
+  const table=el.offsetParent,scene=el.closest('.table-scene');if(!table||!scene)return;
+  const t=table.getBoundingClientRect();
+  let ceiling=t.top;
+  table.querySelectorAll('.seat').forEach(s=>{const b=s.getBoundingClientRect();if(b.height&&b.bottom<t.top+t.height/2)ceiling=Math.min(ceiling,b.top)});
+  const sky=scene.getBoundingClientRect().top,h=el.offsetHeight||42;
+  el.style.bottom='auto';
+  el.style.top=Math.round(Math.max(sky+6,ceiling-h-18)-t.top)+'px';
+}
+
 function showGradeFx(r){
   const el=$('gradeFx');if(!el)return;
   el.className='grade-fx visible '+LABEL_CLASS(r.label);
   el.innerHTML=`<b>${r.glyph}</b><span>${r.label.toUpperCase()}</span>${r.lossBB>=.05&&r.label!=='Best'&&r.label!=='Brilliant'?`<small>−${r.lossBB.toFixed(1)} BB</small>`:''}`;
+  placeGradeFx(el);
   clearTimeout(gradeFxTimer);gradeFxTimer=setTimeout(()=>el.classList.remove('visible'),2300);
 }
 
