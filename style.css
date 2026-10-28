@@ -2284,6 +2284,29 @@ body.in-game #table .win-fx .rivl-winner-cards .card>span,
 .frl-notice span{color:#e9e2d6;font-size:13px}
 .frl-notice div{display:flex;gap:10px;margin-top:6px}
 .frl-notice .gold{flex:1;margin:0}
+/* Freeroll countdown popup (freeroll-popup.js), shown once a night when the site opens or a player signs in. */
+.frl-popup{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;background:#000000b8;backdrop-filter:blur(6px);animation:frlPopFade .25s ease}
+.frl-popup-card{position:relative;width:min(100%,420px);padding:34px 28px 24px;text-align:center;border:1px solid #c99a50;border-radius:18px;background:radial-gradient(ellipse at 50% 0%,#e6ae4329,transparent 60%),linear-gradient(160deg,#1f170e,#0b0b0c 70%);box-shadow:0 24px 90px #000,0 0 40px #e6ae4322;outline:none;animation:frlPopIn .3s cubic-bezier(.2,.9,.3,1.2)}
+.frl-popup-x{position:absolute;top:10px;right:10px;width:38px;height:38px;border:0;border-radius:50%;background:transparent;color:#c8bba5;font-size:26px;line-height:1}
+.frl-popup-x:hover,.frl-popup-x:focus-visible{background:#ffffff14;color:#fff}
+.frl-popup-eyebrow{color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.24em}
+.frl-popup-label{margin:16px 0 14px;color:#e9e2d6;font-size:13px;font-weight:600;letter-spacing:.14em}
+.frl-popup-clock{display:flex;justify-content:center;align-items:flex-start;gap:8px}
+.frl-popup-clock div{display:grid;gap:6px;min-width:78px;padding:12px 6px 10px;border:1px solid #6b4b2c;border-radius:12px;background:#0a0908}
+.frl-popup-clock strong{font-size:40px;line-height:1;color:#f8f4ed;font-variant-numeric:tabular-nums;font-weight:800}
+.frl-popup-clock small{font-size:10px;letter-spacing:.18em;color:#b9a68a}
+.frl-popup-clock i{font-style:normal;font-size:30px;color:#6b4b2c;padding-top:12px}
+.frl-popup.live .frl-popup-clock strong{color:#4bd28e}
+.frl-popup-prize{margin:20px 0 4px;color:var(--gold);font-size:19px;font-weight:800;letter-spacing:.03em}
+.frl-popup-prize:before{content:'🏆 '}
+.frl-popup-when{margin:0;color:#c8bba5;font-size:13px}
+.frl-popup-actions{display:grid;gap:4px;margin-top:22px}
+.frl-popup-actions .gold{width:100%;min-height:48px;margin:0}
+.frl-popup-close{border:0;background:transparent;color:#c8bba5;padding:10px;text-decoration:underline}
+@keyframes frlPopFade{from{opacity:0}}
+@keyframes frlPopIn{from{opacity:0;transform:translateY(12px) scale(.96)}}
+@media(max-width:420px){.frl-popup-card{padding:30px 18px 18px}.frl-popup-clock{gap:4px}.frl-popup-clock div{min-width:64px}.frl-popup-clock strong{font-size:32px}.frl-popup-clock i{font-size:24px;padding-top:10px}}
+@media(prefers-reduced-motion:reduce){.frl-popup,.frl-popup-card{animation:none}}
 
 /* Online tables (rooms, Ranked, the freeroll) use the bot practice POV for your hand: two large hole cards with
    the round decision clock on their left and your BB count on their right, in place of the small seat pill.
