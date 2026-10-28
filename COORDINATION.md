@@ -124,3 +124,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 ### 2026-10-21 17:45 UTC · Claude
 - All-in runouts: once no more betting is possible, the hands are turned face up and the board is dealt one street at a time (1.2 s apart on server tables via `g.runout` and the room alarm; about 1 s apart in bot games), and the winner is announced only after the river. Uncalled bets are handed back before the runout.
 - Hands won by everyone folding no longer reveal undealt board cards in bot games, matching online tables.
+
+### 2026-10-28 03:00 UTC · Claude
+- Added the Back Room, an easter egg: knock five times on the spade in Support's new "About RIVL" panel (or open `/#backroom`) and a door opens to 24 hand-picked hard spots. You act with fold, call (showing the equity a call needs) or a raise slider with quick sizes as a share of the pot; every raise size is graded.
+- Spots are built by `scripts/make-backroom.mjs` into `backroom-spots.js` (static, works on Pages previews). `puzzle.js` now shares its table and answer screen (`window.RivlPuzzleView`) with `backroom.js`. `tests.js` checks every spot's pot, price, EVs, made hand and answer.
+- Support's nav icon is now an SVG like Friends: the "?" never showed in the collapsed sidebar on phones.

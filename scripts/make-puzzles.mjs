@@ -7,6 +7,7 @@
 // Puzzle #1 was already live when this generator was rewritten, so it keeps its spot.
 // Run: node scripts/make-puzzles.mjs [days]   (deterministic: the same input always builds the same file)
 import {writeFileSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
 import '../worker/grading.js';
 const R=globalThis.RivlRating;
 export const START='2026-10-20';
@@ -68,7 +69,7 @@ function spot(rand){
 }
 
 /* ---------- describing your hand ---------- */
-function describe(hero,board){
+export function describe(hero,board){
   const h=hero.map(I),b=board.map(I),all=h.concat(b),v=R.rankHand(all),cat=R.handCategory(v),bcat=R.handCategory(R.rankHand(b));
   const hr=h.map(c=>c>>2),br=b.map(c=>c>>2).sort((x,y)=>y-x),top=br[0],kick=k=>k>=10?'a strong kicker':k>=7?'a medium kicker':'a weak kicker';
   const hasRank=r=>hr.includes(r),boardHas=r=>br.includes(r);
@@ -109,12 +110,13 @@ function rangeLine(s){
 }
 
 /* ---------- grading ---------- */
-function grade(s,iters=ITERS){
+// The table state the analysis reads: you (seat 0) facing their bet, both 100 BB deep (or s.stack) at the start of the street.
+export const spotState=s=>({pot:s.pot+s.heroBet+s.bet,currentBet:s.bet,minRaise:Math.max(s.bet-s.heroBet,BB),bb:BB,board:s.board,hand:1,street:s.street,
+  players:[{hole:s.hero,bet:s.heroBet,stack:s.stack-s.heroBet,folded:false,allin:false,line:s.position==='IP'?2:1},
+           {hole:['?','?'],bet:s.bet,stack:s.stack-s.bet,folded:false,allin:s.stack===s.bet,line:2}]});
+export function grade(s,iters=ITERS){
   const potNow=s.pot+s.heroBet+s.bet,toCall=s.bet-s.heroBet;
-  const state={pot:potNow,currentBet:s.bet,minRaise:Math.max(s.bet-s.heroBet,BB),bb:BB,board:s.board,hand:1,street:s.street,
-    players:[{hole:s.hero,bet:s.heroBet,stack:s.stack-s.heroBet,folded:false,allin:false,line:s.position==='IP'?2:1},
-             {hole:['?','?'],bet:s.bet,stack:s.stack-s.bet,folded:false,allin:s.stack===s.bet,line:2}]};
-  const A=R.analyze(state,0,iters),allIn=s.raiseTo>=s.stack;
+  const A=R.analyze(spotState(s),0,iters),allIn=s.raiseTo>=s.stack;
   const g={fold:R.grade(A,'fold',0),call:R.grade(A,'call',0)};
   const canRaise=A.canRaise&&s.raiseTo>s.bet;
   let raise=null;
@@ -150,13 +152,13 @@ function lesson(best,r,hand){
 }
 
 // A spot is a good puzzle when exactly one answer grades well and the others are clear errors.
-function clearAnswer(grades){
+export function clearAnswer(grades){
   const keys=Object.keys(grades),good=keys.filter(k=>GOOD.has(grades[k].label));
   if(good.length!==1||keys.length<3)return null;
   return keys.every(k=>k===good[0]||CLEAR.has(grades[k].label))?good[0]:null;
 }
 // Difficulty is how much the second-best answer gives up: a big gap is easy to see, a small one is hard.
-const difficultyOf=(grades,best)=>{const m=Math.min(...Object.keys(grades).filter(k=>k!==best).map(k=>grades[k].lossBB));return m<1?null:m>=6?'Easy':m>=2.5?'Medium':'Hard'};
+export const difficultyOf=(grades,best)=>{const m=Math.min(...Object.keys(grades).filter(k=>k!==best).map(k=>grades[k].lossBB));return m<1?null:m>=6?'Easy':m>=2.5?'Medium':'Hard'};
 const weekdayTarget=d=>['Hard','Easy','Easy','Medium','Medium','Hard','Hard'][new Date(Date.parse(START+'T00:00:00Z')+d*86400000).getUTCDay()];
 
 function build(s,best,r,difficulty,n){
@@ -168,6 +170,8 @@ function build(s,best,r,difficulty,n){
 }
 
 /* ---------- a year of puzzles ---------- */
+// Only when run directly: scripts/make-backroom.mjs imports the grading above without rebuilding the year.
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
 const puzzles=[];
 // #1 was live before this rewrite; keep its spot (and answer) so today's answers stay valid.
 {
@@ -204,3 +208,4 @@ export const PUZZLE_START='${START}';
 export const PUZZLES=${JSON.stringify(puzzles)};
 `);
 console.log('Wrote',puzzles.length,'puzzles',tally('best'),tally('difficulty'),tally('kind'));
+}

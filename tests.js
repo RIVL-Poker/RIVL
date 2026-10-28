@@ -61,4 +61,38 @@ assert(lg(0)==='Prospect'&&lg(349)==='Prospect'&&lg(350)==='Challenger'&&lg(699)
 assert(R.tier(525).progress===.5&&R.tier(350).next===700&&R.tier(3000).next===null,'league progress');
 // Online rooms also draw .seat elements, so the bot table must only ever paint its own seats.
 assert(!/querySelector(All)?\('\.(seat|myseat)/.test(source),'bot table seat lookups stay inside #table');
-console.log('PASS: 12 poker engine checks + 17 rating checks');
+// The Back Room (backroom-spots.js): the story's amounts add up, the price and EVs agree with the equity,
+// the hands are what the write-ups say, and re-grading reproduces the answer.
+const bctx=vm.createContext({window:{}});vm.runInContext(fs.readFileSync(__dirname+'/backroom-spots.js','utf8'),bctx);
+const BR=bctx.window.RIVL_BACKROOM,BB=100,num=t=>Math.round(parseFloat(t)*BB);
+assert(BR.length===24&&new Set(BR.map(p=>p.id)).size===24,'the Back Room has 24 different spots');
+const MADE={boat:6,straight:4,'top-set':3,set88:3,'bottom-set':3,acehigh:2,'aces-up':2,a7:2,'turn-raise':2,aces:1,'kk-wet':1,blocker:1,'jj-3bet':1};
+for(const p of BR){
+  // Rebuild the pot from the story text alone: blinds, the preflop raise, each street's bet and call.
+  const pre=p.story[0],put=num((pre.match(/3-bets to ([\d.]+) BB/)||pre.match(/to ([\d.]+) BB/))[1]);
+  let pot=50+(p.heroPos!=='BB'&&p.villainPos!=='BB'?BB:0)+2*put;
+  for(const line of p.story.slice(1,-1)){const m=line.match(/bets? ([\d.]+) BB/);if(m)pot+=2*num(m[1]);else assert(/checked through/.test(line),p.id+' story line')}
+  const last=p.story.at(-1),into=last.match(/into ([\d.]+) BB/),raised=last.match(/you bet ([\d.]+) BB, .* (?:raises to|all-in for) ([\d.]+) BB/);
+  if(raised){assert(num(raised[1])===p.heroBet&&num(raised[2])===p.bet,p.id+' raise in the story matches the table')}
+  else{assert(into&&num(into[1])===pot&&num(last.match(/(?:bets|all-in for) ([\d.]+) BB/)[1])===p.bet,p.id+' bet in the story matches the table')}
+  assert(pot+p.heroBet+p.bet===p.pot,p.id+' the pot adds up');
+  const toCall=p.bet-p.heroBet;
+  assert(Math.abs(p.need-toCall/(p.pot+toCall))<.001,p.id+' pot odds');
+  assert(Math.abs(p.grades.call.ev-(p.eq*(p.pot+toCall)-toCall)/BB)<.2,p.id+' calling EV is equity times the pot minus the call');
+  assert(p.depth*BB-put-(p.stack-0)===p.story.slice(1,-1).reduce((s,l)=>{const m=l.match(/bets? ([\d.]+) BB/);return s+(m?num(m[1]):0)},0),p.id+' stack behind');
+  if(MADE[p.id])assert(vm.runInContext(`evaluate(${JSON.stringify(p.hero.concat(p.board))})`,rctx)[0]===MADE[p.id],p.id+' made hand matches the write-up');
+  // The answer: best kind of play at Best or Brilliant, every other kind at least 1 BB worse, every raise size legal.
+  const loss={fold:p.grades.fold.lossBB,call:p.grades.call.lossBB};
+  if(p.raise){const st=p.raise.stops;assert(st.every((x,i)=>x[0]>=p.raise.min&&x[0]<=p.raise.max&&(!i||x[0]>st[i-1][0])),p.id+' raise sizes');
+    assert(st[0][0]===Math.min(p.bet+Math.max(toCall,BB),p.stack)&&st.at(-1)[0]===p.stack,p.id+' the slider runs from a min-raise to all-in');loss.raise=Math.min(...st.map(x=>x[2]))}
+  const best=Object.keys(loss).reduce((a,k)=>loss[k]<loss[a]?k:a);
+  assert(best===p.best&&Object.keys(loss).every(k=>k===best||loss[k]>=1),p.id+' one clear answer');
+  // Re-grade at fewer samples: the equity and the answer hold.
+  const st={pot:p.pot,currentBet:p.bet,minRaise:Math.max(toCall,BB),bb:BB,board:p.board,hand:1,street:p.street,
+    players:[{hole:p.hero,bet:p.heroBet,stack:p.stack-p.heroBet,folded:false,allin:false,line:p.heroPos==='BB'?1:2},{hole:['?','?'],bet:p.bet,stack:p.stack-p.bet,folded:false,allin:p.stack===p.bet,line:2}]};
+  const A=R.analyze(st,0,4000);
+  assert(Math.abs(A.eq-p.eq)<.03,p.id+' equity re-grades within 3%');
+  const evs={fold:0,call:A.opts[1].ev};if(p.raise)evs.raise=A.raiseOpt(p.raise.best).ev;
+  assert(Object.keys(evs).reduce((a,k)=>evs[k]>evs[a]?k:a)===p.best,p.id+' re-grading finds the same answer');
+}
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots');
