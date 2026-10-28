@@ -30,7 +30,7 @@ window.RivlPuzzleView=(()=>{
     $('Hand').innerHTML=p.hero.map(card).join('');
     $('VillainPos').textContent=p.villainPos||'';$('VillainPos').title=POS[p.villainPos]||'';
     $('HeroPos').textContent=p.heroPos||'';$('HeroPos').title=POS[p.heroPos]||'';
-    $('VillainBet').innerHTML=`<span class="pz-chip"></span>${raise?'Raises to':'Bets'} ${bb(p.bet)}`;
+    $('VillainBet').innerHTML=`<span class="pz-chip"></span>${p.bet>=p.stack?'All-in':raise?'Raises to':'Bets'} ${bb(p.bet)}`;
     $('HeroBet').hidden=!raise;$('HeroBet').innerHTML=raise?`<span class="pz-chip"></span>You bet ${bb(p.heroBet)}`:'';
     $('Stack').textContent=`${bb(p.stack-p.heroBet)} behind`;
     $('Story').innerHTML=p.story.map(storyItem).join('');

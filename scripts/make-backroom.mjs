@@ -79,17 +79,17 @@ const SPOTS=[
    lesson:'With 40 BB stacks, move all-in. They fold about {fold} of the time, and when they call you still win about {eqC}. Calling is fine but worse: you give up the fold equity and face another big bet on the turn.'}},
  {id:'eights',title:'Eights on a paired board',tag:'HERO CALL',answer:'call',
   hero:'8♦8♣',board:'J♥3♣2♥J♠7♦',heroPos:'CO',villainPos:'BB',streets:[['h',T],'x'],last:{bet:H},
-  why:{hand:'You have pocket eights on a board with a pair of jacks. You beat bluffs, a 3, a 2 and smaller pairs, and little else.',
-   range:'The big blind check-called the flop and led the river after the turn checked through. That line has a jack or a 7 sometimes, but also missed heart draws and hands like 6-5 and 5-4 taking a shot.',
+  why:{hand:'You have pocket eights on a board with a pair of jacks. You beat bluffs and weaker pairs, and little else.',
+   range:'The big blind check-called the flop and led the river after the turn checked through. That line has a jack, a bigger pair or pocket sevens sometimes, but also missed heart draws and hands like 6-5 and 5-4 taking a shot.',
    lesson:'You win about {eq} and need {need}. It doesn\'t feel like much of a hand, but at half the pot a pair that beats every bluff is enough. Call.'}},
  {id:'aces',title:'Pocket aces, four to a straight',tag:'BIG LAYDOWN',answer:'fold',
   hero:'A♥A♦',board:'8♣9♣T♦J♥2♣',heroPos:'BTN',villainPos:'BB',streets:[['h',T],['h',H]],last:{bet:1},
   why:{hand:'You have pocket aces, but the board reads 8-9-10-J: any queen or any 7 makes a straight, and the river 2♣ is the third club.',
    range:'The big blind called two bets on a board this connected, then bet the pot on the river. They hold straights, flushes, sets and two pair far more often than a bluff.',
    lesson:'Against that range you have about {eq} and need {need}. One pair, even aces, is close to the bottom of the hands that can call here. Fold.'}},
- {id:'65',title:'Bottom pair and a gutshot',tag:'CALL, DON\'T RAISE',answer:'call',
+ {id:'65',title:'Third pair and a gutshot',tag:'CALL, DON\'T RAISE',answer:'call',
   hero:'6♦5♦',board:'9♦7♠2♣5♣',heroPos:'BTN',villainPos:'BB',streets:[['h',T]],last:{bet:H},
-  why:{hand:'You have bottom pair, fives, plus a gutshot: an 8 makes 5-6-7-8-9. A 5 or a 6 on the river also improves you.',
+  why:{hand:'You have third pair, fives, plus a gutshot: an 8 makes 5-6-7-8-9. A 5 or a 6 on the river also improves you.',
    range:'A turn lead after check-calling the flop is a wide mix of pairs, draws and the odd two pair.',
    lesson:'You need {need} and have about {eq} with the river to come. That is enough to call half the pot. Raising would fold out the hands you beat and get called by the ones that beat you.'}},
  {id:'nfd-xr',title:'Nut flush draw on a monotone flop',tag:'SEMI-BLUFF',answer:'raise',
@@ -100,7 +100,7 @@ const SPOTS=[
  {id:'top-set',title:'Top set when the straight comes',tag:'BIG LAYDOWN',answer:'fold',
   hero:'K♠K♥',board:'2♦T♥K♦Q♠J♥',heroPos:'BTN',villainPos:'BB',streets:['x',['h',TT]],last:{xr:T,x:3},
   why:{hand:'You have top set, but the river J♥ puts K-Q-J-10 on the board: any ace makes broadway and any 9 makes a king-high straight.',
-   range:'The big blind called your turn bet and check-raised the river. Hands like A-x, 9-x and Q-J that called the turn are exactly what this line looks like; bluffs are rare.',
+   range:'The big blind called your turn bet and check-raised the river. Any ace, and draws like J-9 and 9-8 that called the turn, now have a straight, and this line is exactly how they play it. Bluffs are rare.',
    lesson:'You win about {eq} of the time and need {need}. Folding top set hurts, and it is the play.'}},
  {id:'qt-paired',title:'Top pair when the river pairs',tag:'HERO CALL',answer:'call',
   hero:'Q♣T♦',board:'T♠9♣5♦3♦9♥',heroPos:'BB',villainPos:'CO',depth:40,streets:[['v',T],['v',T]],last:{bet:TQ},
@@ -125,7 +125,7 @@ const SPOTS=[
  {id:'at',title:'Top pair, ten kicker, two barrels',tag:'HERO CALL',answer:'call',
   hero:'A♦T♣',board:'5♦K♥A♠9♥7♦',heroPos:'BB',villainPos:'CO',streets:['x',['v',TT]],last:{bet:TT},
   why:{hand:'You have top pair, aces, with a ten kicker.',
-   range:'The cutoff checked the flop, then bet the turn and the river. Better aces bet like this, but so do the diamond and heart draws that missed and the straight draws the turn gave them.',
+   range:'The cutoff checked the flop, then bet the turn and the river. Better aces bet like this, but so do the heart draws and straight draws that missed.',
    lesson:'You need {need} and have about {eq}: behind their value, ahead of every bluff. Call; a raise only gets called by better.'}},
  {id:'jacks-xr',title:'Checked down, then check-raised',tag:'HERO CALL',answer:'call',
   hero:'J♣J♦',board:'2♦K♥4♣4♠6♥',heroPos:'CO',villainPos:'BB',streets:['x','x'],last:{xr:T,x:3.5},
@@ -140,12 +140,12 @@ const SPOTS=[
  {id:'j8',title:'Eights when the queen pairs',tag:'HERO CALL',answer:'call',
   hero:'J♦8♥',board:'8♣5♠Q♠3♦Q♣',heroPos:'BB',villainPos:'CO',streets:['x',['v',H]],last:{bet:H},
   why:{hand:'You have a pair of eights with a jack kicker, and the river Q♣ paired the queen on the board.',
-   range:'The cutoff checked the flop, bet the turn and bet half the pot again when the river paired. That is a queen or a 5 sometimes, but also the spade draws and overcards that missed.',
-   lesson:'You need {need} and have about {eq}. The second queen makes it look like they have it, but it actually makes a queen less likely for them: one of the four is now on the board. Call.'}},
+   range:'The cutoff checked the flop, bet the turn and bet half the pot again when the river paired. That is a queen or a big pocket pair sometimes, but also the spade draws and overcards that missed.',
+   lesson:'You need {need} and have about {eq}. The second queen makes it look like they have it, but it actually makes a queen less likely for them: two of the four are now on the board. Call.'}},
  {id:'ak-lead',title:'Top pair facing an overbet lead',tag:'VALUE RAISE',answer:'raise',
   hero:'A♠K♠',board:'K♦T♠J♣',heroPos:'CO',villainPos:'BB',streets:[],last:{bet:1.5},
   why:{hand:'You have top pair with the best kicker, a gutshot to the nut straight (any queen) and a backdoor flush draw.',
-   range:'A big lead from the big blind on K-J-10 is two pair, sets and straights sometimes, but also queens with a draw and weaker kings that want to protect themselves.',
+   range:'A big lead from the big blind on K-J-10 is two pair, sets and straights sometimes, but also straight draws and weaker kings that want to protect themselves.',
    lesson:'Raise. Even when they call you have about {eqC}, and they fold about {fold} of the time. Calling lets their draws see the turn at their price.'}},
  {id:'k4',title:'Top pair, no kicker',tag:'HERO CALL',answer:'call',
   hero:'K♣4♣',board:'9♠3♠K♥9♥7♦',heroPos:'BB',villainPos:'CO',streets:[['v',T],'x'],last:{bet:H},
@@ -155,7 +155,7 @@ const SPOTS=[
  {id:'aces-up',title:'Aces up vs a check-raise',tag:'HERO CALL',answer:'call',
   hero:'A♣5♠',board:'K♦4♠J♥A♠J♠',heroPos:'BTN',villainPos:'BB',streets:[['h',T],'x'],last:{xr:H,x:3},
   why:{hand:'You have two pair, aces and jacks (the jacks are on the board), with the board\'s king as your kicker.',
-   range:'The river A♠ is the third spade. A check-raise here is flushes and full houses, plus bluffs: you checked the turn back, so they can represent almost anything.',
+   range:'The river J♠ is the third spade. A check-raise here is flushes and full houses, plus bluffs: you checked the turn back, so they can represent almost anything.',
    lesson:'You need {need} and have about {eq}. You are behind most of their value, but you beat every bluff, and they bluff often enough. Call, and never re-raise: no worse hand calls.'}},
  {id:'bottom-set',title:'Bottom set, check-raised on the river',tag:'VALUE RAISE',answer:'raise',allIn:true,
   hero:'4♦4♠',board:'K♣J♦4♥7♣2♦',heroPos:'BTN',villainPos:'BB',streets:[['h',T],['h',H]],last:{xr:H,x:3},
@@ -174,13 +174,13 @@ const SPOTS=[
    lesson:'You need {need} and have about {eq}. Plenty of their range beats you, but the shove comes from enough missed hands that folding gives up {loss} BB on average. Call.'}},
  {id:'boat',title:'A full house on the river',tag:'BIG LAYDOWN',answer:'fold',
   hero:'5♥5♣',board:'6♣6♠K♣5♦6♦',heroPos:'CO',villainPos:'BB',depth:40,streets:[['h',H],'x'],last:{bet:TQ},
-  why:{hand:'You have a full house, sixes full of fives. It is the smallest full house this board allows.',
+  why:{hand:'You have a full house, sixes full of fives. It sounds huge, but three sixes are on the board, so every player has at least trip sixes.',
    range:'When the big blind leads the river after the turn checks through, it is usually a hand that beats you: any king (sixes full of kings), any pocket pair from sevens up, or the last six for four of a kind.',
    lesson:'You win about {eq} and a call needs {need}. Almost every hand that bets for value has you beat, and the bluffs are few. Folding a full house is the play most players never make.'}},
  {id:'acehigh',title:'Ace-high vs a check-raise',tag:'HERO CALL',answer:'call',
   hero:'A♠8♦',board:'7♦3♠3♦5♠5♣',heroPos:'BTN',villainPos:'BB',depth:60,streets:[['h',TT],['h',H]],last:{xr:T,x:3.5},
   why:{hand:'The board has two pair, fives and threes, so your ace plays: you have fives and threes with an ace kicker. You beat every hand that missed, and you split with any other ace.',
-   range:'The big blind called your flop and turn bets, then check-raised a small river bet. Their value is a 7, a 5 or a 3, or a pocket pair from fours up; their bluffs are the busted diamond draws and big cards that missed.',
+   range:'The big blind called your flop and turn bets, then check-raised a small river bet. Their value is a 7, a 5 or a 3, 6-4 for a straight, or a pocket pair from fours up; their bluffs are the busted diamond draws and big cards that missed.',
    lesson:'Calling a check-raise with ace-high sounds crazy. But with two pair on the board, every bluff loses to your ace. You win about {eq} and need {need}. Call.'}},
 ];
 
@@ -210,7 +210,9 @@ function gradeAll(s){
       const fold=Math.min(.9,Math.max(.05,1-A.pot/(A.pot+B||1)*1.6));
       return [T,LABELS.indexOf(g.label),+g.lossBB.toFixed(1),+(o.ev/BB).toFixed(1),Math.round(fold*100),Math.round(o.eqC*100)];
     })};
-    raise.best=raise.stops.reduce((a,x)=>x[3]>a[3]?x:a)[0];
+    // The best size by its exact EV: rounded to 0.1 BB, all-in and a size just under it can look tied.
+    const ev=T=>A.opts.find(x=>x.type==='raise'&&x.T===T).ev;
+    raise.best=sizes.reduce((a,T)=>ev(T)>ev(a)?T:a);
   }
   const one=(type,note)=>{const g=R.grade(A,type,0),o=type==='fold'?A.opts[0]:A.opts[1];return {label:g.label,glyph:g.glyph,lossBB:+g.lossBB.toFixed(1),ev:+(o.ev/BB).toFixed(1),note}};
   const grades={fold:one('fold','Gives up the pot. Nothing more to lose.'),call:one('call',`Wins the pot about ${pct(A.eq)} of the time; you need ${pct(need)}.`)};
