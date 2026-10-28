@@ -129,3 +129,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Added the Back Room, an easter egg: knock five times on the spade in Support's new "About RIVL" panel (or open `/#backroom`) and a door opens to 24 hand-picked hard spots. You act with fold, call (showing the equity a call needs) or a raise slider with quick sizes as a share of the pot; every raise size is graded.
 - Spots are built by `scripts/make-backroom.mjs` into `backroom-spots.js` (static, works on Pages previews). `puzzle.js` now shares its table and answer screen (`window.RivlPuzzleView`) with `backroom.js`. `tests.js` checks every spot's pot, price, EVs, made hand and answer.
 - Support's nav icon is now an SVG like Friends: the "?" never showed in the collapsed sidebar on phones.
+
+### 2026-10-28 03:30 UTC · Claude
+- Play → Bot Practice has a fourth table, "5 PLAYERS · SET HANDS": you vs 4 bots (Ace, Rico, Luna, Nash) through 10 scripted hands, always dealt in the same order. The 3/6/9 bot tables are unchanged.
+- The cards live in `scripted-hands.js` (hole cards per seat plus the board, with a title and who holds the best hand). Bots still pick their own bets. Anyone who busts rebuys for 1,000 so every seat gets all 10 hands; the match ends after hand 10 and is unrated.
+- `style.css` gained 5-seat bot table positions (the 6-seat layout without the head seat).

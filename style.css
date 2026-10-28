@@ -810,9 +810,13 @@ body.in-game .poker-table .community,
  body.in-game #table .poker-table[data-player-count="6"] .s3{top:-24px;left:50%}
  body.in-game #table .poker-table[data-player-count="6"] .s4{top:23%;left:93%}
  body.in-game #table .poker-table[data-player-count="6"] .s5{top:75%;left:93%}
+ body.in-game #table .poker-table[data-player-count="5"] .s1{top:75%;left:7%}
+ body.in-game #table .poker-table[data-player-count="5"] .s2{top:23%;left:7%}
+ body.in-game #table .poker-table[data-player-count="5"] .s3{top:23%;left:93%}
+ body.in-game #table .poker-table[data-player-count="5"] .s4{top:75%;left:93%}
 }
 @media (max-width:600px){
- body.in-game #table .poker-table:is([data-player-count="9"],[data-player-count="6"]) .seat{top:auto;bottom:auto;left:auto;right:auto;transform:none}
+ body.in-game #table .poker-table:is([data-player-count="9"],[data-player-count="6"],[data-player-count="5"]) .seat{top:auto;bottom:auto;left:auto;right:auto;transform:none}
  body.in-game #table .poker-table[data-player-count="9"] .s1{top:79%;left:-12%}
  body.in-game #table .poker-table[data-player-count="9"] .s2{top:60%;left:-18%}
  body.in-game #table .poker-table[data-player-count="9"] .s3{top:27%;left:-18%}
@@ -826,6 +830,10 @@ body.in-game .poker-table .community,
  body.in-game #table .poker-table[data-player-count="6"] .s3{top:-16px;left:50%;transform:translateX(-50%)}
  body.in-game #table .poker-table[data-player-count="6"] .s4{top:27%;right:-18%}
  body.in-game #table .poker-table[data-player-count="6"] .s5{top:60%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="5"] .s1{top:60%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="5"] .s2{top:27%;left:-18%}
+ body.in-game #table .poker-table[data-player-count="5"] .s3{top:27%;right:-18%}
+ body.in-game #table .poker-table[data-player-count="5"] .s4{top:60%;right:-18%}
 }
 /* Small and big blind chips sit on the opposite side of the avatar from the dealer "D". */
 .is-sb>.avatar,.is-bb>.avatar{position:relative}
@@ -1051,6 +1059,10 @@ body.table-focus #rooms.rivl-match-mode{height:100dvh}
   body.in-game #table .poker-table[data-player-count="6"] .s3{top:-23%!important;left:50%!important}
   body.in-game #table .poker-table[data-player-count="6"] .s4{top:25%!important;left:123%!important}
   body.in-game #table .poker-table[data-player-count="6"] .s5{top:77%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s1{top:77%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s2{top:25%!important;left:-23%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s3{top:25%!important;left:123%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s4{top:77%!important;left:123%!important}
   /* Bot: 9 seats, four mirrored pairs. */
   body.in-game #table .poker-table[data-player-count="9"] .s1{top:112%!important;left:27%!important}
   body.in-game #table .poker-table[data-player-count="9"] .s2{top:73%!important;left:-23%!important}
@@ -1145,6 +1157,10 @@ body.in-game #table .community .card.back,
  body.in-game #table .poker-table[data-player-count="6"] .s4{top:27%!important;left:93%!important}
  body.in-game #table .poker-table[data-player-count="6"] .s3{top:77%!important;left:7%!important}
  body.in-game #table .poker-table[data-player-count="6"] .s5{top:77%!important;left:93%!important}
+ body.in-game #table .poker-table[data-player-count="5"] .s1{top:77%!important;left:7%!important}
+ body.in-game #table .poker-table[data-player-count="5"] .s2{top:27%!important;left:7%!important}
+ body.in-game #table .poker-table[data-player-count="5"] .s3{top:27%!important;left:93%!important}
+ body.in-game #table .poker-table[data-player-count="5"] .s4{top:77%!important;left:93%!important}
 }
 
 /* Cairo table layout. On desktop the artwork stretches to fill the scene, so the table box is pinned to the
@@ -1172,6 +1188,10 @@ body.in-game #table .community .card.back,
   body.in-game #table .poker-table[data-player-count="6"] .s3,#roomGame .rivl-pvp-table[data-player-count="6"] .s3{left:50.0%!important;top:1.2%!important}
   body.in-game #table .poker-table[data-player-count="6"] .s4,#roomGame .rivl-pvp-table[data-player-count="6"] .s4{left:94.8%!important;top:23.2%!important}
   body.in-game #table .poker-table[data-player-count="6"] .s5,#roomGame .rivl-pvp-table[data-player-count="6"] .s5{left:95.9%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s1{left:4.1%!important;top:80.5%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s2{left:5.2%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s3{left:94.8%!important;top:23.2%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s4{left:95.9%!important;top:80.5%!important}
   #roomGame .rivl-pvp-table[data-player-count="7"] .s1{left:4.1%!important;top:80.5%!important}
   #roomGame .rivl-pvp-table[data-player-count="7"] .s2{left:5.2%!important;top:23.2%!important}
   #roomGame .rivl-pvp-table[data-player-count="7"] .s3{left:24.4%!important;top:1.2%!important}
@@ -1282,6 +1302,10 @@ body.in-game #table .muck-pile{top:46%!important;left:calc(50% + var(--board-car
   body.in-game #table .poker-table[data-player-count="6"] .s3{left:50%!important;top:-14%!important}
   body.in-game #table .poker-table[data-player-count="6"] .s4{left:86%!important;top:22%!important}
   body.in-game #table .poker-table[data-player-count="6"] .s5{left:87%!important;top:72%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s1{left:13%!important;top:72%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s2{left:14%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s3{left:86%!important;top:22%!important}
+  body.in-game #table .poker-table[data-player-count="5"] .s4{left:87%!important;top:72%!important}
   body.in-game #table .poker-table[data-player-count="9"] .s1{left:14%!important;top:86%!important}
   body.in-game #table .poker-table[data-player-count="9"] .s2{left:11%!important;top:56%!important}
   body.in-game #table .poker-table[data-player-count="9"] .s3{left:14%!important;top:22%!important}
