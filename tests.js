@@ -95,4 +95,12 @@ for(const p of BR){
   const evs={fold:0,call:A.opts[1].ev};if(p.raise)evs.raise=A.raiseOpt(p.raise.best).ev;
   assert(Object.keys(evs).reduce((a,k)=>evs[k]>evs[a]?k:a)===p.best,p.id+' re-grading finds the same answer');
 }
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots');
+// Scripted table: 10 set hands, each with 15 unique cards, dealt in seat order by the engine's normal pops.
+ctx.window={};vm.runInContext(fs.readFileSync(__dirname+'/scripted-hands.js','utf8'),ctx);
+const SH=ctx.window.RIVL_SCRIPTED_HANDS;assert(SH.length===10,'10 scripted hands');
+SH.forEach((h,k)=>{const all=[...h.hole.flat(),...h.board];assert(h.hole.length===5&&h.board.length===5&&new Set(all).size===15,'scripted hand '+(k+1)+' cards');
+  for(const busted of [-1,3]){const ps=[0,1,2,3,4].map(i=>({stack:i===busted?0:1000}));
+    const d=ctx.window.rivlScriptedDeck(k+1,ps);assert(new Set(d).size===52,'scripted deck '+(k+1)+' is a full deck');
+    ps.forEach((p,i)=>{if(p.stack>0)assert.strictEqual(String([d.pop(),d.pop()]),String(h.hole[i]),'scripted hand '+(k+1)+' seat '+i)});
+    assert.strictEqual(String([d.pop(),d.pop(),d.pop(),d.pop(),d.pop()]),String(h.board),'scripted hand '+(k+1)+' board')}});
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands');
