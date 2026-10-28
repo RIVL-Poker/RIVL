@@ -371,6 +371,41 @@ function chooseBot(g,i){
   });
   return{A,type:pick.type==='check'?'check':pick.type,amount:pick.T||0};
 }
+/* Set Hands bots play the move the grader rates best, from their own cards, the board and the
+   betting, with no noise or style bias: preflop the chart's play at the book size, after the
+   flop the top-EV option at grading depth. All-in is on the menu only when it is no bigger
+   than a pot-sized raise, since the one-street EV model would otherwise jam deep stacks into
+   small pots with every strong hand. */
+function chooseBest(g,i){
+  const A=analyze(g,i,root.RivlRating.GRADE_ITERS),room=A.canRaise&&(g.streetRaises||0)<BOT_RAISES_PER_STREET;
+  // Raise totals the table accepts: a multiple of 5 from the minimum raise up, or all-in.
+  const lo=Math.ceil(A.minTotal/5)*5,legal=T=>{const t=Math.max(lo,Math.round(T/5)*5);return t>=A.maxTotal?A.maxTotal:t};
+  if(A.book&&A.book.eff>15){
+    // The chart counts raisers still in the hand, so a 3-bet after the opener folds reads as a
+    // single raise; count the raises made this street instead.
+    A.book.raisers=Math.max(A.book.raisers,g.streetRaises||0);
+    const T=legal(bookSize(A)),acts=A.toCall?['raise','call','fold']:['raise','check'];
+    const rank=a=>LABELS.indexOf(gradePreflop(A,a,a==='raise'?T:0).label);
+    const type=acts.filter(a=>a!=='raise'||room).reduce((x,y)=>rank(y)<rank(x)?y:x);
+    return{A,type,amount:type==='raise'?T:0};
+  }
+  const base=A.pot+A.toCall,opts=A.toCall?[A.opts[1],A.opts[0]]:[A.opts[1]],seen=new Set();
+  if(room)[.5,.75,1,Infinity].forEach(f=>{
+    const T=legal(A.callTo+base*f);
+    if(!seen.has(T)&&(T<A.maxTotal||A.maxTotal-A.callTo<=1.2*base)){seen.add(T);opts.push(A.raiseOpt(T))}
+  });
+  let pick=opts.reduce((x,y)=>y.ev>x.ev?y:x);
+  // The EV model gives every bettor some bluffs. A bet and a raise on the same street rarely
+  // include any, so against that much action the bot continues only if it beats the top half
+  // of the betting ranges, unless the call is cheap (under a fifth of the final pot).
+  if(A.toCall>=.2*(A.pot+A.toCall)&&(g.streetRaises||0)>=2&&pick.type!=='fold'){
+    const hero=g.players[i].hole.map(toInt),board=g.board.map(toInt),H=holdings(hero,board),vshare=VALUE_SHARE[board.length]||1;
+    const specs=g.players.filter((q,j)=>j!==i&&!q.folded&&q.hole&&q.hole.length).map(q=>{const all=rangeOf(H,RANGE[q.line||0]);return{a:q.line===2&&q.bet>0?topOf(H,all,vshare/2):all}});
+    const eq=equity(hero,board,specs,root.RivlRating.GRADE_ITERS,mulberry32(hashSpot([...hero,96,...board,A.pot,A.toCall])),H);
+    if(eq*(A.pot+A.toCall)<A.toCall)pick=A.opts[0];
+  }
+  return{A,type:pick.type,amount:pick.T||0};
+}
 
 /* ---------- Glicko-2 ---------- */
 const SCALE=173.7178,TAU=0.5,W_PLACE=.6,W_DEC=.4,MIN_DECISIONS=3;
@@ -452,5 +487,5 @@ const LEAGUES=[['Prospect',0,350,'prospect'],['Challenger',350,700,'challenger']
 const BAND=350;
 function tier(r){const t=LEAGUES.find(([,lo,hi])=>r>=lo&&r<hi)||LEAGUES[0];const lo=t[1]||t[2]-BAND,hi=t[2]===Infinity?lo+BAND:t[2];return{name:t[0],key:t[3],lo,progress:Math.max(0,Math.min(1,(r-lo)/(hi-lo))),next:t[2]===Infinity?null:t[2]}}
 
-root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,handTier,handClass,equity,analyze,grade,chooseBot,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LEAGUES,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
+root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,handTier,handClass,equity,analyze,grade,chooseBot,chooseBest,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LEAGUES,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
 })(typeof window!=='undefined'?window:globalThis);
