@@ -15,6 +15,7 @@
     <meta name="apple-mobile-web-app-title" content="RIVL">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="stylesheet" href="style.css?v=install-app-20261029">
+    <link rel="stylesheet" href="player-stats.css?v=player-stats-20261029">
     <link rel="stylesheet" href="phone-landscape.css?v=phone-landscape-20261029" media="(orientation:landscape) and (max-height:500px) and (hover:none) and (pointer:coarse)">
     <script src="screen-modes.js?v=sidebar-drawer-20261020"></script>
 </head>
@@ -378,6 +379,25 @@
                     <div class="rt-foot"><p id="onlineProfileDetails" class="muted">Sign in or create an account to play Ranked.</p></div>
                     <p id="onlineProfileRecord" hidden></p>
                 </article>
+                <article class="panel player-stats" id="playerStats" aria-labelledby="psTitle">
+                    <div class="ps-head"><h3 id="psTitle">♠ PLAYER STATS</h3><button type="button" class="outline" id="psRefresh">REFRESH</button></div>
+                    <div class="ps-modes" role="group" aria-label="Choose which games your stats count">
+                        <button type="button" class="active" data-ps-mode="all" aria-pressed="true">ALL</button>
+                        <button type="button" data-ps-mode="practice" aria-pressed="false">BOT PRACTICE</button>
+                        <button type="button" data-ps-mode="casual" aria-pressed="false">CASUAL</button>
+                        <button type="button" data-ps-mode="ranked" aria-pressed="false">RANKED</button>
+                        <button type="button" data-ps-mode="freeroll" aria-pressed="false">FREEROLL</button>
+                    </div>
+                    <p class="muted ps-note" id="psNote" role="status"></p>
+                    <div class="ps-tiles" id="psTiles"></div>
+                    <div class="ps-body">
+                        <div><h4>ACCURACY BY STREET</h4><div id="psStreets"></div></div>
+                        <div><h4>ACCURACY BY SEAT</h4><div id="psSeats"></div></div>
+                        <div><h4>BIGGEST LEAKS</h4><div id="psLeaks"></div></div>
+                        <div><h4>DECISION GRADES</h4><div id="psGrades"></div></div>
+                    </div>
+                    <div><h4 class="ps-games-title">MY GAMES</h4><div id="psGames" class="ps-games"></div></div>
+                </article>
                 <h2 class="profile-section-heading">BOT PRACTICE MODE RATING</h2>
                 <div class="panel ladder">
                     <h3>BOT PRACTICE MODE RATING</h3>
@@ -433,6 +453,7 @@
                         <button type="button" class="active" data-history-filter="All" aria-pressed="true">ALL</button>
                         <button type="button" data-history-filter="Ranked" aria-pressed="false">RANKED</button>
                         <button type="button" data-history-filter="Freeroll" aria-pressed="false">TOURNAMENTS</button>
+                        <button type="button" data-history-filter="Mine" aria-pressed="false">MINE</button>
                     </div>
                     <div id="historyGames" aria-live="polite"><p class="muted">Loading history…</p></div>
                 </div>
@@ -615,6 +636,7 @@
     <script src="login.js"></script>
     <script src="engine.js"></script>
     <script src="rating.js"></script>
+    <script src="hand-stats.js"></script>
     <script src="chips.js"></script>
     <script src="muck.js"></script>
     <script src="amounts.js"></script>
@@ -622,6 +644,7 @@
     <script src="bot-avatars.js"></script>
     <script src="script.js"></script>
     <script src="ladder-ui.js"></script>
+    <script src="player-stats.js"></script>
     <script src="rooms.js"></script>
     <script src="table-themes.js"></script>
     <script src="puzzle.js"></script>

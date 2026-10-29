@@ -1,6 +1,6 @@
-/* Server-side decision grading for Ranked rooms. Reuses the bot-practice analysis in rating.js, so a decision
-   gets the same EV-based grade online as it would against bots. Opponents' real cards are never used:
-   equity is estimated against the ranges their betting suggests. */
+/* Server-side decision grading for online rooms: player stats in every mode, and Ranked Elo. Reuses the bot-practice
+   analysis in rating.js, so a decision gets the same EV-based grade online as it would against bots. Opponents' real
+   cards are never used: equity is estimated against the ranges their betting suggests. */
 import '../rating.js';
 const RANKS='23456789TJQKA';
 // Same starting-hand strength as engine.js; rating.js reads it as a global the first time it builds its range table.
@@ -8,8 +8,9 @@ globalThis.preflopStrength??=cards=>{const a=RANKS.indexOf(cards[0][0])+2,b=RANK
 const R=globalThis.RivlRating;
 const SUIT={S:'♠',H:'♥',D:'♦',C:'♣'};
 const card=c=>c[0]+SUIT[c[1]];
-// Fewer samples than the browser's live coach keeps each graded action well inside a Worker's CPU budget.
-export const SERVER_ITERS=600;
+// The same number of samples as bot practice, so a decision gets the same grade online and offline. A grade takes
+// about 20 ms, well inside a room's CPU allowance (30 seconds for each message).
+export const SERVER_ITERS=R.GRADE_ITERS;
 const STREETS={preflop:'Preflop',flop:'Flop',turn:'Turn',river:'River'};
 
 // Grade the decision `seat` is about to make in room game `g`. Returns {label,acc,weight,lossBB} or null.

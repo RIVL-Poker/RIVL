@@ -4,6 +4,7 @@ export {Directory} from './directory.js';
 export {Tournament} from './tournament.js';
 import {nightOf} from './tournament.js';
 import {gradeDecision} from './grading.js';
+import '../hand-stats.js';
 import {verifyGoogleToken} from './google.js';
 import {cleanReport,sendBugReport,BUG_MAX_CHARS,cleanPlayerReport,sendPlayerReport} from './bug-report.js';
 import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
@@ -21,6 +22,9 @@ const BLINDS=[[10,20],[15,30],[25,50],[50,100],[75,150],[100,200],[150,300],[200
 // match then ends on chip count once that hand finishes, so a match never runs much past 15.
 const RANKED_BLINDS=[[15,30],[25,50],[50,100],[100,200],[150,300],[250,500]],RANKED_LEVEL_MS=150000,RANKED_LAST_DEAL_MS=14*60000;
 const rankedLevel=startedAt=>Math.min(RANKED_BLINDS.length-1,Math.floor(Math.max(0,Date.now()-startedAt)/RANKED_LEVEL_MS));
+// Player stats (hand-stats.js): each signed-in player's hands are sent to the Directory when their match ends, when they
+// leave or move tables, or every 100 hands at a long table, so a room never holds too many at once.
+const HS=globalThis.RivlHandStats,STATS_CHUNK=100,STREET_OF={preflop:0,flop:1,turn:2,river:3};
 const HAND_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
 
 function allowedOrigin(request,env){
@@ -156,6 +160,14 @@ export default {
       if(url.pathname==='/api/me'){
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/me',await readBody(request)));
+      }
+      // Player stats: the signed-in player's own totals and games, a finished practice match to save, Match History's MINE.
+      const pstats={'/api/player-stats':'/pstats/me','/api/player-stats/practice':'/pstats/practice','/api/history/mine':'/history/mine'}[url.pathname];
+      if(pstats){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many requests. Try again in a minute.'},429);
+        const body=await readBody(request,pstats==='/pstats/practice'?250000:MAX_BODY);
+        if(!body.key)return json({error:'Sign in to keep your stats.'},401);
+        return send(await dir(env,pstats,body));
       }
       if(url.pathname==='/api/google'){
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
@@ -415,6 +427,7 @@ export class Room {
         room.pendingResults=null;
       }
     }
+    if(room.pendingStats?.length&&await this.sendStats())room.pendingStats=null;
     await this.syncLobby();
     if(room.tourney)await this.tArm();
     else if(this.matchOver(g))await this.armAlarm(room.lastActive+IDLE_MS);
@@ -442,23 +455,55 @@ export class Room {
   }
   finishMatch(standing){
     const m=this.room.match;if(!m)return;
-    if(!m.ranked){this.room.match=null;return}
     const order=[...standing.sort((a,b)=>b.stack-a.stack).map(p=>[p.seat]),...[...m.out].reverse(),...[...(m.left||[])].reverse().map(s=>[s])];
     const place={};let next=1;for(const group of order){for(const s of group)place[s]=next;next+=group.length}
+    // Every signed-in player's hands from the match go to their stats, with the place they finished.
+    this.closeAllStats(Object.fromEntries(Object.entries(m.accounts).map(([seat,id])=>[id,{place:place[seat]??null}])));
+    if(!m.ranked){this.room.match=null;return}
     // Each Ranked player's decision accuracy (weighted like bot practice) goes with their place.
     const accuracy=seat=>{const d=m.grades?.[seat];return d?.n?{acc:d.s/d.w,decisions:d.n}:{acc:null,decisions:0}};
     const players=Object.entries(m.accounts).map(([seat,id])=>({id,place:place[seat]??next,chips:standing.find(p=>p.seat===Number(seat))?.stack??0,...accuracy(seat)}));
-    if(players.length>=2)this.room.pendingResults={matchId:m.id,players,duration:Date.now()-m.startedAt,hands:this.room.game?.hand||0};
+    if(players.length>=2)this.room.pendingResults={matchId:m.id,players,duration:Date.now()-m.startedAt,hands:this.room.game?.handNumber||0};
     else if(this.room.game)this.room.game.note='Unrated: at least two signed-in players are needed for a rated match.';
     this.room.match=null;
   }
+  // Which stats a hand here counts toward: the match (casual or Ranked), or tonight's freeroll for its tables.
+  statsKey(){const room=this.room;return room.tourney?{game:'freeroll:'+room.tourney.id,mode:'freeroll'}:room.match?{game:room.match.id,mode:room.match.ranked?'ranked':'casual'}:null}
+  // A finished hand is added to the stats record of each signed-in player dealt into it (hand-stats.js).
+  handStats(){
+    const room=this.room,g=room.game,key=this.statsKey();
+    if(!g?.acct||g.statsDone||!key||!this.env.DIRECTORY)return;
+    g.statsDone=true;
+    const seats=g.players.map(p=>p.seat).sort((a,b)=>a-b),at=Math.max(0,seats.indexOf(g.sbSeat)),order=[...seats.slice(at),...seats.slice(0,at)];
+    const won=g.statsWon||Object.fromEntries((g.winners||[]).map(w=>[w.seat,w.amount]));
+    const here=new Set(Object.values(room.members).map(m=>m.accountId).filter(Boolean));
+    for(const [seat,id] of Object.entries(g.acct)){
+      const p=g.players.find(x=>x.seat===Number(seat));if(!p)continue;
+      const stats=room.stats||={};
+      if(stats[id]&&stats[id].game!==key.game)this.closeStats(id);
+      // A player's record at a freeroll table starts with the hand they sat down for; they may sit at a table twice.
+      const r=stats[id]||={...key,part:(room.tourney?room.code+':':'')+g.handNumber,t0:Date.now(),size:0,hands:[]};
+      r.hands.push(HS.pack({order,me:p.seat,bb:g.bigBlind,log:g.log||[],net:p.stack-(g.starts?.[seat]??p.stack),won:won[seat]||0,hole:g.hands[seat],board:g.board}));
+      r.size=Math.max(r.size,g.players.length);r.t=Date.now();
+      // Someone who left during the hand is not coming back to this match: their last hand is sent now, with no place.
+      if(r.hands.length>=STATS_CHUNK||!here.has(id))this.closeStats(id);
+    }
+  }
+  // A closed record waits in pendingStats until the Directory has it; save() keeps trying, like Ranked results.
+  closeStats(id,extra){
+    const room=this.room,r=room.stats?.[id];if(!r)return;
+    delete room.stats[id];
+    if(r.hands.length)(room.pendingStats||=[]).push({account:id,...r,...extra});
+  }
+  closeAllStats(extra={}){for(const id of Object.keys(this.room.stats||{}))this.closeStats(id,extra[id])}
+  async sendStats(){const out=await this.dir('/pstats/record',{records:this.room.pendingStats});return !!out&&!out.error}
   // Deal the first hand of a new match. Ranked tables call this from their countdown; other rooms from the host's Start.
   async beginMatch(){
     const room=this.room;
     if(room.seats.filter(Boolean).length<2)throw Error('At least two players required');
     const usage=await this.dir('/usage/hand',{...this.dealtTo(),newMatch:true});
     if(usage&&!usage.ok)throw Error(CLOSED_MESSAGE);
-    room.startsAt=0;
+    room.startsAt=0;this.closeAllStats();
     room.match={id:crypto.randomUUID(),ranked:!!room.ranked,startedAt:Date.now(),out:[],left:[],accounts:Object.fromEntries(Object.values(room.members).filter(m=>m.accountId).map(m=>[m.seat,m.accountId]))};
     room.game=null;this.startHand();
   }
@@ -470,7 +515,10 @@ export class Room {
     if(players>=rankedSize(room)){await this.beginMatch().catch(()=>{});return}
     if(!room.startsAt){room.startsAt=Date.now()+RANKED_COUNTDOWN_MS;this.alarmAt=0;await this.armAlarm(room.startsAt)}
   }
-  async destroy(){if(this.room?.lobbySig)await this.dir('/lobby/remove',{code:this.room.code});for(const ws of this.state.getWebSockets())try{ws.close(1000,'Room closed')}catch{}this.room=null;await this.state.storage.deleteAlarm();await this.state.storage.deleteAll()}
+  async destroy(){
+    // The room's last hands go to the players' stats before its storage is deleted (one retry if the Directory is busy).
+    if(this.room){this.closeAllStats();for(let k=0;k<2&&this.room.pendingStats?.length;k++)if(await this.sendStats())this.room.pendingStats=null}
+    if(this.room?.lobbySig)await this.dir('/lobby/remove',{code:this.room.code});for(const ws of this.state.getWebSockets())try{ws.close(1000,'Room closed')}catch{}this.room=null;await this.state.storage.deleteAlarm();await this.state.storage.deleteAll()}
   next(seat,eligible){for(let n=1;n<=9;n++){const i=(seat+n)%9;if(eligible(i))return i}return -1}
   randomDeck(){
     const deck=[];for(const s of 'SHDC')for(const r of '23456789TJQKA')deck.push(r+s);
@@ -495,6 +543,9 @@ export class Room {
     }
     const handNumber=(old?.handNumber||0)+1,[smallBlind,bigBlind]=this.room.tourney?.blinds||(ranked?RANKED_BLINDS[rankedLevel(ranked)]:BLINDS[Math.min(BLINDS.length-1,Math.floor((handNumber-1)/8))]);
     const g={phase:'preflop',handNumber,pot:0,board:[],players:participants,hands:{},deck:this.randomDeck(),turn:-1,deadline:0,currentBet:0,minRaise:bigBlind,smallBlind,bigBlind,acted:[],raiseLocked:[],streetRaises:0,winners:[],result:'',dealer:-1,nextHandAt:0,shown:[]};
+    // Every action is logged, and each signed-in player at the table (not sitting out) gets the hand in their stats.
+    g.log=[];g.starts=Object.fromEntries(participants.map(p=>[p.seat,p.stack]));
+    g.acct=Object.fromEntries(Object.values(this.room.members).filter(m=>m.accountId&&participants.some(p=>p.seat===m.seat&&!p.away)).map(m=>[m.seat,m.accountId]));
     const alive=i=>participants.some(p=>p.seat===i);
     g.dealer=this.next(old?.dealer??8,alive);
     const sb=participants.length===2?g.dealer:this.next(g.dealer,alive);
@@ -559,13 +610,18 @@ export class Room {
     g.shown=contenders.map(p=>p.seat);
     g.winners=[...awarded].map(([seat,amount])=>({seat,name:g.players.find(p=>p.seat===seat).name,amount,hand:HAND_NAMES[values.get(seat)[0]]}));
     g.result=g.winners.map(w=>w.name+' wins '+w.amount+' with '+w.hand).join(' · ')||'Hand ended';
-    g.pot=0;
+    g.pot=0;this.handStats();
   }
   endStreet(){
     const g=this.room.game;
     const alive=g.players.filter(p=>!p.folded);
     // A bot that wins without a showdown turns its cards over; a person keeps theirs hidden, as at a real table.
-    if(alive.length===1){alive[0].stack+=g.pot;g.winners=[{seat:alive[0].seat,name:alive[0].name,amount:g.pot}];g.result=alive[0].name+' wins '+g.pot+' (everyone folded)';g.pot=0;g.phase='showdown';g.shown=alive[0].bot?[alive[0].seat]:[];g.turn=-1;g.deadline=0;return}
+    if(alive.length===1){
+      // What the winner takes back of their own last bet (nobody called it) is not counted as won in their stats.
+      const p=alive[0],back=Math.max(0,p.contribution-Math.max(0,...g.players.filter(x=>x!==p).map(x=>x.contribution)));
+      p.stack+=g.pot;g.winners=[{seat:p.seat,name:p.name,amount:g.pot}];g.result=p.name+' wins '+g.pot+' (everyone folded)';g.statsWon={[p.seat]:g.pot-back};
+      g.pot=0;g.phase='showdown';g.shown=p.bot?[p.seat]:[];g.turn=-1;g.deadline=0;this.handStats();return;
+    }
     if(g.phase==='river'){this.finishHand();return}
     // Once no more betting is possible the hands are turned face up and the board is dealt one street at a time,
     // so every card is on the table before the winner is announced. The first pause lets players see the hands.
@@ -589,13 +645,13 @@ export class Room {
     g.turn=this.next(g.dealer,i=>g.players.some(p=>p.seat===i&&!p.folded&&!p.allIn));
     g.deadline=Date.now()+TURN_MS;
   }
-  applyAction(seat,action,amount){
+  applyAction(seat,action,amount,grade=null){
     const g=this.room.game,p=g.players.find(x=>x.seat===seat),legal=this.legal(seat);
     if(!legal)throw Error('Not your turn');
     g.botThinking=false;
     const call=Math.max(0,g.currentBet-p.bet);
     // How each player has bet this hand shapes the ranges decision grading assumes for them.
-    const line=action==='raise'||action==='allin'&&p.stack>call?2:(action==='call'||action==='allin')&&call>0?1:0;
+    const raising=action==='raise'||action==='allin'&&p.stack>call,line=raising?2:(action==='call'||action==='allin')&&call>0?1:0;
     if(action==='fold')p.folded=true;
     else if(action==='check'){if(call)throw Error('Must call, raise, or fold')}
     else if(action==='call'||action==='allin'&&p.stack<=call){const v=Math.min(p.stack,call);p.stack-=v;p.bet+=v;p.contribution+=v;g.pot+=v}
@@ -614,6 +670,7 @@ export class Room {
     if(p.stack===0)p.allIn=true;
     p.line=Math.max(p.line||0,line);
     g.acted=[...new Set([...g.acted,seat])];
+    (g.log||=[]).push({seat,street:STREET_OF[g.phase]??0,type:action==='fold'?'f':raising?'r':call>0?'c':'k',to:raising?p.bet:0,grade});
     const active=g.players.filter(x=>!x.folded&&!x.allIn);
     const alive=g.players.filter(x=>!x.folded);
     if(alive.length===1||active.every(x=>g.acted.includes(x.seat)&&x.bet===g.currentBet)||active.length===0){this.endStreet()}
@@ -682,9 +739,10 @@ export class Room {
     }
     // Finished matches, lobbies and tables where every human is away wait for players; rooms idle for 6 hours are deleted.
     if(this.matchOver(g)||g.phase==='showdown'&&this.humansAway(g)){
-      if(room.pendingResults){
+      const pending=()=>room.pendingResults||room.pendingStats?.length;
+      if(pending()){
         await this.save();
-        if(room.pendingResults){await this.state.storage.setAlarm(Date.now()+30000);return}
+        if(pending()){await this.state.storage.setAlarm(Date.now()+30000);return}
       }
       if(Date.now()>=idleUntil&&!this.sockets().length)return this.destroy();
       await this.state.storage.setAlarm(Math.max(idleUntil,Date.now()+60000));return;
@@ -693,7 +751,7 @@ export class Room {
       if(Date.now()<(g.nextHandAt||0)){await this.armAlarm(g.nextHandAt);return}
       // Each hand is counted against the daily free-plan budget; past the hard limit the match stops unrated.
       const usage=await this.dir('/usage/hand',this.dealtTo());
-      if(usage&&!usage.ok){g.result='Match complete';g.note=CLOSED_MESSAGE;g.nextHandAt=0;room.match=null;await this.save();return}
+      if(usage&&!usage.ok){g.result='Match complete';g.note=CLOSED_MESSAGE;g.nextHandAt=0;this.closeAllStats();room.match=null;await this.save();return}
       this.startHand(g);await this.save();return;
     }
     if(Date.now()<g.deadline-50){await this.armAlarm(g.deadline);return}
@@ -778,7 +836,7 @@ export class Room {
       const note=plan.finished?{kind:'finished',place:plan.places?.[id]??null,entrants,winner:plan.winner}
         :plan.out?.[id]?{kind:'out',place:plan.out[id].place,entrants}
         :plan.moves?.[id]?{kind:'moved',table:plan.moves[id].table}:{kind:'moved',table:0};
-      this.tNotify(token,note);
+      this.tNotify(token,note);this.closeStats(id,{place:note.place??null});
       delete room.members[token];room.seats[m.seat]=null;delete t.stacks[id];if(t.ext)delete t.ext[id];
     }
     for(const s of plan.seats||[])this.seatT(s);
@@ -806,7 +864,9 @@ export class Room {
   }
   async removeMember(token,reason){
     const room=this.room,m=room.members[token];if(!m)return;
-    delete room.members[token];
+    // A player who leaves has their hands sent with no place (they left), unless they busted out of the match: then
+    // their record waits for the match to end, which gives them their place.
+    delete room.members[token];if(m.accountId&&!room.match?.out?.some(group=>group.includes(m.seat)))this.closeStats(m.accountId);
     const g=room.game,p=g?.players.find(x=>x.seat===m.seat);
     if(p&&!this.matchOver(g)){
       p.left=true;
@@ -942,11 +1002,12 @@ export class Room {
       if(msg.type==='action'){
         if(this.matchOver(room.game))throw Error('Match not started');
         const p=room.game.players.find(x=>x.seat===member.seat);
-        // Ranked: grade the decision before it changes the table; a failed grade never blocks play.
-        let graded=null;
-        if(room.match?.ranked&&member.accountId&&this.legal(member.seat))try{graded=gradeDecision(room.game,member.seat,msg.action,msg.amount)}catch{}
-        this.applyAction(member.seat,msg.action,msg.amount);
-        if(graded){const d=(room.match.grades||={})[member.seat]||={s:0,w:0,n:0};d.s+=graded.acc*graded.weight;d.w+=graded.weight;d.n++}
+        // A signed-in player's decision is graded before it changes the table, for their stats in every mode and for
+        // Ranked Elo; a failed grade never blocks play.
+        let graded=null;const legal=member.accountId&&this.legal(member.seat);
+        if(legal&&['fold','check','call','raise','allin'].includes(msg.action)&&(msg.action!=='check'||legal.check))try{graded=gradeDecision(room.game,member.seat,msg.action,msg.amount)}catch{}
+        this.applyAction(member.seat,msg.action,msg.amount,graded);
+        if(graded&&room.match?.ranked){const d=(room.match.grades||={})[member.seat]||={s:0,w:0,n:0};d.s+=graded.acc*graded.weight;d.w+=graded.weight;d.n++}
         if(p){p.timeouts=0;p.away=false}
         this.autoAdvance();await this.save();return;
       }

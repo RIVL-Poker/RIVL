@@ -4,9 +4,10 @@ import {glicko} from './glicko.js';
 import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 import {startOf} from './tournament.js';
 import {setupStats,heartbeat,guestId,handDealt,report} from './stats.js';
+import '../hand-stats.js';
 
-// rating.js (loaded by grading.js) defines the Ranked leagues shared with the site.
-const R=globalThis.RivlRating;
+// rating.js (loaded by grading.js) defines the Ranked leagues shared with the site; hand-stats.js the player stats.
+const R=globalThis.RivlRating,HS=globalThis.RivlHandStats;
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
 const FRIEND_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MAX_FRIENDS=100;
 // The page sends a presence heartbeat every minute while it's on screen (account.js), and says when it's hidden.
@@ -15,6 +16,9 @@ const ONLINE_MS=5*60*1000;
 // An invite to a casual room shows for 15 minutes, or until the friend joins or says no thanks.
 const INVITE_MS=15*60*1000;
 const LOBBY_TTL=15*60*1000,BOARD_TTL=10000;
+// Player stats: a practice upload carries at most 5 matches of at most 400 hands; a room sends a player's hands at least
+// every 100. The recent games list adds up the latest 30 matches.
+const STATS_BATCH=5,STATS_HANDS=400,RECENT_GAMES=30;
 const day=()=>new Date().toISOString().slice(0,10);
 const hex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
 const sha256=async text=>hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)));
@@ -75,6 +79,19 @@ export class Directory {
     // Freerolls finished before game history existed get their history card from the saved results.
     for(const {night} of this.rows("SELECT DISTINCT night FROM freeroll_results WHERE 'freeroll:'||night NOT IN (SELECT id FROM game_history)"))
       this.freerollHistory(night,startOf(night),0);
+    // Player stats (hand-stats.js): one row per player per match (per table, in the freeroll) with the match's counts,
+    // kept for good, and every hand's record, kept HS.HAND_DAYS days for replays. player_totals holds each player's
+    // counts per mode, the sum of their rows, so the Profile reads four rows instead of every match.
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS player_matches(account TEXT NOT NULL,game TEXT NOT NULL,part TEXT NOT NULL,mode TEXT NOT NULL,t INTEGER NOT NULL,t0 INTEGER NOT NULL,
+      size INTEGER NOT NULL,place INTEGER,hands INTEGER NOT NULL,stats TEXT NOT NULL,detail TEXT,PRIMARY KEY(account,game,part))`);
+    this.sql.exec('CREATE INDEX IF NOT EXISTS player_matches_recent ON player_matches(account,t DESC)');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS player_matches_detail ON player_matches(t) WHERE detail IS NOT NULL');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS player_totals(account TEXT NOT NULL,mode TEXT NOT NULL,stats TEXT NOT NULL,PRIMARY KEY(account,mode))');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS game_history_players_account ON game_history_players(account)');
+    // A Ranked row keeps the Elo shown after the match, so the Profile chart is the same on every device.
+    if(!this.rows('PRAGMA table_info(game_history_players)').some(c=>c.name==='elo_after'))this.sql.exec('ALTER TABLE game_history_players ADD COLUMN elo_after INTEGER');
+    // Practice matches saved a day count against their own budget, so uploads can never use up online play's.
+    if(!this.rows('PRAGMA table_info(usage)').some(c=>c.name==='practice'))this.sql.exec('ALTER TABLE usage ADD COLUMN practice INTEGER NOT NULL DEFAULT 0');
     // Player numbers for the owner's stats page (worker/stats.js).
     setupStats(this);
     // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
@@ -90,11 +107,11 @@ export class Directory {
   one(q,...b){return this.rows(q,...b)[0]||null}
   limits(){
     const n=(v,d)=>Number.isFinite(Number(v))&&Number(v)>0?Number(v):d;
-    return {rooms:n(this.env.DAILY_ROOM_LIMIT,300),hands:n(this.env.DAILY_HAND_LIMIT,1500),accounts:n(this.env.DAILY_ACCOUNT_LIMIT,500)};
+    return {rooms:n(this.env.DAILY_ROOM_LIMIT,300),hands:n(this.env.DAILY_HAND_LIMIT,1500),accounts:n(this.env.DAILY_ACCOUNT_LIMIT,500),practice:n(this.env.DAILY_PRACTICE_LIMIT,2000)};
   }
   usage(){
     const d=day();this.sql.exec('INSERT OR IGNORE INTO usage(day) VALUES (?)',d);
-    return this.one('SELECT rooms,hands,accounts FROM usage WHERE day=?',d);
+    return this.one('SELECT rooms,hands,accounts,practice FROM usage WHERE day=?',d);
   }
   status(){
     const u=this.usage(),l=this.limits();
@@ -273,6 +290,39 @@ export class Directory {
         const game=this.one('SELECT * FROM game_history WHERE id=?',id);
         if(!game)return this.reply({error:'Game not found'},404);
         return this.reply({game,players:this.rows('SELECT account AS id,name,place,chips,accuracy,decisions,elo_change FROM game_history_players WHERE game=? ORDER BY place,name',id)});
+      }
+      // Match History's MINE filter: the Ranked and freeroll games this player was in.
+      if(path==='/history/mine'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in again to see your games.'},401);
+        return this.reply({games:this.rows('SELECT g.* FROM game_history_players p JOIN game_history g ON g.id=p.game WHERE p.account=? ORDER BY g.t DESC LIMIT 60',a.id)});
+      }
+      // Player stats. Rooms send each signed-in player's hands (this path is never reachable from the Worker's /api);
+      // browsers send finished practice matches; only the player can read their own stats.
+      if(path==='/pstats/record'){
+        for(const r of Array.isArray(body.records)?body.records.slice(0,200):[])if(r&&r.mode!=='practice')this.saveStats(r);
+        return this.reply({ok:true});
+      }
+      if(path==='/pstats/practice'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in again to save your practice stats.'},401);
+        // saved lists every match the browser can let go of: stored now, stored before, or not valid. Past the day's
+        // budget the rest wait in the browser for tomorrow.
+        const saved=[];let full=false;
+        for(const m of Array.isArray(body.matches)?body.matches.slice(0,STATS_BATCH):[]){
+          const id=String(m?.id||'').slice(0,64);
+          if(/^[A-Za-z0-9-]{8,64}$/.test(id)){
+            if(this.usage().practice>=this.limits().practice){full=true;break}
+            if(this.saveStats({account:a.id,game:'practice:'+id,part:'',mode:'practice',t:m.t,t0:m.t0,size:m.size,place:m.place,hands:m.hands}))this.sql.exec('UPDATE usage SET practice=practice+1 WHERE day=?',day());
+          }
+          saved.push(id);
+        }
+        return this.reply({saved,full});
+      }
+      if(path==='/pstats/me'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in again to see your stats.'},401);
+        return this.reply(this.playerStats(a));
       }
       if(path==='/leaderboard'){
         return this.reply(this.board('top',()=>{
@@ -466,6 +516,38 @@ export class Directory {
       :this.rows('SELECT * FROM accounts WHERE rgames>0 AND MAX(0,rr-elo_offset)>=? AND MAX(0,rr-elo_offset)<? ORDER BY ABS(MAX(0,rr-elo_offset)-?) LIMIT 50',lo,top,r);
     return {league:t.name,leagueKey:t.key,near,total,players:rows.sort((x,y)=>y.rr-x.rr).map(a=>this.publicAccount(a))};
   }
+  // One player's hands from one match (or one freeroll table) are saved once: a second copy is ignored, so a room or a
+  // browser can safely send it again. The counts are worked out here from the hand records, never taken as sent.
+  saveStats({account,game,part='',mode,t,t0,size,place,hands}){
+    const list=Array.isArray(hands)?hands.slice(0,STATS_HANDS).filter(HS.valid):[];
+    account=String(account||'');game=String(game||'');part=String(part??'');
+    if(!list.length||!HS.MODES.includes(mode)||!game||game.length>80||part.length>40)return false;
+    if(!this.one('SELECT id FROM accounts WHERE id=?',account))return false;
+    if(this.one('SELECT 1 AS x FROM player_matches WHERE account=? AND game=? AND part=?',account,game,part))return false;
+    const now=Date.now(),end=Math.min(now,Number(t)||now),start=Math.min(end,Number(t0)||end),stats=HS.total(list.map(HS.count));
+    const seats=Math.max(2,Math.min(9,Math.round(Number(size))||Math.max(...list.map(h=>h[0])))),finish=Number.isInteger(place)&&place>=1&&place<=10000?place:null;
+    this.sql.exec('INSERT INTO player_matches(account,game,part,mode,t,t0,size,place,hands,stats,detail) VALUES (?,?,?,?,?,?,?,?,?,?,?)',account,game,part,mode,end,start,seats,finish,list.length,JSON.stringify(stats),JSON.stringify(list));
+    const row=this.one('SELECT stats FROM player_totals WHERE account=? AND mode=?',account,mode);
+    this.sql.exec('INSERT OR REPLACE INTO player_totals(account,mode,stats) VALUES (?,?,?)',account,mode,JSON.stringify(HS.add(row?HS.add(HS.blank(),JSON.parse(row.stats)):HS.blank(),stats)));
+    // Hand records past their HS.HAND_DAYS are dropped, at most once an hour; the counts they added stay.
+    if(now-(this.prunedAt||0)>=3600000){this.prunedAt=now;this.sql.exec('UPDATE player_matches SET detail=NULL WHERE t<? AND detail IS NOT NULL',now-HS.HAND_DAYS*86400000)}
+    return true;
+  }
+  // A player's own stats: totals per mode, their latest games (a freeroll night's tables added together) and their Elo
+  // after each Ranked match, for the Profile chart.
+  playerStats(a){
+    const totals=Object.fromEntries(HS.MODES.map(m=>[m,HS.blank()])),games=new Map();
+    for(const r of this.rows('SELECT mode,stats FROM player_totals WHERE account=?',a.id))if(totals[r.mode])HS.add(totals[r.mode],JSON.parse(r.stats));
+    for(const r of this.rows(`SELECT m.game,m.mode,m.t,m.t0,m.size,m.place,m.hands,m.stats,h.place AS final,h.elo_change FROM player_matches m
+      LEFT JOIN game_history_players h ON h.game=m.game AND h.account=m.account WHERE m.account=? ORDER BY m.t DESC LIMIT 120`,a.id)){
+      let x=games.get(r.game);
+      if(!x){if(games.size>=RECENT_GAMES)continue;games.set(r.game,x={id:r.game,mode:r.mode,t:r.t,t0:r.t0,size:r.size,place:r.final??r.place,elo:r.elo_change,hands:0,stats:HS.blank()})}
+      x.t0=Math.min(x.t0,r.t0);x.size=Math.max(x.size,r.size);x.hands+=r.hands;x.place??=r.place;HS.add(x.stats,JSON.parse(r.stats));
+    }
+    const ranked=this.rows(`SELECT g.t,g.players,p.place,p.accuracy,p.elo_change AS change,p.elo_after AS after FROM game_history_players p JOIN game_history g ON g.id=p.game
+      WHERE p.account=? AND g.mode='Ranked' ORDER BY g.t DESC LIMIT 100`,a.id);
+    return {totals,games:[...games.values()],ranked,rating:this.publicAccount(a,false).rating};
+  }
   // Ranked rooms only: Glicko-2 among signed-in players. Against each opponent the score is 60% finishing place
   // and 40% decision accuracy, as in bot practice; with fewer than 3 graded decisions on either side it is place only.
   // Ratings and grades are computed on the server, never trusted from browsers.
@@ -486,7 +568,7 @@ export class Directory {
     this.sql.exec('INSERT INTO game_history(id,t,mode,players,winner,duration,hands) VALUES (?,?,?,?,?,?,?)',String(matchId),now,'Ranked',updates.length,winner?.a.name||'Unknown',Math.max(0,Math.round(Number(duration)||0)),Math.max(0,Math.round(Number(hands)||0)));
     for(const u of updates){
       const acc=graded(u.p)?Math.round(Number(u.p.acc)*10)/10:null;
-      this.sql.exec('INSERT INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change) VALUES (?,?,?,?,?,?,?,?)',String(matchId),u.a.id,u.a.name,u.place,Number.isFinite(Number(u.p.chips))?Number(u.p.chips):null,acc,Number(u.p.decisions)||0,Math.round(u.next.r-u.a.rr));
+      this.sql.exec('INSERT INTO game_history_players(game,account,name,place,chips,accuracy,decisions,elo_change,elo_after) VALUES (?,?,?,?,?,?,?,?,?)',String(matchId),u.a.id,u.a.name,u.place,Number.isFinite(Number(u.p.chips))?Number(u.p.chips):null,acc,Number(u.p.decisions)||0,Math.round(u.next.r-u.a.rr),Math.max(0,Math.round(u.next.r-(u.a.elo_offset||0))));
     }
     return {rated:true,changes:updates.map(u=>({id:u.a.id,name:u.a.name,before:Math.max(0,Math.round(u.a.rr-(u.a.elo_offset||0))),after:Math.max(0,Math.round(u.next.r-(u.a.elo_offset||0))),accuracy:graded(u.p)?Math.round(Number(u.p.acc)):null}))};
   }

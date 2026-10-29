@@ -5,20 +5,21 @@ const signed=n=>{n=Math.round(n);return n===0?'±0':(n>0?'+':'−')+Math.abs(n)}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let lastGrade=null,gradeFxTimer=null;
 
-/* Called by action() before every legal decision is applied. */
+/* Called by action() before every legal decision is applied. Returns the grade (or null), which player stats log. */
 function gradeAction(i,type,amount){
-  if(!game||!window.RivlRating)return;
-  const g=game,p=g.players[i];
+  if(!game||!window.RivlRating)return null;
+  const g=game,p=g.players[i];let r=null;
   try{
     let A=g.pendingAnalysis&&g.pendingAnalysis.i===i?g.pendingAnalysis:null;
     g.pendingAnalysis=null;
     if(!A)A=RivlRating.analyze(g,i,i===0?RivlRating.GRADE_ITERS:140);
-    const r=RivlRating.grade(A,type,type==='raise'?Math.round(Number(amount)):0);
+    r=RivlRating.grade(A,type,type==='raise'?Math.round(Number(amount)):0);
     (p.grades||(p.grades=[])).push(r);
     if(i===0){lastGrade=r;if(g.coach)showGradeFx(r)}
   }catch(e){console.error('grading failed',e)}
   const toCall=Math.max(0,g.currentBet-p.bet);
   if(type==='raise')p.line=2;else if(type==='call'&&toCall>0)p.line=Math.max(p.line||0,1);
+  return r;
 }
 
 /* Float the grade just above the highest seat, in the open sky over the table,
@@ -92,7 +93,7 @@ function showMatchResult(s){
 /* ---------- ladder views ---------- */
 function ladderRows(){
   const st=RivlRating.store();
-  return Object.entries(st.players).map(([name,p])=>({name,...p,avg:p.accN?p.accSum/p.accN:null})).sort((a,b)=>b.r-a.r);
+  return Object.entries(st.players).map(([name,p])=>({name,...p,avg:RivlRating.lifetimeAccuracy(p)})).sort((a,b)=>b.r-a.r);
 }
 function sparkline(points,w=560,h=120){
   if(points.length<2)return '<p class="muted">Play two rated matches to see your rating chart.</p>';
@@ -115,12 +116,13 @@ function renderRankedTracker(acct,elo,games,set){
   set('rtGames',games);set('rtWins',acct?.wins||0);
   set('rtWinRate',games?Math.round(100*(acct.wins||0)/games)+'%':'–');
   set('rtRank',acct?.rank?'#'+acct.rank:'–');
-  let hist=[];try{hist=JSON.parse(localStorage.getItem('rivlRankedHistory')||'[]')}catch{}
-  hist=Array.isArray(hist)&&acct?hist.filter(m=>m.account===acct.id):[];
+  // The server's Ranked history is the same on every device; until it loads, this device's own list stands in.
+  let hist=window.rivlPlayerStats?.ranked?.(acct);const server=!!hist;
+  if(!server){try{hist=JSON.parse(localStorage.getItem('rivlRankedHistory')||'[]')}catch{}hist=Array.isArray(hist)&&acct?hist.filter(m=>m.account===acct.id):[]}
   const ch=$('rtChart');
   if(ch)ch.innerHTML=hist.length?sparkline([hist[0].before,...hist.map(m=>m.after)]):'<p class="muted">Your Elo chart starts after your first Ranked match.</p>';
   const ms=$('rtMatches');
-  if(ms)ms.innerHTML=hist.length?`<div class="mr-row head"><span>RESULT</span><span>TABLE</span><span>ACC</span><span>ELO</span></div>`+hist.slice(-6).reverse().map(m=>`<div class="mr-row"><span class="${m.result==='Win'?'positive':''}">${m.result==='Win'?'WIN':'LOSS'}</span><span>${m.players} players</span><span>${m.acc==null?'–':m.acc+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)}</span></div>`).join(''):'<p class="muted">No Ranked matches on this device yet.</p>';
+  if(ms)ms.innerHTML=hist.length?`<div class="mr-row head"><span>RESULT</span><span>TABLE</span><span>ACC</span><span>ELO</span></div>`+hist.slice(-6).reverse().map(m=>`<div class="mr-row"><span class="${m.result==='Win'?'positive':''}">${m.result==='Win'?'WIN':'LOSS'}</span><span>${m.players} players</span><span>${m.acc==null?'–':m.acc+'%'}</span><span class="${m.after-m.before>=0?'positive':'negative'}">${signed(m.after-m.before)}</span></div>`).join(''):`<p class="muted">No Ranked matches${server?'':' on this device'} yet.</p>`;
 }
 function refreshRatingUI(){
   if(!window.RivlRating)return;
@@ -140,7 +142,7 @@ function refreshRatingUI(){
   renderRankedTracker(acct,elo,games,set);
   window.rivlPaintName?.();
   set('homeRating',Math.max(0,Math.round(me.r-1500)).toLocaleString());
-  const avg=me.accN?' · '+(me.accSum/me.accN).toFixed(1)+'% avg accuracy':'';
+  const lifetime=RivlRating.lifetimeAccuracy(me),avg=lifetime==null?'':' · '+lifetime.toFixed(1)+'% accuracy';
   set('homeStatsLine',`${t.name} · ${me.games||0} bot matches${avg}`);
   const recent=st.matches.slice(-3).reverse();
   const rl=$('recentList');
@@ -153,7 +155,7 @@ function refreshRatingUI(){
   set('profTier','Bot Practice · Unranked');
   set('profGames',me.games||0);set('profWins',me.wins||0);
   set('profWinRate',me.games?Math.round(100*(me.wins||0)/me.games)+'%':'–');
-  set('profAcc',me.accN?(me.accSum/me.accN).toFixed(1)+'%':'–');
+  set('profAcc',lifetime==null?'–':lifetime.toFixed(1)+'%');
   const ch=$('profChart');if(ch)ch.innerHTML=sparkline(st.matches.length?[st.matches[0].before,...st.matches.map(m=>m.after)]:[]);
   const lb=$('profLabels');
   if(lb){const total=RivlRating.LABELS.reduce((s,l)=>s+(st.labels[l]||0),0);
@@ -173,7 +175,7 @@ function refreshRatingUI(){
       <div class="bot-skill-stat"><span>WINS</span><strong>${me.wins||0}</strong></div>
       <div class="bot-skill-stat"><span>MATCHES</span><strong>${me.games||0}</strong></div>
       <div class="bot-skill-stat"><span>WIN RATE</span><strong>${me.games?Math.round(100*(me.wins||0)/me.games)+'%':'–'}</strong></div>
-      <div class="bot-skill-stat"><span>DECISION ACCURACY</span><strong>${me.accN?(me.accSum/me.accN).toFixed(1)+'%':'–'}</strong></div>
+      <div class="bot-skill-stat"><span>DECISION ACCURACY</span><strong>${lifetime==null?'–':lifetime.toFixed(1)+'%'}</strong></div>
       <div class="bot-skill-decisions"><span>DECISION QUALITY · ${decisions} GRADED</span><strong>${qualityText}</strong></div>`;
   }
 }

@@ -444,6 +444,16 @@ function store(){
 function save(){try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify(STORE))}catch(e){}}
 function resetLadder(){STORE=freshStore();save();return STORE}
 
+// A player's lifetime bot practice accuracy, weighing every decision as a match does: Σ accuracy×weight over Σ weight.
+// Matches from before decisions were weighted kept only their averages, so each of those counts as a typical match
+// since does (the average weight of the matches since); with none since, it is the plain average of match averages.
+function lifetimeAccuracy(p){
+  if(!p)return null;
+  const oldN=p.accOldN??p.accN??0,oldSum=p.accOldSum??p.accSum??0,newN=(p.accN||0)-oldN;
+  if(!p.accW||newN<=0)return oldN?oldSum/oldN:null;
+  const w=p.accW/newN;
+  return (p.accS+oldSum*w)/(p.accW+oldN*w);
+}
 function matchAccuracy(p){
   const gr=p.grades||[];if(!gr.length)return{acc:null,n:0};
   let s=0,w=0;gr.forEach(x=>{s+=x.acc*x.weight;w+=x.weight});
@@ -452,7 +462,7 @@ function matchAccuracy(p){
 /* places: array of finishing places aligned with game.players (1 = best, ties allowed). */
 function recordMatch(players,places){
   const st=store();
-  const rows=players.map((p,i)=>{const a=matchAccuracy(p);return{name:p.name,place:places[i],acc:a.acc,n:a.n,before:{...(st.players[p.name]||{r:1500,rd:350,vol:.06})}}});
+  const rows=players.map((p,i)=>{const a=matchAccuracy(p),gr=p.grades||[];return{name:p.name,place:places[i],acc:a.acc,n:a.n,s:gr.reduce((t,x)=>t+x.acc*x.weight,0),w:gr.reduce((t,x)=>t+x.weight,0),before:{...(st.players[p.name]||{r:1500,rd:350,vol:.06})}}});
   const results=(row,mode)=>rows.filter(o=>o!==row).map(o=>{
     const pl=placeScore(row.place,o.place),okAcc=row.n>=MIN_DECISIONS&&o.n>=MIN_DECISIONS;
     const ac=okAcc?pairAcc(row.acc,o.acc):pl;
@@ -468,7 +478,10 @@ function recordMatch(players,places){
     const s=st.players[row.name]||(st.players[row.name]={games:0,wins:0,accSum:0,accN:0});
     Object.assign(s,{r:row.after.r,rd:row.after.rd,vol:row.after.vol});
     s.games=(s.games||0)+1;if(row.place===1)s.wins=(s.wins||0)+1;
+    // Lifetime accuracy (lifetimeAccuracy): the averages from before decisions were weighted are kept apart.
+    if(s.accW==null){s.accOldSum=s.accSum||0;s.accOldN=s.accN||0}
     if(row.acc!=null){s.accSum=(s.accSum||0)+row.acc;s.accN=(s.accN||0)+1}
+    s.accS=(s.accS||0)+row.s;s.accW=(s.accW||0)+row.w;
   });
   const me=rows[0],myGrades=players[0].grades||[];
   const labels=Object.fromEntries(LABELS.map(l=>[l,0]));myGrades.forEach(g=>{labels[g.label]++;st.labels[g.label]=(st.labels[g.label]||0)+1});
@@ -488,5 +501,5 @@ const LEAGUES=[['Prospect',0,350,'prospect'],['Challenger',350,700,'challenger']
 const BAND=350;
 function tier(r){const t=LEAGUES.find(([,lo,hi])=>r>=lo&&r<hi)||LEAGUES[0];const lo=t[1]||t[2]-BAND,hi=t[2]===Infinity?lo+BAND:t[2];return{name:t[0],key:t[3],lo,progress:Math.max(0,Math.min(1,(r-lo)/(hi-lo))),next:t[2]===Infinity?null:t[2]}}
 
-root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,handTier,handClass,TIERS,rfiTier,bookWindows,gradePreflop,equity,analyze,grade,chooseBot,chooseBest,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LEAGUES,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
+root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,handTier,handClass,TIERS,rfiTier,bookWindows,gradePreflop,equity,analyze,grade,chooseBot,chooseBest,glicko,recordMatch,matchAccuracy,lifetimeAccuracy,store,save,resetLadder,tier,LEAGUES,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
 })(typeof window!=='undefined'?window:globalThis);
