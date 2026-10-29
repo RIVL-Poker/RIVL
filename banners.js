@@ -227,5 +227,8 @@
   document.addEventListener('rivl:view',e=>{if(e.detail==='profile')loadMine();if(e.detail==='support')paintVault()});
   document.addEventListener('rivl:account',loadMine);
   setupVault();paintPanel();
+  // Opened on this device but the account never heard (signed out then, or the save failed): tell it now, so
+  // the player's other devices see banners too.
+  setTimeout(()=>{if(local()&&window.rivlAccount?.key()&&!account()?.bannersUnlocked)loadMine()},4000);
   window.rivlBanners={decorate,openCard,unlocked,banner};
 })();
