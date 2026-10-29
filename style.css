@@ -2786,3 +2786,19 @@ html.sidebar-open .nav .nav-icon{width:15px;height:15px;vertical-align:-2px}
   .hr-chart{padding:12px}
 }
 @media(max-width:360px){.hr-cell{font-size:7px}}
+
+/* Installed app (home-screen PWA): keep the bottom of the page clear of the iPhone home bar */
+@media (display-mode: standalone){
+  #app{box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom,0px)}
+}
+/* "Add RIVL to your home screen" card, shown on phones after a game (install-app.js) */
+.install-card{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:9500;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;background:#14110d;border:1px solid #9c7143;border-radius:14px;box-shadow:0 12px 40px #000c;color:#f8f4ed;animation:install-in .25s ease-out}
+.install-card img{width:48px;height:48px;border-radius:11px;flex:none}
+.install-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.install-text strong{font-size:12px;letter-spacing:.08em;color:#e9b977}
+.install-text span{font-size:13px;line-height:1.35;color:#d8d0c4}
+.install-text svg{width:17px;height:17px;vertical-align:-3px;fill:none;stroke:#e9b977;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.install-card .install-go{flex:none;margin:0;padding:12px 16px;min-height:44px}
+.install-card .install-close{flex:none;width:44px;height:44px;margin:-6px -4px -6px 0;padding:0;background:none;border:0;color:#a99e8f;font-size:26px;line-height:1}
+@keyframes install-in{from{transform:translateY(20px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.install-card{animation:none}}
