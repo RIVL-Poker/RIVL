@@ -35,7 +35,8 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Stricter decision grading (preflop charts, tighter thresholds) | `claude/decision-grading-accuracy-cnnv3r` | rating.js, worker/grading.js, tests.js, README.md | PR open |
 | Claude | Launch notices: Terms of Use, public privacy page, Support notices, 18+ line | `claude/support-launch-notices-a26yoz` | index.html, style.css, welcome-support.js, privacy.html, terms.html, legal.css, scripts/build-site.mjs | PR open |
 | Claude | Training section + hand range trainer | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, scripts/build-site.mjs | Merged (#141) |
-| Claude | Training: facing-a-raise drill | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, README.md | PR open |
+| Claude | Training: facing-a-raise drill | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, README.md | Merged (#142) |
+| Claude | Standard facing-a-raise charts in the grader | `claude/project-thread-bkyllm` | rating.js, training.js (export only), tests.js, README.md | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -157,3 +158,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - The answers are `RivlRating.gradePreflop()` itself (now exported with `bookWindows`), fed the same book `analyze()` builds for the spot, and 3-bets go to 3x in position or 4x from the blinds, so the drill can never disagree with the grader. Correct = Best, Close = Excellent or Good, Miss = anything worse. `tests.js` checks the labels against `analyze()` + `grade()` for every seat and opener.
 - `training.js` is now one shared drill page (`makeDrill`) plus a config per drill, and each drill renders into an empty `<section>` in index.html. To add a drill: add a config to `DRILLS` and an empty `<section id="…" class="view content-view">`, and map the id to `training` in `NAV_FOR`.
 - Badges/achievements are still parked.
+
+### 2026-10-29 02:38 UTC · Claude
+- The grader's charts for facing one raise (`bookWindows` in rating.js) were too loose against early raises: the small blind 3-bet 11% against UTG (77+, KTs, QTs, JTs, AJo, KQo), and at 9-max a cold caller continued with as many hands as UTG opens. The big blind also defended the same 48% against the hijack as against the button.
+- Now the small blind 3-bets tiers 0-1 (about 5%) against UTG to LJ, tiers 0-2 against the hijack and tiers 0-3 against the cutoff or later, with flats never wider than its 3-bet range. Cold callers and the big blind 3-bet only tier 0 against UTG, UTG+1 and MP. Cold calls are one tier tighter against UTG to HJ. Against a 2.5 BB open the big blind defends about 33% against the hijack, 48% against the cutoff and 68% against the button or small blind. Against bigger opens (up to 3.5 BB) it defends one tier tighter against the hijack and one tier wider against the button or small blind.
+- This changes live grading (Ranked rooms via worker/grading.js) and the Set Hands bots (`chooseBest`) in these spots, as well as the facing-a-raise drill. `tests.js` now checks that the charts stay close to standard ones.

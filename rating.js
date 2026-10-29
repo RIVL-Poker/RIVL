@@ -237,14 +237,15 @@ function bookWindows(b){
       if(b.pos==='SB'&&!hu){W.call=[3,8];W.weakCall=true}
       W.spot=hu?'first in heads-up':b.pos==='SB'?'first in from the small blind':`first in with ${b.behind} players behind`;
     }
-  }else if(b.raisers===1&&b.pos==='BB'){ // Closing the action at a discount: defend wider against smaller raises and wider openers.
-    const hi=b.size<=2.5?Math.min(7,Ro+2):b.size<=3.5?Math.min(6,Ro+1):b.size<=5?Math.min(4,Ro):b.size<=8?2:1;
-    W.raise=[0,Ro>=6?2:1];W.call=[1,Math.max(1,hi)];W.spot=`in the big blind against a raise to ${bbs(b.size)}`;
-  }else if(b.raisers===1&&b.pos==='SB'){ // Out of position with the big blind behind: 3-bet or fold, flatting is weaker.
-    W.raise=[0,Ro>=6?3:2];W.call=[1,2];W.weakCall=true;W.spot=`in the small blind against a raise to ${bbs(b.size)}`;
+  }else if(b.raisers===1&&b.pos==='BB'){ // Closing the action at a discount: defend wider against smaller raises and later openers.
+    const hi=b.size<=2.5?Math.min(8,Ro+(Ro>=5?1:2)):b.size<=3.5?Math.min(7,Ro+(Ro>=5?0:1)):b.size<=5?Math.min(4,Ro):b.size<=8?2:1;
+    W.raise=[0,Ro>=6?2:Ro>=4?1:0];W.call=[1,Math.max(1,hi)];W.spot=`in the big blind against a raise to ${bbs(b.size)}`;
+  }else if(b.raisers===1&&b.pos==='SB'){ // Out of position with the big blind behind: 3-bet or fold, tighter against earlier openers; flatting is weaker.
+    const hi=Ro>=6?3:Ro===5?2:1;
+    W.raise=[0,hi];W.call=[1,Math.min(2,hi)];W.weakCall=true;W.spot=`in the small blind against a raise to ${bbs(b.size)}`;
   }else if(b.raisers===1){ // Cold-calling: tighter against early openers and bigger raises.
-    const hi=Math.max(1,Math.min(4,Math.max(2,Ro-1))-(b.size>5?2:b.size>3.5?1:0));
-    W.raise=[0,Ro>=6?2:1];W.call=[1,hi];W.spot=`against a raise to ${bbs(b.size)}`;
+    const hi=Math.max(1,Math.min(4,Ro-2)-(b.size>5?2:b.size>3.5?1:0));
+    W.raise=[0,Ro>=6?2:Ro>=4?1:0];W.call=[1,hi];W.spot=`against a raise to ${bbs(b.size)}`;
   }else if(b.raisers===2){
     W.raise=[0,0];W.call=[0,1];W.spot='against a 3-bet';
   }else{
