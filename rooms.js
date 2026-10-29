@@ -4,6 +4,8 @@
   const stored=key=>{try{return localStorage.getItem(key)}catch{return null}};
   const API=window.RIVL_ROOM_API||stored('rivlRoomApi')||(/^https?:$/.test(location.protocol)?location.origin:'');
   const SESSION='rivlRoomSession';
+  // Spectating: watchId is the table's object id (never its join code) and watchFocus the friend whose seat the view follows.
+  let watchId='',watchFocus='';
   let socket=null,roomCode='',token='',snapshot=null,selectedSeat=-1,isHost=false,clockOffset=0,retry=0,retryTimer=null,pingTimer=null,roomWinKey='',roomWinTimer=null;
   const saveSession=()=>{try{localStorage.setItem(SESSION,JSON.stringify({code:roomCode,token}))}catch{}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION)}catch{}};
@@ -130,24 +132,29 @@
   function render(){
     if(!snapshot)return;
     const fr=snapshot.tourney;
-    $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=fr?'· FREEROLL TABLE '+fr.table:snapshot.ranked?'· RANKED '+(snapshot.rankedMax||6)+' PLAYERS':roomCode;
+    const spectator=!!snapshot.watching;
+    $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=(fr?'· FREEROLL TABLE '+fr.table:snapshot.ranked?'· RANKED '+(snapshot.rankedMax||6)+' PLAYERS':spectator?'':roomCode)+(spectator?' · WATCHING':'');
+    $('leaveRoom').textContent=spectator?'STOP WATCHING':'LEAVE ROOM';
+    $('rooms').classList.toggle('rivl-spectating',spectator);
+    const eye=$('roomWatchers');if(eye){eye.hidden=!snapshot.watchers;eye.textContent='👁 '+snapshot.watchers+' WATCHING';eye.title=spectator?'Spectators at this table, you included':(fr?'Spectators never see your cards unless they are shown at showdown':'Spectators are your friends or other players’ friends. Only your own friends can see your cards')}
+    for(const id of ['roomLobbyChatForm','roomChatForm'])if($(id))$(id).hidden=spectator;
     const playing=!!snapshot.started&&!!snapshot.game;
     $('roomLobbyChat').hidden=playing;
     if(!playing)renderLobbyChat();
     const disclaimer=document.querySelector('.room-disclaimer');
-    if(disclaimer)disclaimer.textContent=fr?'Nightly Freeroll · free to play, no real money, no Elo change. Your seat is kept if you refresh or lose connection.':(snapshot.ranked?'Ranked':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
+    if(disclaimer)disclaimer.textContent=spectator?(fr?'You are watching as a spectator. You see the board and any hand shown at showdown, never anyone’s hole cards.':'You are watching as a spectator. You see your friends’ cards and any hand shown at showdown, never anyone else’s.'):fr?'Nightly Freeroll · free to play, no real money, no Elo change. Your seat is kept if you refresh or lose connection.':(snapshot.ranked?'Ranked':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
     const heading=document.querySelector('.crumb');
     if(heading)heading.textContent=fr?'TEXAS HOLD’EM · NIGHTLY FREEROLL':playing?'TEXAS HOLD’EM · '+(snapshot.ranked?'RANKED':'UNRANKED')+' MULTIPLAYER':'TEXAS HOLD’EM · ONLINE ROOMS';
     $('rooms').classList.toggle('rivl-match-mode',playing);
     if(playing&&!wasPlaying){window.scrollTo({top:0,behavior:'instant'});}
     wasPlaying=playing;
     const host=isHost;
-    $('roomHostNotice').textContent=fr?'Freeroll table '+fr.table+'. The first hand is dealt when the tournament starts.':snapshot.ranked?rankedQueueText():
+    $('roomHostNotice').textContent=spectator?'You are watching this table. The match has not started yet.':fr?'Freeroll table '+fr.table+'. The first hand is dealt when the tournament starts.':snapshot.ranked?rankedQueueText():
       (host?'You are the host. Tap + to add a bot.':'Waiting for the host to start.');
     $('roomPrivate').disabled=!host;$('roomPublic').disabled=!host;
     // Ranked tables are matchmade: no visibility switch, no room code to share and no Start button.
-    const visibilityRow=document.querySelector('.room-visibility');if(visibilityRow)visibilityRow.hidden=!!snapshot.ranked||!!fr;
-    $('roomStart').hidden=!!snapshot.ranked||!!fr;
+    const visibilityRow=document.querySelector('.room-visibility');if(visibilityRow)visibilityRow.hidden=!!snapshot.ranked||!!fr||spectator;
+    $('roomStart').hidden=!!snapshot.ranked||!!fr||spectator;
     clearInterval(queueTimer);if(snapshot.ranked&&!snapshot.started)queueTimer=setInterval(()=>{$('roomHostNotice').textContent=rankedQueueText()},1000);
     $('roomPrivate').className=snapshot.visibility==='private'?'gold':'outline';
     $('roomPublic').className=snapshot.visibility==='public'?'gold':'outline';
@@ -176,11 +183,13 @@
     if(snapshot.game){
       const g=snapshot.game;
       $('roomBlinds').textContent=g.smallBlind+' / '+g.bigBlind;
-      $('roomMode').textContent=fr?'FREEROLL · TABLE '+fr.table:snapshot.ranked?'PVP · RANKED':'PVP · UNRANKED';
+      $('roomMode').textContent=(spectator?'WATCHING · ':'')+(fr?'FREEROLL · TABLE '+fr.table:snapshot.ranked?'PVP · RANKED':'PVP · UNRANKED');
       $('roomGamePhase').textContent='#'+g.handNumber+' · '+g.phase.toUpperCase();
       const active=g.players.filter(p=>p&&!p.sittingOut);
       $('roomPlayerCount').textContent=active.length;
-      const me=g.players.find(p=>p.seat===snapshot.mySeat);
+      // A spectator sees the table from the seat of the friend they came to watch (or the first player), cards face down.
+      const me=g.players.find(p=>p.seat===snapshot.mySeat)||(spectator?g.players.find(p=>watchFocus&&snapshot.seats[p.seat]?.accountId===watchFocus)||g.players[0]:null);
+      const myCards=g.holeCards||(spectator&&me?g.friendCards?.[me.seat]||g.shown?.[me.seat]:null)||null;
       // Opponents are laid out clockwise starting at your left, in the server's turn order (seat index order
       // starting after yours), so the action, dealer and blinds travel around the table instead of jumping.
       const after=p=>me?(p.seat-me.seat+9)%9:p.seat;
@@ -191,7 +200,7 @@
       // Like bot practice, your clock always sits beside your cards and counts down only on your turn.
       const myTurn=!!me&&g.turn===me.seat&&g.phase!=='showdown';$('roomTimer').hidden=!me;$('roomTimer').classList.toggle('is-live',myTurn);
       // Ranked: three +5 second extensions per match, usable on your own turn.
-      const ext=$('roomExtend'),extLeft=snapshot.extensionsLeft;ext.hidden=!me||extLeft==null||g.matchOver||!!me.folded;
+      const ext=$('roomExtend'),extLeft=snapshot.extensionsLeft;ext.hidden=!me||spectator||extLeft==null||g.matchOver||!!me.folded;
       if(!ext.hidden){ext.disabled=!myTurn||!extLeft;ext.classList.toggle('is-live',myTurn&&extLeft>0);$('roomExtendLeft').textContent=extLeft?extLeft+' left':'none left'}
       const newHand=g.handNumber!==previousHand;
       if(newHand){previousHand=g.handNumber;previousBoard=[];previousTurn=-1;lastTick=-1}
@@ -201,9 +210,9 @@
       mySpot.classList.toggle('is-folded',!!me?.folded);
       window.rivlTable?.bbCount(mySpot,$('roomMyAvatar'),me?.stack??0,me?g.bigBlind:0);
       if(me?.folded)hole.replaceChildren();
-      else if(newHand||hole.children.length!==2){
-        hole.replaceChildren();
-        for(let i=0;i<2;i++)hole.append(animatedCard(g.holeCards?.[i],!g.holeCards?.[i],i*170+100));
+      else if(newHand||hole.children.length!==2||hole.dataset.cards!==(myCards||[]).join()){
+        hole.replaceChildren();hole.dataset.cards=(myCards||[]).join();
+        for(let i=0;i<2;i++)hole.append(animatedCard(myCards?.[i],!myCards?.[i],i*170+100));
         if(g.holeCards?.length){setTimeout(()=>pvpSound('card'),100);setTimeout(()=>pvpSound('card'),270)}
       }
       const board=$('roomBoard');
@@ -231,7 +240,7 @@
       const amt=(n)=>window.rivlAmounts.fmt(n,g.bigBlind);
       window.rivlAmounts.fill($('roomPotTotal'),g.pot,g.bigBlind);$('roomPotLabel').textContent=amt(g.pot);window.rivlAmounts.paint();
       window.rivlAmounts.fill($('roomBalance'),me?.stack??0,g.bigBlind);
-      const myContribution=Number(g.players.find(p=>p.seat===snapshot.mySeat)?.contribution||0);
+      const myContribution=Number(me?.contribution||0);
       $('roomPotEquity').textContent=g.pot?Math.round(100*myContribution/g.pot)+'%':'0%';
       const potEl=$('roomPotChips');if(potEl.dataset.pot!==String(g.pot||0)){potEl.dataset.pot=g.pot||0;potEl.innerHTML=window.rivlChips.pileHTML(g.pot)}
       const seats=$('roomGamePlayers');seats.replaceChildren();
@@ -244,7 +253,8 @@
         const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=amt(p.stack)+(p.left?' · LEFT':p.away&&snapshot.seats[p.seat]?.online===false?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
         if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}
-        const cards=g.shown?.[p.seat];
+        // A spectator also sees the cards of any other friend at the table (the server sends only friends', never in a freeroll).
+        const cards=g.shown?.[p.seat]||(!p.folded&&g.friendCards?.[p.seat])||null;
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
         // Evenly distribute opponents along a mirrored arc around the Cairo table.
         const total=opponents.length;
@@ -286,9 +296,9 @@
         winnerOverlay.classList.add('visible');}
       }else{roomWinKey='';clearTimeout(roomWinTimer);winnerOverlay.classList.remove('visible')}
       $('roomWinner').textContent=g.result||'';
-      $('roomNext').hidden=!(g.matchOver&&(host||snapshot.ranked||fr));
+      $('roomNext').hidden=spectator||!(g.matchOver&&(host||snapshot.ranked||fr));
       $('roomNext').textContent=fr?'FREEROLL RESULTS':snapshot.ranked?'FIND NEXT RANKED MATCH':'BACK TO LOBBY';
-      if(g.matchOver&&!fr)recordMatch(g);
+      if(g.matchOver&&!fr&&!spectator)recordMatch(g);
       if(g.matchOver&&fr)$('roomWinner').textContent=g.note||'The freeroll is over.';
       else if(g.matchOver){const best=g.players.filter(p=>!p.left).sort((a,b)=>b.stack-a.stack)[0];$('roomWinner').textContent=best?'Match complete · '+best.name+' wins the table':'Match complete'}
       const ratings=$('roomRatings');ratings.replaceChildren();
@@ -314,14 +324,14 @@
         slider.value=amount.value;window.rivlAmounts.raiseLabel($('roomAmountLabel'),amount.value,snapshot?.game?.bigBlind);
         $('roomBetInfo').parentElement.hidden=true;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips'+(window.rivlAmounts.unit()==='bb'?' ('+amt(l.raiseToMin)+'–'+amt(l.raiseToMax)+')':'')+' · 12-second turn';
-      }else{roomBetKey='';$('roomBetInfo').parentElement.hidden=false;$('roomBetInfo').textContent=fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
+      }else{roomBetKey='';$('roomBetInfo').parentElement.hidden=false;$('roomBetInfo').textContent=spectator?(g.matchOver?'This match is over':'Watching'+(me?' '+me.name:'')+(fr?' · hole cards stay hidden unless shown at showdown':' · you see your friends’ cards, nobody else’s')):fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
       const tick=()=>{
         // The ring drains over the whole turn, extensions included, so an extension refills it.
         const ms=Math.max(0,g.deadline-(Date.now()+clockOffset)),key=[g.handNumber,g.turn,g.board.length,g.currentBet].join(':');
         if(key!==clockKey){clockKey=key;clockSpan=12000}clockSpan=Math.max(clockSpan,ms);const percent=Math.min(100,ms/clockSpan*100);
         $('roomTimer').style.background=myTurn?'conic-gradient(#dc5555 '+(100-percent)+'%, #52bd76 0)':'';
-        const sec=Math.ceil(ms/1000);if(g.turn===me?.seat&&sec<=5&&sec>0&&sec!==lastTick){pvpSound('tick');lastTick=sec}
+        const sec=Math.ceil(ms/1000);if(!spectator&&g.turn===me?.seat&&sec<=5&&sec>0&&sec!==lastTick){pvpSound('tick');lastTick=sec}
         $('roomTimerText').textContent=myTurn?Math.ceil(ms/1000):'–';
         $('roomBlindsLabel').innerHTML=blindClockText(snapshot.blindClock);
       };
@@ -357,6 +367,7 @@
     $('rankedSelectStatus').textContent=window.rivlAccount?.key()?(message||''):'Sign in on your Profile to play Ranked.';
   }
   function leaveRoom(){
+    if(watchId){const back=snapshot?.tourney?'freeroll':'friends';resetView('');show(back);if(back==='freeroll')window.rivlFreeroll?.refresh();return true}
     if(snapshot?.tourney){
       // A freeroll seat is kept: leaving the table just sits you out until you come back from the Freeroll page.
       if(!snapshot.tourney.done&&!confirm('Leave the table? You stay in the freeroll, but your hands are folded until you come back.'))return false;
@@ -377,27 +388,28 @@
   function resetView(message){
     clearTimeout(retryTimer);clearInterval(pingTimer);clearInterval(clockTimer);closeBotPicker();
     if(socket){socket.onclose=null;socket.close()}
-    clearInterval(queueTimer);socket=null;roomCode='';token='';rankedEntry=false;snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
+    clearInterval(queueTimer);socket=null;roomCode='';token='';watchId='';watchFocus='';rankedEntry=false;snapshot=null;wasPlaying=false;previousHand=0;roomHistory=[];roomChat=[];lastRecordedResult='';clearSession();
     const heading=document.querySelector('.crumb');if(heading)heading.textContent='TEXAS HOLD’EM';
-    $('rooms').classList.remove('rivl-match-mode');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();document.dispatchEvent(new Event('rivl:room'));
+    $('rooms').classList.remove('rivl-match-mode','rivl-spectating');$('roomLobby').hidden=true;$('roomEntry').hidden=false;$('roomFinder').hidden=false;status(message);startFinder();document.dispatchEvent(new Event('rivl:room'));
   }
   function connect(){
     clearTimeout(retryTimer);
     if(socket){socket.onclose=null;socket.close()}
-    const ws=new WebSocket(API.replace(/^http/,'ws').replace(/\/$/,'')+'/ws/'+encodeURIComponent(roomCode));
+    const ws=new WebSocket(API.replace(/^http/,'ws').replace(/\/$/,'')+(watchId?'/ws/watch/'+watchId:'/ws/'+encodeURIComponent(roomCode)));
     socket=ws;
-    ws.onopen=()=>{retry=0;ws.send(JSON.stringify({type:'auth',token}));status(snapshot?.ranked||rankedEntry?'Connected to the Ranked queue':'Connected to room '+roomCode);clearInterval(pingTimer);pingTimer=setInterval(()=>{if(socket?.readyState===WebSocket.OPEN)socket.send('ping')},30000)};
+    ws.onopen=()=>{retry=0;ws.send(JSON.stringify(watchId?{type:'watch',key:window.rivlAccount?.key()||undefined}:{type:'auth',token}));status(watchId?'Watching as a spectator':snapshot?.ranked||rankedEntry?'Connected to the Ranked queue':'Connected to room '+roomCode);clearInterval(pingTimer);pingTimer=setInterval(()=>{if(socket?.readyState===WebSocket.OPEN)socket.send('ping')},30000)};
     ws.onmessage=event=>{
       if(event.data==='pong')return;
       let message;try{message=JSON.parse(event.data)}catch{return}
       if(message.type==='state'){const before=snapshot;snapshot=message.state;keepPhotos(before,snapshot);if(snapshot.ranked)markRankedHistory();roomChat=Array.isArray(snapshot.chat)?snapshot.chat.slice(-40):[];renderLobbyChat();isHost=!!message.isHost;clockOffset=(snapshot.serverNow||Date.now())-Date.now();render();document.dispatchEvent(new Event('rivl:room'))}
       else if(message.type==='chat')addChatMessage(message.message);
       else if(message.type==='freeroll'){resetView('');window.rivlFreeroll?.handle(message)}
+      else if(message.type==='removed'&&watchId){const back=snapshot?.tourney?'freeroll':'friends';resetView('');show(back);const note=$(back==='freeroll'?'frlStatus':'frStatus');if(note)note.textContent=message.reason||'You stopped watching.'}
       else if(message.type==='removed'){const ranked=!!snapshot?.ranked||rankedEntry,reason=message.reason||'You are no longer in that room.';resetView(reason);if(ranked){dropRankedHistory();showRankedMenu(reason)}}
       else if(message.error)status(message.error);
     };
     // Reconnect automatically with backoff; the saved token keeps the seat.
-    ws.onclose=()=>{if(socket!==ws||!token)return;clearInterval(pingTimer);const wait=Math.min(15000,1000*2**retry++);status('Connection lost. Reconnecting…');retryTimer=setTimeout(connect,wait)};
+    ws.onclose=()=>{if(socket!==ws||!token&&!watchId)return;clearInterval(pingTimer);const wait=Math.min(15000,1000*2**retry++);status('Connection lost. Reconnecting…');retryTimer=setTimeout(connect,wait)};
   }
   let rankedSize=6;
   async function enter(kind){try{
@@ -438,7 +450,7 @@
   }
   function startFinder(){clearInterval(lobbyTimer);refreshLobby();refreshCapacity();lobbyTimer=setInterval(()=>finderVisible()?refreshLobby():null,15000)}
   document.querySelectorAll('.nav').forEach(n=>n.addEventListener('click',()=>{if(n.dataset.view!=='rooms')clearInterval(lobbyTimer)}));
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&token&&socket?.readyState!==WebSocket.OPEN){retry=0;connect()}});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(token||watchId)&&socket?.readyState!==WebSocket.OPEN){retry=0;connect()}});
   $('openRooms').onclick=()=>{show('rooms');startFinder()};
   $('quickPlay').onclick=()=>enter('quick');
   $('createRoom').onclick=()=>enter('create');
@@ -473,11 +485,15 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('roomBotPicker').hidden)closeBotPicker()});
   document.querySelectorAll('[data-level]').forEach(button=>button.onclick=()=>{send({type:'addBot',seat:selectedSeat,level:button.dataset.level});closeBotPicker()});
   // The Freeroll page seats players at their tournament table with a token the tournament hands out.
-  window.rivlRooms={enter(code,seatToken){if(token&&socket){socket.onclose=null;socket.close()}roomCode=code;token=seatToken;snapshot=null;saveSession();show('rooms');status('Joining your freeroll table…');connect()},code:()=>roomCode,freeroll:()=>!!snapshot?.tourney,
+  window.rivlRooms={enter(code,seatToken){if(token&&socket){socket.onclose=null;socket.close()}roomCode=code;token=seatToken;snapshot=null;saveSession();show('rooms');status('Joining your freeroll table…');connect()},code:()=>roomCode,freeroll:()=>!!snapshot?.tourney&&!watchId,
+    // Watch a table as a spectator: a freeroll table, or a friend's. Leaves any seat first, the same as joining.
+    watch(id,focus){if(!/^[0-9a-f]{64}$/.test(id||''))return;if(id===watchId){show('rooms');return}if(token&&leaveRoom()===false)return;if(watchId)resetView('');
+      watchId=id;watchFocus=focus||'';snapshot=null;show('rooms');status('Joining as a spectator…');connect()},
+    watching:()=>!!watchId,
     // The kind of table this player is seated at, for the player numbers heartbeat (account.js).
     mode:()=>roomCode&&snapshot?(snapshot.tourney?'freeroll':snapshot.ranked?'ranked':'casual'):'',
     // Friends can be invited to a casual room until its match starts (friends.js).
-    casual:()=>!!snapshot&&!snapshot.ranked&&!snapshot.tourney&&!snapshot.started,
+    casual:()=>!!snapshot&&!snapshot.watching&&!snapshot.ranked&&!snapshot.tourney&&!snapshot.started,
     // Accepting a friend's invite: leave any other room first, then take a seat at theirs.
     join(code){if(code===roomCode){show('rooms');return}if(token&&leaveRoom()===false)return;show('rooms');$('roomCodeInput').value=code;enter('join')}};
   // Resume a saved seat after a refresh or a closed tab.

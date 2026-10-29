@@ -64,7 +64,9 @@ export class Tournament {
       level:status==='running'?{n:level+1,blinds:blindsFor(level),next:blindsFor(level+1),nextAt:t.startAt+(level+1)*FREEROLL.levelMs}:null,
       lateReg:status==='running'&&now<t.startAt+FREEROLL.lateRegMs&&Object.keys(t.players).length<FREEROLL.cap,
       structure:{stack:FREEROLL.stack,blinds:FREEROLL_BLINDS[0],levelMinutes:FREEROLL.levelMs/60000,lateRegMinutes:FREEROLL.lateRegMs/60000,tableSize:FREEROLL.tableSize},
-      winner:winner?{id:winner.id,name:winner.name}:null,finishedAt:t.finishedAt||0,note:t.note||'',players};
+      winner:winner?{id:winner.id,name:winner.name}:null,finishedAt:t.finishedAt||0,note:t.note||'',players,
+      // Anyone can watch a running table; it is reached by its object id, not its room code.
+      watch:status==='running'?this.openTables().map(n=>({table:n,room:String(this.env.ROOMS.idFromName(t.tables[n].code)),players:this.assigned(n).length})):[]};
   }
   // Calls to tables. Adds and pokes are sent after this object's own state is saved, never awaited inside a report.
   room(code,path,body){return this.env.ROOMS.get(this.env.ROOMS.idFromName(code)).fetch('https://room'+path,{method:'POST',body:JSON.stringify(body||{})})}

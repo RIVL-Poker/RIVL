@@ -59,6 +59,10 @@ async function cachedTourney(env,night){
 const RANKED_SIZES=[3,6,9],RANKED_COUNTDOWN_MS=15000;
 // Players can add 5 seconds to their own turn clock: three times per Ranked match, five times per freeroll.
 const RANKED_EXTENSIONS=3,FREEROLL_EXTENSIONS=5,EXTENSION_MS=5000;
+// Spectators: anyone can watch a freeroll table; other tables only by a friend of someone seated there.
+// They get the same view as a player with no seat (no hole cards until showdown) plus, away from the freeroll, the
+// hole cards of the friends they came to watch. They cannot act or chat.
+const MAX_WATCHERS=25;
 const rankedSize=room=>RANKED_SIZES.includes(Number(room?.rankedMax))?Number(room.rankedMax):6;
 const RANKED_SIGN_IN='Sign in or create an account to play Ranked.';
 const CLOSED_MESSAGE='Online play has used its free capacity for today. Bot practice still works. New rooms open again after midnight UTC.';
@@ -99,6 +103,12 @@ export default {
       const ws=url.pathname.match(/^\/ws\/([A-Z2-9]{6})$/);
       if(ws&&request.headers.get('Upgrade')==='websocket'){
         return env.ROOMS.get(env.ROOMS.idFromName(ws[1])).fetch('https://room/ws',{headers:{Upgrade:'websocket'}});
+      }
+      // Spectators reach a table by its object id, so watching a friend never hands out a private room's join code.
+      const watchWs=url.pathname.match(/^\/ws\/watch\/([0-9a-f]{64})$/);
+      if(watchWs&&request.headers.get('Upgrade')==='websocket'){
+        let id;try{id=env.ROOMS.idFromString(watchWs[1])}catch{return json({error:'Table not found'},404)}
+        return env.ROOMS.get(id).fetch('https://room/ws',{headers:{Upgrade:'websocket'}});
       }
       if(request.method==='GET'){
         if(url.pathname==='/api/status')return send(await cached(env,'/status',10000));
@@ -207,6 +217,19 @@ export default {
         const r=await tourney(env,night,'/'+freeroll[1],{account:me.data.account});
         return send(r);
       }
+      if(url.pathname==='/api/watch'){
+        // Watch a friend's table: the Directory checks the friendship and knows the table from the friend's heartbeat;
+        // the table checks the friend is really seated there before anyone gets its id.
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
+        const body=await readBody(request);
+        if(!body.key)return json({error:'Sign in to watch a friend.'},401);
+        const r=await dir(env,'/watch/friend',{key:body.key,id:body.friend});
+        if(r.status!==200)return send(r);
+        const id=env.ROOMS.idFromName(r.data.code);
+        const seated=await env.ROOMS.get(id).fetch('https://room/seated',{method:'POST',body:JSON.stringify({id:String(body.friend||'')})}).then(x=>x.json()).catch(()=>null);
+        if(!seated?.ok)return json({error:r.data.name+' is not at a table right now.'},404);
+        return json({room:String(id),name:r.data.name,seat:seated.seat,kind:seated.kind});
+      }
       const friends=url.pathname.match(/^\/api\/friends(\/add|\/remove|\/new-code|\/invite|\/dismiss-invite|\/request|\/accept|\/decline)?$/);
       if(friends){
         if(friends[1]&&!['/remove','/dismiss-invite','/accept','/decline'].includes(friends[1])&&await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
@@ -297,12 +320,40 @@ export class Room {
   async armAlarm(at){if(this.alarmAt>Date.now()&&this.alarmAt<=at)return;this.alarmAt=at;await this.state.storage.setAlarm(at)}
   async load(){if(!this.room)this.room=await this.state.storage.get('room')||null;return this.room}
   sockets(){return this.state.getWebSockets().filter(ws=>ws.readyState===1).map(ws=>[ws,ws.deserializeAttachment()?.token]).filter(([,token])=>token)}
+  watchers(){return this.state.getWebSockets().filter(ws=>ws.readyState===1&&ws.deserializeAttachment()?.watch)}
+  // Spectators who came to watch a friend are sent away once none of their friends is seated here any more.
+  friendGone(ws){
+    const friends=ws.deserializeAttachment()?.friends;
+    if(this.room.tourney||!friends?.length)return false;
+    const seated=new Set(Object.values(this.room.members).map(m=>m.accountId));
+    return !friends.some(id=>seated.has(id));
+  }
+  // Someone watching a friend sees that friend's own hole cards. Freeroll spectators never see any (friends get no list there).
+  friendCards(ws){
+    const g=this.room.game,friends=ws.deserializeAttachment()?.friends;
+    if(this.room.tourney||!g||!friends?.length)return {};
+    return Object.fromEntries(Object.values(this.room.members).filter(m=>friends.includes(m.accountId)&&g.hands[m.seat]).map(m=>[m.seat,g.hands[m.seat]]));
+  }
+  async watch(ws,msg){
+    const room=this.room,out=reason=>{this.send(ws,{type:'removed',reason,watch:true});try{ws.close(1000,reason)}catch{}};
+    if(this.watchers().length>=MAX_WATCHERS)return out('This table has as many spectators as it can take. Try again later.');
+    let friends=[];
+    if(!room.tourney){
+      const a=msg.key?(await this.dir('/verify',{key:String(msg.key)}))?.account:null;
+      if(!a)return out('Sign in to watch a friend’s table.');
+      const ids=Object.values(room.members).map(m=>m.accountId).filter(Boolean);
+      friends=(await this.dir('/watch/among',{id:a.id,ids}))?.ids||[];
+      if(!friends.length)return out('You can only watch tables where a friend is playing.');
+    }
+    ws.serializeAttachment({watch:true,friends});
+    this.broadcast();
+  }
 
   publicState(token){
     const g=this.room.game,m=this.room.members[token];
     const onlineSeats=new Set(this.sockets().map(([,t])=>this.room.members[t]?.seat));
     const shown=(g?.phase==='showdown'||g?.runout)&&g.shown?Object.fromEntries(g.shown.map(s=>[s,g.hands[s]])):{};
-    return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),
+    return {visibility:this.room.visibility,started:!!this.room.started,mySeat:m?m.seat:-1,serverNow:Date.now(),watching:!m,watchers:this.watchers().length,
       seats:this.room.seats.map((s,i)=>s?{type:s.type,name:s.name,avatar:s.avatar,accountId:Object.values(this.room.members).find(m=>m.seat===i)?.accountId||null,level:s.level,isHost:!!s.isHost,verified:!!s.verified,online:s.type==='bot'||onlineSeats.has(i)}:null),
       chat:(this.room.chat||[]).slice(-CHAT_HISTORY_LIMIT),ranked:!!this.room.ranked,rated:this.rated(),
       extensionsLeft:this.extensionsLeft(m),startsAt:this.room.startsAt||0,rankedMax:rankedSize(this.room),blindClock:this.blindClock(),
@@ -321,6 +372,16 @@ export class Room {
       if(this.photosSent.get(ws)===photos){for(const seat of state.seats)if(/^data:/.test(seat?.avatar||''))delete seat.avatar}
       else this.photosSent.set(ws,photos);
       this.send(ws,{type:'state',state,isHost:token===this.room.hostToken});
+    }
+    if(!this.watchers().length)return;
+    const view=this.publicState(null);
+    for(const ws of this.watchers()){
+      if(this.friendGone(ws)){this.send(ws,{type:'removed',reason:'Your friend has left this table.',watch:true});try{ws.close(1000,'Friend left')}catch{}continue}
+      const state={...view,seats:view.seats.map(s=>s&&{...s})};
+      if(state.game)state.game={...state.game,friendCards:this.friendCards(ws)};
+      if(this.photosSent.get(ws)===photos){for(const seat of state.seats)if(/^data:/.test(seat?.avatar||''))delete seat.avatar}
+      else this.photosSent.set(ws,photos);
+      this.send(ws,{type:'state',state,isHost:false});
     }
   }
   matchOver(g=this.room?.game){return !g||g.result==='Match complete'}
@@ -790,6 +851,10 @@ export class Room {
       if(room.tourney.waiting){room.tourney.waiting=false;room.tourney.wakeAt=Date.now()+1500}
       await this.save();return this.reply({ok:true});
     }
+    if(path==='/seated'&&request.method==='POST'){
+      const id=String((await request.json()).id||''),m=id&&Object.values(room.members).find(x=>x.accountId===id);
+      return this.reply(m?{ok:true,seat:m.seat,kind:room.tourney?'freeroll':room.ranked?'ranked':'casual'}:{ok:false});
+    }
     if(path==='/t/poke'){if(room.tourney){this.alarmAt=0;await this.save()}return this.reply({ok:true})}
     if(path==='/join'&&request.method==='POST'){
       if(room.tourney)return this.reply({error:'Freeroll tables are seated by the tournament.'},403);
@@ -826,7 +891,13 @@ export class Room {
       if(data==='ping'){try{ws.send('pong')}catch{}return}
       if(typeof data!=='string'||data.length>MAX_MESSAGE)throw Error('Message too large');
       const msg=JSON.parse(data);
-      let token=ws.deserializeAttachment()?.token;
+      const attached=ws.deserializeAttachment();
+      if(attached?.watch){
+        if(msg.type==='ping')return this.send(ws,{type:'pong'});
+        throw Error('Spectators can watch but not play or chat');
+      }
+      let token=attached?.token;
+      if(!token&&msg.type==='watch')return this.watch(ws,msg);
       if(!token){
         // The seat token is sent as the first message, never in the URL.
         if(msg.type!=='auth'||!room.members[msg.token]){this.send(ws,{type:'removed',reason:'Your seat in this room is gone'});ws.close(1008,'Unauthorized');return}

@@ -141,12 +141,27 @@
     $('frlResultText').textContent=won?`Champion out of ${result.entrants} players. Your win is on the board below.`:result.place?`Out of ${result.entrants||data?.entrants||''} players. ${result.entrants?`That's ${result.entrants-result.place+1} points this month. `:''}Same time tomorrow night.`:(result.winner?`${result.winner} won tonight.`:'');
     el.classList.toggle('won',won);
   }
+  // While it runs, anyone not playing (signed out, never registered, or knocked out) can watch any table.
+  function watchList(){
+    const d=data,mine=me(),panel=$('frlWatch'),list=d.watch||[];
+    panel.hidden=d.status!=='running'||!list.length||(mine&&mine.place==null);
+    if(panel.hidden)return;
+    $('frlWatchList').replaceChildren(...list.map(t=>{
+      const row=document.createElement('div');row.className='frl-row';
+      const name=document.createElement('span');name.className='frl-name';name.textContent=`Table ${t.table}`;
+      const right=document.createElement('span');right.className='frl-right';
+      const count=document.createElement('small');count.textContent=`${t.players} ${t.players===1?'PLAYER':'PLAYERS'}`;
+      const b=document.createElement('button');b.type='button';b.className='outline frl-watch-btn';b.textContent='👁 WATCH';
+      b.onclick=()=>{if(typeof game!=='undefined'&&game&&typeof confirmLeave==='function'){if(!confirmLeave())return;stop()}window.rivlRooms?.watch(t.room)};
+      right.append(count,b);row.append(name,right);return row;
+    }));
+  }
   function render(){
     const signedIn=!!account();
     $('frlSignedOutNote').hidden=signedIn;
     if(!data){$('frlBody').hidden=true;return}
     $('frlBody').hidden=false;
-    hero();facts();standings();resultCard();
+    hero();facts();watchList();standings();resultCard();
   }
   // Messages from the table: a move to another table, a knock-out, or the final result.
   // A notice that works on every page, so registered players can play bots (or anything else) while they wait.

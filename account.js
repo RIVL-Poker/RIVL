@@ -57,7 +57,8 @@
   function presence(away){
     // Automated browsers (tests, load scripts) are not players: a guest one sends nothing, a signed-in one only friends' presence.
     if(!API||(!state&&navigator.webdriver))return;
-    const info=away?{visitor,away:true}:{visitor,activity:activity(),automated:!!navigator.webdriver||undefined};
+    // The table code lets friends watch (the server never shows it to them); a spectator sends none.
+    const info=away?{visitor,away:true}:{visitor,activity:activity(),table:window.rivlRooms?.code?.()||undefined,automated:!!navigator.webdriver||undefined};
     const url=API.replace(/\/$/,'')+(state?'/api/presence':'/api/ping'),body=JSON.stringify(state?{key:state.key,...info}:info);
     if(away&&navigator.sendBeacon){try{if(navigator.sendBeacon(url,body))return}catch{}}
     // A plain-text body keeps this a simple request; the server reads it as JSON either way.

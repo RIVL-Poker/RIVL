@@ -2666,3 +2666,18 @@ html.sidebar-open .nav .nav-icon{width:15px;height:15px;vertical-align:-2px}
    dealer and blind badges on the avatar's ::before/::after still show. */
 .seat .avatar.has-bot-photo{padding:0;overflow:visible}
 .seat .avatar .rivl-bot-photo{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
+/* Spectator mode (rooms.js): watching a freeroll table or a friend's. No action buttons, no chat box, a WATCHING tag. */
+.room-watchers{position:absolute;z-index:4;left:12px;top:10px;padding:4px 10px;border-radius:999px;background:#0b0b0cb3;border:1px solid #8a6a3a;color:#efe6d8;font-size:11px;font-weight:700;letter-spacing:.1em;white-space:nowrap;pointer-events:auto}
+.room-watchers[hidden]{display:none}
+#rooms.rivl-spectating #roomActions > :not(.rivl-pot-stats){display:none!important}
+#rooms.rivl-spectating #roomTimer{opacity:.75}
+#rooms.rivl-spectating .rivl-pot-stats-label:last-of-type{visibility:hidden}
+#rooms.rivl-spectating #roomPotEquity{visibility:hidden}
+#rooms.rivl-spectating .rivl-pvp-myseat{outline:1px dashed #8a6a3a66;outline-offset:6px;border-radius:14px}
+.fr-row-actions{display:flex;gap:8px;flex:0 0 auto;align-items:center}
+.fr-row-actions button{width:auto;margin:0}
+.fr-watch{padding:8px 12px}
+.frl-watch{margin:0 0 18px}
+.frl-watch .frl-list{max-height:none}
+.frl-watch-btn{width:auto;margin:0;padding:6px 12px;font-size:12px}
+@media(max-width:600px){.fr-row-actions{flex-direction:column;align-items:stretch}.fr-watch{padding:6px 8px}}

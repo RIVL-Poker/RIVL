@@ -75,8 +75,22 @@
       const remove=document.createElement('button');remove.type='button';remove.className='outline fr-remove';
       remove.textContent=confirmId===f.id?'CONFIRM REMOVE':'REMOVE';
       remove.onclick=()=>{if(confirmId!==f.id){confirmId=f.id;render();return}confirmId=null;act('/api/friends/remove',{id:f.id},`Removed ${f.name}.`)};
-      row.append(pic,main,remove);list.append(row);
+      // A friend seated at an online table can be watched as a spectator.
+      const buttons=document.createElement('div');buttons.className='fr-row-actions';
+      if(f.watchable){const w=document.createElement('button');w.type='button';w.className='gold fr-watch';w.textContent='👁 WATCH';w.title=`Watch ${f.name}’s table. Spectators never see hole cards unless they are shown at showdown.`;w.onclick=()=>watch(f,w);buttons.append(w)}
+      buttons.append(remove);
+      row.append(pic,main,buttons);list.append(row);
     }
+  }
+  async function watch(f,btn){
+    const acc=account();if(!acc)return;btn.disabled=true;status('');
+    try{
+      const r=await window.rivlAccount.call('/api/watch',{key:acc.key,friend:f.id});
+      // Leaving a bot match mid-hand ends it unrated, so ask first, the same as joining a friend's room.
+      if(typeof game!=='undefined'&&game&&typeof confirmLeave==='function'){if(!confirmLeave())return;stop()}
+      window.rivlRooms?.watch(r.room,f.id);
+    }catch(e){status(e.message);if(e.status===404)load()}
+    finally{btn.disabled=false}
   }
   async function act(path,extra,done){
     const acc=account();if(!acc||busy)return;busy=true;

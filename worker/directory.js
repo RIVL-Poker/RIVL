@@ -59,7 +59,8 @@ export class Directory {
     // Friends: each account has a public friend code (separate from its secret sign-in code). Entering someone's
     // code adds the friendship both ways; either side can remove it. last_seen is when the player last had RIVL open
     // on screen, and online_until says how long that counts as "active now" (see presence below).
-    for(const [name,def] of [['friend_code','TEXT'],['last_seen','INTEGER'],['online_until','INTEGER']])
+    // at_table is the online table the player's last heartbeat came from, so friends can watch it (never shown to them).
+    for(const [name,def] of [['friend_code','TEXT'],['last_seen','INTEGER'],['online_until','INTEGER'],['at_table','TEXT']])
       if(!this.rows('PRAGMA table_info(accounts)').some(c=>c.name===name))this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${name} ${def}`);
     this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS accounts_friend_code ON accounts(friend_code)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS friends(account TEXT NOT NULL,friend TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(account,friend))');
@@ -171,13 +172,13 @@ export class Directory {
   }
   // Presence comes only from the page's heartbeat, which runs while RIVL is open and on screen. Loading the
   // friends list or verifying a key doesn't count, so a tab left open in the background doesn't look online.
-  presence(a,away){const t=Date.now();this.sql.exec('UPDATE accounts SET last_seen=?,online_until=? WHERE id=?',t,away?0:t+ONLINE_MS,a.id)}
+  presence(a,away,table){const t=Date.now();this.sql.exec('UPDATE accounts SET last_seen=?,online_until=?,at_table=? WHERE id=?',t,away?0:t+ONLINE_MS,!away&&/^[A-Z2-9]{6}$/.test(table||'')?table:null,a.id)}
   friendList(a){
     const today=day(),now=Date.now();
     return this.rows(`SELECT x.*,EXISTS(SELECT 1 FROM puzzle_answers p WHERE p.account=x.id AND p.day=?) AS solved FROM friends f JOIN accounts x ON x.id=f.friend
       WHERE f.account=? ORDER BY COALESCE(x.last_seen,0) DESC LIMIT ?`,today,a.id,MAX_FRIENDS)
       // online and seenAgo are worked out here on the server's clock, so a phone with a wrong clock still shows them right.
-      .map(x=>({...this.publicAccount(x,false),lastSeen:x.last_seen||null,seenAgo:x.last_seen?Math.max(0,now-x.last_seen):null,online:(x.online_until||0)>now,solvedToday:!!x.solved,puzzleStreak:this.puzzleStats(x.id).streak}));
+      .map(x=>({...this.publicAccount(x,false),lastSeen:x.last_seen||null,seenAgo:x.last_seen?Math.max(0,now-x.last_seen):null,online:(x.online_until||0)>now,watchable:(x.online_until||0)>now&&!!x.at_table,solvedToday:!!x.solved,puzzleStreak:this.puzzleStats(x.id).streak}));
   }
   invitesFor(a){
     this.sql.exec('DELETE FROM invites WHERE created<?',Date.now()-INVITE_MS);
@@ -323,7 +324,7 @@ export class Directory {
       if(path==='/presence'){
         const a=await this.byKey(body.key);
         if(!a)return this.reply({error:'Sign in again.'},401);
-        this.presence(a,!!body.away);
+        this.presence(a,!!body.away,String(body.table||''));
         if(!body.crawler&&!body.automated)heartbeat(this,{who:'a:'+a.id,visitor:body.visitor,activity:body.activity,away:!!body.away});
         return this.reply(body.away?{ok:true,invites:[],requests:[]}:{ok:true,invites:this.invitesFor(a),requests:this.requestsFor(a).slice(0,5).map(f=>({id:f.id,name:f.name,avatar:f.avatar}))});
       }
@@ -337,6 +338,19 @@ export class Directory {
       if(path==='/stats/report'){
         if(!this.env.STATS_KEY||typeof body.statsKey!=='string'||body.statsKey!==this.env.STATS_KEY)return this.reply({error:'Not authorized.'},403);
         return this.reply(report(this));
+      }
+      // Spectating: which of these players are friends of this account (asked by a table), and which table a friend is at.
+      if(path==='/watch/among'){
+        const ids=(Array.isArray(body.ids)?body.ids:[]).slice(0,9).map(String);
+        return this.reply({ids:ids.filter(id=>this.one('SELECT 1 AS x FROM friends WHERE account=? AND friend=?',String(body.id||''),id))});
+      }
+      if(path==='/watch/friend'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in to watch a friend.'},401);
+        const f=this.one('SELECT x.name,x.at_table,x.online_until FROM friends JOIN accounts x ON x.id=friends.friend WHERE friends.account=? AND friends.friend=?',a.id,String(body.id||''));
+        if(!f)return this.reply({error:'You can only watch your friends.'},403);
+        if(!f.at_table||(f.online_until||0)<=Date.now())return this.reply({error:f.name+' is not at a table right now.'},404);
+        return this.reply({code:f.at_table,name:f.name});
       }
       if(path.startsWith('/friends')){
         const a=await this.byKey(body.key);
