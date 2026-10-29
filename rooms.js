@@ -248,7 +248,7 @@
       $('roomPokerTable').dataset.playerCount=String(count);
       opponents.forEach((p,i)=>{
         const item=document.createElement('div'),thinking=p.bot&&p.seat===g.turn&&g.phase!=='showdown';
-        item.dataset.seat=p.seat;item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
+        item.dataset.seat=p.seat;const acct=snapshot.seats[p.seat]?.accountId;if(acct)item.dataset.account=acct;item.className='seat rivl-pvp-seat s'+(i+1)+(p.seat===g.turn?' is-turn':'')+(thinking?' is-thinking':'')+(p.folded?' is-folded':'')+(p.seat===g.dealer?' is-dealer':'')+(p.seat===g.sbSeat?' is-sb':'')+(p.seat===g.bbSeat?' is-bb':'');
         const avatar=document.createElement('div');avatar.className='avatar';paintSeatAvatar(avatar,snapshot.seats[p.seat]||p);
         const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=amt(p.stack)+(p.left?' · LEFT':p.away&&snapshot.seats[p.seat]?.online===false?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
@@ -277,6 +277,7 @@
         window.rivlTable?.bbCount(item,avatar,p.stack,g.bigBlind);
       });
       window.rivlTable?.markers(table);
+      window.rivlBanners?.decorate(seats);
       if(g.result&&lastRecordedResult!==g.handNumber+':'+g.result){roomHistory.push('Hand '+g.handNumber+': '+g.result);if(roomHistory.length>100)roomHistory.shift();lastRecordedResult=g.handNumber+':'+g.result}
       renderRoomPanel();
       // Large showdown banner. Use only publicly revealed cards from the server.

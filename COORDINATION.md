@@ -38,6 +38,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Training: facing-a-raise drill | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, README.md | Merged (#142) |
 | Claude | Standard facing-a-raise charts in the grader | `claude/project-thread-bkyllm` | rating.js, training.js (export only), tests.js, README.md | PR open |
 | Claude | Player stats on the Profile, in every mode, saved to the account | `claude/project-thread-lkcyr9` | hand-stats.js, player-stats.js, player-stats.css, worker/rooms.js, worker/directory.js, worker/grading.js, index.html, script.js, ladder-ui.js, rating.js, account.js, tests.js, tests-worker.mjs, scripts/build-site.mjs, README.md | PR open |
+| Claude | Freeroll Champion Banners, secret unlock, player cards | `claude/project-thread-azruh2` | banners.js, banners.css, assets/banners/, index.html, rooms.js, account.js, freeroll.js, worker/rooms.js, worker/tournament.js, worker/directory.js, tests-worker.mjs, scripts/build-site.mjs, README.md | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -172,3 +173,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - The Directory never takes counts from a room or a browser: it checks each hand record and counts it with `hand-stats.js`. Tables: `player_matches` (one row per player per match, or per freeroll table; the hand records are dropped after 90 days, the counts stay) and `player_totals` (each player's sum per mode). New columns `game_history_players.elo_after` and `usage.practice`. A match sent twice is saved once.
 - The Ranked tracker's chart and list now come from the server, so they are the same on every device. Match History has a MINE filter. Bot practice lifetime accuracy is weighted by decision from now on (older matches keep their averages). Fixed: Ranked game history saved 0 hands for every match.
 - Not done yet: a hand replay view and trends over time (the hand records are already stored for them), importing old browser-only practice history, and all-in luck.
+
+### 2026-10-29 · Claude
+- Added Freeroll Champion Banners (banners.js, banners.css). They stay invisible until unlocked from a hidden control in Support; the unlock is saved to the account.
+- rooms.js now tags each seat with data-account and calls rivlBanners.decorate(seats) after rendering. worker/rooms.js reports knockouts and the winning five cards to the tournament; the Directory stores a detail column on freeroll_results and a banner column on accounts.
+- New routes: /api/banners, /api/banners/me, /api/banners/save, /api/player (public player card).

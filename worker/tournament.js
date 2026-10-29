@@ -134,6 +134,19 @@ export class Tournament {
       send(shuffle(mine)[0],low[0]);
     }
   }
+  // The champion banner's details: the stack after every hand (thinned to at most 96 points), who they knocked out,
+  // and the five cards of their latest showdown win (the hand that wins the night is the last one).
+  track(p,r){
+    (p.series||=[]).push(p.stack);
+    if(p.series.length>96)p.series=p.series.filter((_,i)=>i%2);
+    if(Array.isArray(r.ko))p.kos=[...(p.kos||[]),...r.ko.slice(0,9).map(x=>String(x).slice(0,20))].slice(-60);
+    const five=r.won?.five;
+    if(Array.isArray(five)&&five.length===5&&five.every(c=>/^[2-9TJQKA][SHDC]$/.test(c)))p.won={five,name:String(r.won.name||'').slice(0,20)};
+  }
+  detail(p){
+    const t=this.t;
+    return {kos:p.kos||[],series:[FREEROLL.stack,...(p.series||[])],hand:p.place===1?p.won||null:null,start:t.startAt,end:p.outAt||t.finishedAt||Date.now()};
+  }
   finish(now=Date.now()){
     const t=this.t,alive=this.alive().sort((a,b)=>b.stack-a.stack);
     alive.forEach((p,i)=>{p.place=i+1});
@@ -143,7 +156,7 @@ export class Tournament {
   }
   async record(){
     const t=this.t;if(t.recorded||t.status!=='finished'||!this.env.DIRECTORY)return;
-    const r=await this.env.DIRECTORY.get(this.env.DIRECTORY.idFromName('global')).fetch('https://dir/freeroll/results',{method:'POST',body:JSON.stringify({night:t.night,duration:(t.finishedAt||Date.now())-t.startAt,entrants:Object.keys(t.players).length,players:Object.values(t.players).map(p=>({id:p.id,place:p.place}))})});
+    const r=await this.env.DIRECTORY.get(this.env.DIRECTORY.idFromName('global')).fetch('https://dir/freeroll/results',{method:'POST',body:JSON.stringify({night:t.night,duration:(t.finishedAt||Date.now())-t.startAt,entrants:Object.keys(t.players).length,players:Object.values(t.players).map(p=>({id:p.id,place:p.place,detail:this.detail(p)}))})});
     if(r.ok){t.recorded=true;await this.save()}
   }
   plan(n,extra={}){
@@ -155,10 +168,12 @@ export class Tournament {
       winner:winner?.name||'',note:t.note||'',places:t.status==='finished'?Object.fromEntries(Object.values(t.players).map(p=>[p.id,p.place])):null,
       info:{entrants:Object.keys(t.players).length,left:this.alive().length,level:level+1,nextLevelAt:t.startAt+(level+1)*FREEROLL.levelMs,next:blindsFor(level+1)},...extra};
   }
-  report({table,players,halted}){
+  report({table,hand,players,halted}){
     const t=this.t,n=Number(table),now=Date.now(),here=t.tables[n];
     if(!here)return this.plan(n,{close:true});
     here.reportedAt=now;
+    // A table can send the same hand twice (a lost answer is retried), so a hand's banner details count once.
+    const fresh=Number(hand)>0&&Number(hand)>(here.hand||0);if(fresh)here.hand=Number(hand);
     const out={},moves={byTable:{}};
     // Players already moved away or knocked out are told so again in case the last answer was lost.
     for(const r of Array.isArray(players)?players:[]){
@@ -168,12 +183,13 @@ export class Tournament {
       const stack=Math.max(0,Math.floor(Number(r.stack)||0));p.stack=stack;p.handStart=Math.floor(Number(r.start)||stack);
       // Time extensions used so far travel with the player to their next table.
       p.ext=Math.max(p.ext||0,Math.floor(Number(r.ext)||0));
+      if(fresh)this.track(p,r);
     }
     if(t.status==='running'){
       // Everyone who busted on the same hand shares the places below the survivors; a bigger starting stack places higher.
       const busted=this.assigned(n).filter(p=>p.stack<=0&&p.seated).sort((a,b)=>b.handStart-a.handStart);
       let place=this.alive().length;
-      for(const p of busted.reverse())p.place=place--;
+      for(const p of busted.reverse()){p.place=place--;p.outAt=now}
       for(const p of busted)out[p.id]={place:p.place};
       if(halted){t.note='The freeroll ended early because online play reached its free daily limit. Places are by chip count.';this.finish(now)}
       else if(this.alive().length<=1)this.finish(now);

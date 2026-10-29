@@ -16,6 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="stylesheet" href="style.css?v=install-app-20261029">
     <link rel="stylesheet" href="player-stats.css?v=player-stats-20261029">
+    <link rel="stylesheet" href="banners.css?v=banners-20261029">
     <link rel="stylesheet" href="phone-landscape.css?v=phone-landscape-20261029" media="(orientation:landscape) and (max-height:500px) and (hover:none) and (pointer:coarse)">
     <script src="screen-modes.js?v=sidebar-drawer-20261020"></script>
 </head>
@@ -379,6 +380,7 @@
                     <div class="rt-foot"><p id="onlineProfileDetails" class="muted">Sign in or create an account to play Ranked.</p></div>
                     <p id="onlineProfileRecord" hidden></p>
                 </article>
+                <article class="panel rb-panel" id="rbPanel" hidden></article>
                 <article class="panel player-stats" id="playerStats" aria-labelledby="psTitle">
                     <div class="ps-head"><h3 id="psTitle">♠ PLAYER STATS</h3><button type="button" class="outline" id="psRefresh">REFRESH</button></div>
                     <div class="ps-modes" role="group" aria-label="Choose which games your stats count">
@@ -509,9 +511,15 @@
                     <p>For account help, privacy requests, appeals or anything else, email <a href="mailto:support@rivlpoker.com">support@rivlpoker.com</a>.</p>
                 </div>
                 <div class="panel rivl-support-panel">
-                    <h3>PLAY MONEY ONLY &middot; 18+</h3>
+                    <h3>PLAY MONEY ONLY <button type="button" class="rb-keyhole" id="rbKeyhole" aria-label="Keyhole">&middot;</button> 18+</h3>
                     <p>RIVL is free poker for fun and practice. There is no real-money gambling. Chips, ratings and leagues have no cash value and can't be bought, sold, won as prizes or exchanged for anything. You must be 18 or older to play.</p>
                     <p class="muted">If gambling is causing problems for you or someone you know, free confidential help is available: call or text 1-800-GAMBLER (US), call 0808 8020 133 (UK) or visit <a href="https://www.gamblingtherapy.org" target="_blank" rel="noopener">gamblingtherapy.org</a>.</p>
+                </div>
+                <div class="panel rivl-support-panel rb-vault" id="rbVault" hidden>
+                    <h3>THE VAULT</h3>
+                    <p class="rb-note" id="rbVaultHint">Five dials, one answer: the best hand in poker. Tap a dial to turn it.</p>
+                    <div class="rb-dials" id="rbDials"></div>
+                    <div class="rb-vault-open" id="rbVaultOpen" hidden></div>
                 </div>
                 <div class="panel rivl-support-panel">
                     <h3>FAIR PLAY &amp; COMMUNITY RULES</h3>
@@ -653,6 +661,7 @@
     <script src="backroom.js"></script>
     <script src="friends.js"></script>
     <script src="freeroll.js"></script>
+    <script src="banners.js"></script>
     <script src="freeroll-popup.js"></script>
     <script src="install-app.js"></script>
 </body>
