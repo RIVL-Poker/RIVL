@@ -1,0 +1,432 @@
+/* Phones held sideways. index.html loads this file with
+   media="(orientation:landscape) and (max-height:500px) and (hover:none) and (pointer:coarse)",
+   so its rules only ever apply to a touch screen that is wider than tall and at most 500px tall.
+   Upright phones, tablets and computers never match, and keep style.css exactly as it is.
+
+   During a match (bot practice, online rooms, Ranked and the freeroll) the table fills the left of the screen
+   at full height and the betting controls sit in a column on the right (--lp-rail wide). Blinds, clock and the
+   table buttons float as small chips in the top corners of the table. Selectors start with "html body" so they
+   outrank style.css. Bot practice is body.in-game #table; online tables are #rooms.rivl-match-mode #roomGame. */
+
+/* ---------- The page around the table ---------- */
+html body.in-game,html body:has(#rooms.active.rivl-match-mode){--lp-rail:clamp(164px,26vw,236px);--lp-gap:6px;--lp-card:clamp(40px,14vh,58px)}
+html body.in-game .sidebar,html body.in-game main>header,
+html body:has(#rooms.active.rivl-match-mode) .sidebar,html body:has(#rooms.active.rivl-match-mode) main>header{display:none!important}
+html body.in-game #app,html body:has(#rooms.active.rivl-match-mode) #app{padding-left:0!important;height:100dvh!important;min-height:0!important;overflow:hidden!important}
+html body.in-game main,html body:has(#rooms.active.rivl-match-mode) main{display:block!important;width:100%!important;min-width:0!important;height:100dvh!important;padding:0!important;margin:0!important;overflow:hidden!important}
+
+html body.in-game #table.view.active{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) var(--lp-rail)!important;
+  grid-template-rows:auto auto auto auto auto minmax(0,1fr) auto auto!important;
+  height:100dvh!important;min-height:0!important;max-height:none!important;
+  padding:0!important;margin:0!important;gap:0!important;overflow:hidden!important;
+  background:#0d0c0b!important;position:relative!important
+}
+html body #rooms.rivl-match-mode{height:100dvh!important;min-height:0!important;width:100%!important;max-width:none!important;padding:0!important;margin:0!important;overflow:hidden!important}
+html body #rooms.rivl-match-mode #roomLobby:not([hidden]){display:block!important;position:relative!important;height:100%!important;padding:0!important;margin:0!important}
+html body #rooms.rivl-match-mode #roomGame:not([hidden]){
+  display:grid!important;grid-template-columns:minmax(0,1fr) var(--lp-rail)!important;grid-template-rows:minmax(0,1fr)!important;
+  height:100%!important;min-height:0!important;padding:0!important;margin:0!important;gap:0!important;overflow:hidden!important;
+  background:#0d0c0b!important;border:0!important;border-radius:0!important;box-shadow:none!important;position:relative!important
+}
+
+/* ---------- The table: full height on the left ---------- */
+html body.in-game #table .table-scene,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-scene{
+  grid-column:1!important;grid-row:1/-1!important;position:relative!important;display:block!important;
+  min-height:0!important;height:auto!important;padding:0!important;margin:0!important;flex:none!important;
+  overflow:hidden!important;background:#0b0806!important;border:0!important;border-right:1px solid #3a2a1a!important;
+  border-radius:0!important;box-shadow:none!important
+}
+html body.in-game #table .table-scene .skyline,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-scene .skyline{display:none!important}
+/* The felt box, 62px in from each side so the side seats fit beside it. The table painting is drawn on
+   its ::before, registered to the painted rim (7-93% across and 43-84% down the image), so the cards, seats
+   and pot always sit on the painting; the box is placed so the painting's foot meets the bottom of the screen. */
+html body.in-game #table .table-scene .poker-table,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-scene .rivl-pvp-table{
+  --lp-felt-w:calc(100vw - var(--lp-rail) - 124px);
+  --lp-felt-h:max(41%,min(54%,calc(var(--lp-felt-w)/2.55)));
+  --board-card:clamp(26px,9vh,40px);--board-gap:4px;
+  position:absolute!important;left:62px!important;right:auto!important;width:var(--lp-felt-w)!important;
+  top:calc(100% - var(--lp-felt-h)*1.3902)!important;bottom:auto!important;height:var(--lp-felt-h)!important;
+  margin:0!important;transform:none!important;aspect-ratio:auto!important;
+  min-width:0!important;max-width:none!important;min-height:0!important;max-height:none!important;
+  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+  isolation:isolate;z-index:0
+}
+/* The painting fades out at its sides into a dim, blurred copy of itself that fills the rest of the table area. */
+html body.in-game #table .table-scene .poker-table::before,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-scene .rivl-pvp-table::before{
+  content:""!important;display:block!important;position:absolute!important;
+  left:-8.14%!important;top:-104.88%!important;right:auto!important;bottom:auto!important;
+  width:116.28%!important;height:243.9%!important;inset:auto;
+  background:var(--table-bg,url("assets/CAIRO%20BACKGROUND%20TEST%203.png")) center/100% 100% no-repeat!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;opacity:1!important;
+  z-index:-1!important;pointer-events:none!important;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)
+}
+html body.in-game #table .table-scene .poker-table::after,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-scene .rivl-pvp-table::after{content:none!important}
+html body.in-game #table .table-scene::after,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-scene::after{
+  content:""!important;display:block!important;position:absolute!important;inset:-24px!important;z-index:-1!important;
+  background:var(--table-bg,url("assets/CAIRO%20BACKGROUND%20TEST%203.png")) center 70%/cover no-repeat!important;
+  filter:blur(18px) brightness(.42)!important;pointer-events:none!important
+}
+
+/* Board, pot and discards in the middle of the felt. */
+html body.in-game #table .community,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-board{top:47%!important}
+html body.in-game #table .pot,html body.in-game #table .muck-pile,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .pot{top:47%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .muck-pile{top:47%!important;left:calc(50% + var(--board-card)*2.5 + var(--board-gap)*2 + 12px)!important;transform:translateY(-50%)}
+
+/* Opponents: compact pills on the rim, the name and chips on two short lines. */
+html body.in-game #table .poker-table .seat,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-pvp-seat{
+  transform:translate(-50%,-50%)!important;right:auto!important;bottom:auto!important;margin:0!important;
+  gap:4px!important;padding:2px 8px 2px 2px!important;font-size:10px!important;line-height:1.15!important;
+  width:max-content!important;max-width:none!important;border-radius:999px!important
+}
+html body.in-game #table .poker-table .seat .avatar,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-pvp-seat .avatar{width:24px!important;height:24px!important;flex:0 0 24px!important;font-size:10px!important}
+html body.in-game #table .poker-table .seat>span{font-size:10px!important;line-height:1.15!important;white-space:normal!important;max-width:74px!important;display:block!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-seat-label{display:flex!important;flex-direction:column!important;max-width:84px!important;font-size:10px!important;line-height:1.15!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-seat-label b{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-seat-label small{white-space:normal!important;overflow:visible!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-seat-label small:before{content:none!important}
+
+/* Seat slots run clockwise from your left, mirrored left to right (the same spots as on a computer). */
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="2"] .s1{left:50%!important;top:-2%!important}
+html body.in-game #table .poker-table[data-player-count="3"] .s1,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="3"] .s1{left:25%!important;top:1%!important}
+html body.in-game #table .poker-table[data-player-count="3"] .s2,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="3"] .s2{left:75%!important;top:1%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="4"] .s1{left:1%!important;top:52%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="4"] .s2{left:50%!important;top:-2%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="4"] .s3{left:99%!important;top:52%!important}
+html body.in-game #table .poker-table[data-player-count="5"] .s1{left:4%!important;top:80%!important}
+html body.in-game #table .poker-table[data-player-count="5"] .s2{left:5%!important;top:14%!important}
+html body.in-game #table .poker-table[data-player-count="5"] .s3{left:95%!important;top:14%!important}
+html body.in-game #table .poker-table[data-player-count="5"] .s4{left:96%!important;top:80%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="5"] .s1{left:1%!important;top:52%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="5"] .s2{left:25%!important;top:-1%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="5"] .s3{left:75%!important;top:-1%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="5"] .s4{left:99%!important;top:52%!important}
+html body.in-game #table .poker-table[data-player-count="6"] .s1,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s1{left:4%!important;top:80%!important}
+html body.in-game #table .poker-table[data-player-count="6"] .s2,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s2{left:5%!important;top:14%!important}
+html body.in-game #table .poker-table[data-player-count="6"] .s3,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s3{left:50%!important;top:1%!important}
+html body.in-game #table .poker-table[data-player-count="6"] .s4,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s4{left:95%!important;top:14%!important}
+html body.in-game #table .poker-table[data-player-count="6"] .s5,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s5{left:96%!important;top:80%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s1{left:4%!important;top:80%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s2{left:5%!important;top:14%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s3{left:30%!important;top:-2%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s4{left:70%!important;top:-2%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s5{left:95%!important;top:14%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s6{left:96%!important;top:80%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s1{left:4%!important;top:93%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s2{left:-1%!important;top:52%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s3{left:14%!important;top:4%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s4{left:50%!important;top:-3%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s5{left:86%!important;top:4%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s6{left:101%!important;top:52%!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s7{left:96%!important;top:93%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s1,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s1{left:4%!important;top:93%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s2,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s2{left:-1%!important;top:55%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s3,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s3{left:7%!important;top:13%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s4,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s4{left:32%!important;top:-2%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s5,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s5{left:68%!important;top:-2%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s6,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s6{left:93%!important;top:13%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s7,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s7{left:101%!important;top:55%!important}
+html body.in-game #table .poker-table[data-player-count="9"] .s8,html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s8{left:96%!important;top:93%!important}
+/* Seven to nine at a table: slightly smaller pills so every opponent fits round the rim with a name. */
+html body.in-game #table .poker-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .seat,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .rivl-pvp-seat{gap:3px!important;padding:2px 7px 2px 2px!important}
+html body.in-game #table .poker-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .seat .avatar,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .rivl-pvp-seat .avatar{width:20px!important;height:20px!important;flex:0 0 20px!important;font-size:9px!important}
+html body.in-game #table .poker-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .seat>span{font-size:9px!important;max-width:62px!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"]) .rivl-seat-label{font-size:9px!important;max-width:68px!important}
+
+/* Dealer button and blind discs, a size down so they find room on the smaller felt. */
+html body.in-game #table .poker-table>.table-marker,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.table-marker{--size:28px}
+html body.in-game #table .poker-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"])>.table-marker,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table:is([data-player-count="7"],[data-player-count="8"],[data-player-count="9"])>.table-marker{--size:24px}
+
+/* Cards shown at showdown, sized to fit between the seats. Online they hang off the pill toward the felt. */
+html body.in-game #table .poker-table .bot-shown{gap:2px!important}
+html body.in-game #table .poker-table .bot-shown .card{width:22px!important;height:31px!important;padding:2px!important;font-size:10.5px!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-pvp-seat .rivl-shown{
+  position:absolute!important;left:50%!important;right:auto!important;top:calc(100% + 10px)!important;bottom:auto!important;
+  transform:translateX(-50%)!important;margin:0!important;gap:2px!important;z-index:1
+}
+/* Below the pill by default; the front corner seats show theirs above, and the side seats beside, toward the board. */
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s1 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s5 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s1 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s6 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s1 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s7 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s1 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s8 .rivl-shown{top:auto!important;bottom:calc(100% + 3px)!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="4"] .s1 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="5"] .s1 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s2 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s2 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s2 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s2 .rivl-shown{top:50%!important;bottom:auto!important;left:calc(100% + 4px)!important;transform:translateY(-50%)!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="4"] .s3 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="5"] .s4 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="6"] .s4 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="7"] .s5 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="8"] .s6 .rivl-shown,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table[data-player-count="9"] .s7 .rivl-shown{top:50%!important;bottom:auto!important;left:auto!important;right:calc(100% + 4px)!important;transform:translateY(-50%)!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-shown .card{width:22px!important;height:31px!important;flex:0 0 22px!important;padding:2px!important;border-radius:4px!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-shown .card>strong{font-size:9px!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-shown .card>.rivl-card-center{font-size:14px!important}
+
+/* The winner banner, compact so it fits the shorter table. */
+html body.in-game #table .poker-table .win-fx,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-room-win-fx{min-width:0!important;max-width:calc(100% + 60px)!important;padding:10px 18px 9px!important;border-radius:14px!important}
+html body.in-game #table .poker-table .win-fx strong,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-room-win-fx strong{font-size:18px!important;letter-spacing:.14em!important}
+html body.in-game #table .poker-table .win-fx .rivl-winner-cards,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-room-win-fx .rivl-winner-cards{gap:8px!important;margin:7px auto 5px!important}
+html body.in-game #table .poker-table .win-fx .rivl-winner-cards .card,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-room-win-fx .rivl-winner-cards .card{width:38px!important;height:54px!important}
+html body.in-game #table .poker-table .win-fx .win-hand,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-room-win-fx .rivl-win-hand{margin-top:3px!important;font-size:11px!important}
+html body.in-game #table .poker-table .win-fx small,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table .rivl-room-win-fx .rivl-victory-gain{margin-top:4px!important;font-size:11px!important}
+
+/* You: your two cards on the front rim, the round clock on their left and your BB count on their right. */
+html body.in-game #table .poker-table>.myseat,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat{
+  position:absolute!important;left:50%!important;top:calc(100% - 16px)!important;right:auto!important;bottom:auto!important;
+  transform:translateX(-50%)!important;width:auto!important;height:auto!important;min-width:0!important;
+  display:block!important;padding:0!important;margin:0!important;background:none!important;border:0!important;
+  border-radius:0!important;box-shadow:none!important;overflow:visible!important;pointer-events:none!important;z-index:15!important
+}
+html body.in-game #table .poker-table>.myseat>.avatar,
+html body.in-game #table .poker-table>.myseat>div:not(.holecards),
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.avatar,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>div:not(.holecards):not(.rivl-seat-clock){display:none!important}
+html body.in-game #table .poker-table>.myseat>.holecards,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.holecards{
+  position:relative!important;left:auto!important;top:auto!important;transform:none!important;
+  display:flex!important;gap:6px!important;width:max-content!important;z-index:1
+}
+html body.in-game #table .poker-table>.myseat>.holecards .card,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.holecards .card{
+  width:var(--lp-card)!important;height:calc(var(--lp-card)*1.36)!important;
+  min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;
+  font-size:calc(var(--lp-card)*.36)!important;padding:4px 5px!important;border-radius:6px!important;box-sizing:border-box!important
+}
+html body.in-game #table .poker-table>.myseat>.turn,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.rivl-seat-clock{
+  position:absolute!important;right:calc(100% + 10px)!important;left:auto!important;top:50%!important;bottom:auto!important;
+  transform:translateY(-50%)!important;width:44px!important;height:44px!important;box-sizing:border-box!important
+}
+html body.in-game #table .poker-table>.myseat>.turn{border-width:4px!important;font-size:17px!important;box-shadow:0 0 0 2px #16100a,0 3px 10px #000b!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.rivl-seat-clock>span{width:36px!important;height:36px!important;font-size:16px!important}
+/* +5s (Ranked and the freeroll) sits just left of the clock. */
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.rivl-extend{
+  right:calc(100% + 60px)!important;width:42px!important;padding:3px 0!important;font-size:11px!important;border-radius:7px!important
+}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.rivl-extend small{font-size:7px!important}
+html body.in-game #table .poker-table>.myseat>.bb-count,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-table>.rivl-pvp-myseat>.bb-count{
+  position:absolute!important;left:calc(100% + 8px)!important;right:auto!important;top:50%!important;bottom:auto!important;
+  transform:translateY(-50%)!important;white-space:nowrap!important
+}
+
+/* ---------- Corner chips over the table ---------- */
+/* Blinds, clock and accuracy (or hand and mode online) in the top-left corner. */
+html body.in-game #table .gamebar,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-gamebar{
+  grid-column:1!important;grid-row:1/-1!important;align-self:start!important;z-index:20!important;position:relative!important;
+  display:flex!important;align-items:flex-start!important;justify-content:flex-start!important;gap:5px!important;
+  height:auto!important;min-height:0!important;flex:none!important;margin:0!important;padding:6px 8px!important;
+  background:none!important;border:0!important;box-shadow:none!important;pointer-events:none!important
+}
+html body.in-game #table .gamebar>div,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-gamebar>div{
+  display:flex!important;flex-direction:column!important;gap:1px!important;padding:3px 8px!important;min-width:0!important;
+  background:#090807d9!important;border:1px solid #6b4b2c!important;border-radius:8px!important;pointer-events:auto
+}
+html body.in-game #table .gamebar>div:nth-child(4),
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-gamebar>div:nth-child(4){display:none!important}
+html body.in-game #table .gamebar small,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-gamebar small{font-size:7.5px!important;letter-spacing:.08em!important;line-height:1!important}
+html body.in-game #table .gamebar strong,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-gamebar strong{font-size:12px!important;line-height:1.1!important;white-space:nowrap!important}
+/* Full screen, Save and Leave in the top-right corner. */
+html body.in-game #table .gamebar-actions{margin-left:auto!important;display:flex!important;gap:5px!important;pointer-events:auto}
+html body #rooms.rivl-match-mode .room-topline{
+  position:absolute!important;top:6px!important;right:calc(var(--lp-rail) + 8px)!important;left:auto!important;bottom:auto!important;
+  display:flex!important;gap:5px!important;width:auto!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;
+  background:none!important;border:0!important;box-shadow:none!important;z-index:25!important
+}
+html body.in-game #table .gamebar-actions button,
+html body #rooms.rivl-match-mode .room-topline button:not([hidden]){
+  height:28px!important;min-height:0!important;padding:0 9px!important;font-size:10.5px!important;
+  border-radius:7px!important;background:#090807d9!important;display:flex!important;align-items:center!important;gap:0!important
+}
+html body.in-game #table .gamebar-actions .fs-label,
+html body #rooms.rivl-match-mode .room-topline .fs-label{display:none!important}
+html body.in-game #table .gamebar-actions .fs-toggle svg,
+html body #rooms.rivl-match-mode .room-topline .fs-toggle svg{width:15px!important;height:15px!important;margin:0!important}
+
+/* ---------- The right-hand column: pot, balance and equity; Fold, Call and Raise; the raise size ---------- */
+/* style.css shrinks the betting block with zoom:.85. Here the block's own box is dissolved into the column, so the
+   zoom moves onto each piece, which looks the same in every browser. */
+html body.in-game #table .actions{display:contents!important;zoom:1!important}
+html body.in-game #table .actions>*,html body #rooms.rivl-match-mode #roomGame #roomActions>*{zoom:.85}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls{
+  grid-column:2!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto auto auto minmax(0,1fr) auto auto auto auto auto!important;
+  min-height:0!important;height:auto!important;padding:0 0 6px!important;margin:0!important;gap:0!important;
+  overflow-x:hidden!important;overflow-y:auto!important;background:#0d0c0b!important;border:0!important;border-radius:0!important;box-shadow:none!important
+}
+html body #rooms.rivl-match-mode #roomGame #roomActions:not([hidden]){display:contents!important;zoom:1!important}
+html body.in-game #table .actions>*,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>*,
+html body #rooms.rivl-match-mode #roomGame #roomActions>*{grid-column:2!important;margin:var(--lp-gap) 8px 0!important;min-width:0!important;width:auto!important;max-width:none!important;flex:none!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>*,
+html body #rooms.rivl-match-mode #roomGame #roomActions>*{grid-column:1!important}
+html body.in-game #table .actions>.rivl-pot-stats,html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats{grid-row:1!important}
+html body.in-game #table .actions>#fold,html body #rooms.rivl-match-mode #roomGame #roomFold{grid-row:2!important}
+html body.in-game #table .actions>#check,html body #rooms.rivl-match-mode #roomGame #roomCall{grid-row:3!important}
+html body.in-game #table .actions>#bet,html body #rooms.rivl-match-mode #roomGame #roomRaise{grid-row:4!important}
+html body.in-game #table .actions>.raise,html body #rooms.rivl-match-mode #roomGame #roomActions>.raise{grid-row:5!important}
+html body #rooms.rivl-match-mode #roomGame #roomWinner{grid-row:7!important}
+html body #rooms.rivl-match-mode #roomGame #roomRatings{grid-row:8!important}
+html body #rooms.rivl-match-mode #roomGame #roomNext{grid-row:9!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>.bottom-toggle{grid-row:10!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>.rivl-timer-row{grid-row:11!important}
+html body.in-game #table .actions>button,
+html body #rooms.rivl-match-mode #roomGame #roomActions>button{
+  height:clamp(34px,11.5vh,46px)!important;min-height:0!important;padding:0 8px!important;
+  font-size:clamp(12px,3.6vh,15px)!important;border-radius:9px!important
+}
+html body.in-game #table .actions>.raise,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.raise{
+  display:grid!important;grid-template-columns:1fr 1fr!important;gap:5px!important;height:auto!important;
+  padding:6px!important;border-radius:9px!important
+}
+html body.in-game #table .actions>.raise>label,
+html body.in-game #table .actions>.raise>input[type=range],
+html body #rooms.rivl-match-mode #roomGame #roomActions>.raise>label,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.raise>input[type=range]{display:none!important}
+html body.in-game #table .actions>.raise .amount-row,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.raise .amount-row{
+  grid-column:1/-1!important;display:grid!important;grid-template-columns:30px minmax(0,1fr) 30px!important;gap:5px!important;margin:0!important
+}
+html body.in-game #table .actions>.raise .amount-row>*,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.raise .amount-row>*{height:30px!important;min-height:0!important;min-width:0!important;width:auto!important;padding:0 4px!important;margin:0!important;font-size:14px!important}
+html body.in-game #table .actions>.raise .quick-bets,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.raise .quick-bets{grid-column:1/-1!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:5px!important;margin:0!important}
+html body.in-game #table .actions>.raise .quick-bets button,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.raise .quick-bets button{height:26px!important;min-height:0!important;padding:0 2px!important;font-size:10px!important;margin:0!important}
+/* When an online match is over, its result and the next-match button take the place of the betting buttons. */
+html body #rooms.rivl-match-mode #roomGame:has(#roomNext:not([hidden])) #roomActions>:not(.rivl-pot-stats){display:none!important}
+html body #rooms.rivl-match-mode #roomGame #roomWinner:empty,
+html body #rooms.rivl-match-mode #roomGame #roomRatings:empty{display:none!important}
+html body #rooms.rivl-match-mode #roomGame #roomWinner{padding:0!important;font-size:12px!important;line-height:1.3!important;text-align:center!important}
+html body #rooms.rivl-match-mode #roomGame #roomRatings{padding:0!important;font-size:10px!important;line-height:1.35!important;text-align:center!important}
+html body #rooms.rivl-match-mode #roomGame #roomNext{height:36px!important;min-height:0!important;padding:0 6px!important;font-size:12px!important;border-radius:9px!important}
+
+/* Pot, balance and equity on one slim line at the top of the column. */
+html body.in-game #table .actions>.rivl-pot-stats,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:4px!important;
+  height:auto!important;min-height:0!important;padding:5px 8px!important;margin-top:8px!important;border-radius:8px!important;overflow:hidden!important
+}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pov-pot-balance-row{display:contents!important}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pov-stat{display:flex!important;align-items:center!important;gap:4px!important;min-width:0!important;padding:0!important;border:0!important}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pot-stats-divider,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-divider{display:none!important}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pot-stats-label,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-label{font-size:0!important;margin:0!important;padding:0!important}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pot-stats-label::after,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-label::after{font-size:8px;letter-spacing:.06em}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pov-stat:not(.rivl-pov-balance-stat) .rivl-pot-stats-label::after,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-label:nth-child(1)::after{content:'POT'}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pov-balance-stat .rivl-pot-stats-label::after,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-label:nth-child(4)::after{content:'BAL'}
+html body.in-game #table .actions>.rivl-pot-stats>.rivl-pot-stats-label::after,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-label:nth-child(7)::after{content:'EQ'}
+/* Online the three figures are one flat list, so each label after the first pushes its pair along. */
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats{justify-content:flex-start!important}
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-label:is(:nth-child(4),:nth-child(7)){margin-left:auto!important}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pot-stats-value,
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pot-stats-percent,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats .rivl-pot-stats-value,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats .rivl-pot-stats-percent{display:flex!important;align-items:center!important;gap:3px!important;font-size:11px!important;margin:0!important;padding:0!important;white-space:nowrap!important}
+@media(min-width:721px){
+  html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats>.rivl-pot-stats-value:not(:has(.amount-unit))>:is(.rivl-pot-stats-chip,.rivl-pov-chip-icon){display:inline-grid!important;place-items:center!important}
+}
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pot-stats-chip,
+html body.in-game #table .actions>.rivl-pot-stats .rivl-pov-chip-icon,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats .rivl-pot-stats-chip,
+html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats .rivl-pov-chip-icon{width:12px!important;height:12px!important;flex:0 0 12px!important;font-size:7px!important}
+
+/* On the narrowest phones the figures need the room the chip icons took. */
+@media(max-width:720px){
+  html body.in-game #table .actions>.rivl-pot-stats :is(.rivl-pot-stats-chip,.rivl-pov-chip-icon),
+  html body #rooms.rivl-match-mode #roomGame #roomActions>.rivl-pot-stats :is(.rivl-pot-stats-chip,.rivl-pov-chip-icon){display:none!important}
+}
+
+/* Game panel button and the status line at the foot of the column. */
+html body.in-game #table .bottom-toggle,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>.bottom-toggle{
+  display:flex!important;align-items:center!important;gap:5px!important;
+  width:auto!important;height:auto!important;min-height:0!important;flex:none!important;margin:var(--lp-gap) 8px 0!important;padding:0!important
+}
+html body.in-game #table .bottom-toggle{grid-column:2!important;grid-row:7!important}
+html body.in-game #table .bottom-toggle>button,
+html body #rooms.rivl-match-mode #roomGame .bottom-toggle>button{
+  flex:1!important;min-width:0!important;height:30px!important;padding:0 4px!important;font-size:0!important;border-radius:8px!important
+}
+html body.in-game #table .bottom-toggle>button::after,
+html body #rooms.rivl-match-mode #roomGame .bottom-toggle>button::after{content:'⌃ GAME PANEL';font-size:10px;letter-spacing:.05em}
+html body.in-game #table .bottom-toggle>button[aria-expanded="true"]::after,
+html body #rooms.rivl-match-mode #roomGame .bottom-toggle>button[aria-expanded="true"]::after{content:'⌄ CLOSE PANEL'}
+@media(max-width:720px){
+  html body.in-game #table .bottom-toggle>button::after,
+  html body #rooms.rivl-match-mode #roomGame .bottom-toggle>button::after{content:'⌃ PANEL'}
+  html body.in-game #table .bottom-toggle>button[aria-expanded="true"]::after,
+  html body #rooms.rivl-match-mode #roomGame .bottom-toggle>button[aria-expanded="true"]::after{content:'⌄ CLOSE'}
+}
+html body.in-game #table .bottom-toggle .unit-toggle-wrap,
+html body #rooms.rivl-match-mode #roomGame .bottom-toggle .unit-toggle-wrap{position:static!important;transform:none!important;flex:none!important;margin:0!important}
+html body.in-game #table .bottom-toggle .unit-toggle,
+html body #rooms.rivl-match-mode #roomGame .bottom-toggle .unit-toggle{height:30px!important;padding:2px!important}
+html body.in-game #table .bottom-toggle .unit-toggle em,
+html body #rooms.rivl-match-mode #roomGame .bottom-toggle .unit-toggle em{font-size:8.5px!important;padding:0 6px!important;line-height:24px!important}
+html body.in-game #table #status{grid-column:2!important;grid-row:8!important}
+html body.in-game #table #status,
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>.rivl-timer-row{
+  margin:4px 8px 6px!important;padding:0!important;height:auto!important;min-height:0!important;flex:none!important;
+  font-size:10px!important;line-height:1.25!important;text-align:center!important;white-space:normal!important
+}
+html body.in-game #table #status{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>.rivl-timer-row{justify-content:center!important}
+html body #rooms.rivl-match-mode #roomGame .rivl-pvp-controls>.rivl-timer-row>*{font-size:10px!important;line-height:1.25!important}
+
+/* The game panel opens over the table, leaving the controls column in place. */
+html body.in-game #table #gamePanel.collapsed,
+html body #rooms.rivl-match-mode #roomGame #roomGamePanel.collapsed{display:none!important}
+html body.in-game #table #gamePanel:not(.collapsed),
+html body #rooms.rivl-match-mode #roomGame #roomGamePanel:not(.collapsed){
+  position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;
+  width:calc(100vw - var(--lp-rail))!important;height:auto!important;max-height:none!important;
+  margin:0!important;padding:8px!important;z-index:40!important;display:flex!important;flex-direction:column!important;
+  background:#0d0c0b!important;border:0!important;border-right:1px solid #6b4b2c!important;border-radius:0!important;overflow:hidden!important
+}
+html body.in-game #table #gamePanel .tabs,
+html body #rooms.rivl-match-mode #roomGame #roomGamePanel .tabs{display:flex!important;flex:none!important;gap:2px!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
+html body.in-game #table #gamePanel .tabs .tab,
+html body #rooms.rivl-match-mode #roomGame #roomGamePanel .tabs .tab{flex:none!important;white-space:nowrap!important;padding:9px 10px!important;font-size:10.5px!important;line-height:1.2!important;min-width:0!important;width:auto!important}
+html body.in-game #table #gamePanel #tabcontent,
+html body #rooms.rivl-match-mode #roomGame #roomGamePanel #roomTabContent{flex:1!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:auto!important;display:block!important;-webkit-line-clamp:none!important}

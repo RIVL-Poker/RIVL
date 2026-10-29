@@ -2,7 +2,7 @@
 import {cpSync,existsSync,mkdirSync,readdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const root=new URL('..',import.meta.url),out=new URL('dist/',root);
-const files=['index.html','style.css','engine.js','rating.js','chips.js','muck.js','amounts.js','script.js','scripted-hands.js','bot-avatars.js','ladder-ui.js','rooms.js','table-themes.js','screen-modes.js','profile.js','account.js','login.js','welcome-support.js','league-icons.js','puzzle.js','training.js','backroom.js','backroom-spots.js','friends.js','freeroll.js','freeroll-popup.js','install-app.js','privacy.html','terms.html','legal.css','stats.html','stats.css','stats.js','favicon.svg','apple-touch-icon.png','manifest.webmanifest','icons','sw.js','sounds','assets'];
+const files=['index.html','style.css','phone-landscape.css','engine.js','rating.js','chips.js','muck.js','amounts.js','script.js','scripted-hands.js','bot-avatars.js','ladder-ui.js','rooms.js','table-themes.js','screen-modes.js','profile.js','account.js','login.js','welcome-support.js','league-icons.js','puzzle.js','training.js','backroom.js','backroom-spots.js','friends.js','freeroll.js','freeroll-popup.js','install-app.js','privacy.html','terms.html','legal.css','stats.html','stats.css','stats.js','favicon.svg','apple-touch-icon.png','manifest.webmanifest','icons','sw.js','sounds','assets'];
 rmSync(out,{recursive:true,force:true});mkdirSync(out);
 for(const f of files){const src=new URL(f,root);if(!existsSync(src))throw Error('Missing site file: '+f);cpSync(src,new URL(f,out),{recursive:true})}
 writeFileSync(new URL('_headers',out),`/*
