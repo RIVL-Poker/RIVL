@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id), views=document.querySelectorAll('.view');
 // The daily puzzle opens from Play and keeps Play lit in the sidebar; drills keep Training lit.
-const NAV_FOR={puzzle:'play',backroom:'support',rangeTrainer:'training'};
+const NAV_FOR={puzzle:'play',backroom:'support',rangeTrainer:'training',vsRaise:'training'};
 function show(id){document.body.classList.toggle('in-game',id==='table');views.forEach(v=>v.classList.toggle('active',v.id===id));const nav=NAV_FOR[id]||id;document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===nav));window.scrollTo(0,0);document.dispatchEvent(new CustomEvent('rivl:view',{detail:id}))}
 document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{if(game&&idIsLeaving(b.dataset.view)){if(!confirmLeave())return;stop()}show(b.dataset.view)});
 // Leaving mid-match ends it unrated, so ask first; a finished match can be left freely.

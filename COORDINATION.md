@@ -34,7 +34,8 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Multiplayer infrastructure test | (none, test only) | none | Done, see log |
 | Claude | Stricter decision grading (preflop charts, tighter thresholds) | `claude/decision-grading-accuracy-cnnv3r` | rating.js, worker/grading.js, tests.js, README.md | PR open |
 | Claude | Launch notices: Terms of Use, public privacy page, Support notices, 18+ line | `claude/support-launch-notices-a26yoz` | index.html, style.css, welcome-support.js, privacy.html, terms.html, legal.css, scripts/build-site.mjs | PR open |
-| Claude | Training section + hand range trainer | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, scripts/build-site.mjs | PR open |
+| Claude | Training section + hand range trainer | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, scripts/build-site.mjs | Merged (#141) |
+| Claude | Training: facing-a-raise drill | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, README.md | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -145,8 +146,14 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Spectator mode, only for freeroll tables and friends' tables. Freeroll page → "Watch a table" (anyone not still playing); Friends page → 👁 WATCH on a friend who is seated at any online table. Spectators get the seatless view (only hands shown at showdown) plus, away from the freeroll, their own friends' hole cards (`game.friendCards`, built per spectator socket); freeroll spectators see no hole cards at all. They can't act or chat, and are capped at 25 per table. Players see "👁 N WATCHING" on the felt.
 - Spectators connect to `/ws/watch/<object id>` and send `{type:'watch',key}`; the room checks it's a freeroll table or that the key's account is a friend of someone seated, and drops a friend-spectator when no friend is left at the table. The table's join code is never sent: friends' heartbeats now carry `table` (stored as `accounts.at_table`), the Friends list only gets `watchable`, and `/api/watch` returns the object id. The freeroll view lists `watch` (table, object id, players) while running.
 
-### 2026-10-29 01:10 UTC · Claude
+### 2026-10-29 00:31 UTC · Claude
 - New **Training** section in the sidebar (`#training`, a hub of drill cards built from `DRILLS` in `training.js`; each drill is its own view, kept lit under Training via `NAV_FOR` in script.js). To add a drill: add an entry to `DRILLS` and a `<section>` in index.html.
 - First drill, the **Hand Range Trainer** (`#rangeTrainer`): seat + hand with everyone folded to you, raise or fold, then the verdict (Correct, Close or Miss), why, and the seat's 13×13 opening chart with the other seats one tap away. 6-max and 9-max, any seat or all seats. Progress (streak, accuracy per seat, last hands) is kept in this browser (`localStorage` key `rivlRangeTrainer`).
 - The charts are rating.js's preflop tiers (now exported as `RivlRating.TIERS` and `rfiTier`), so the trainer teaches exactly what the decision grader rewards. `tests.js` checks all 4,394 trainer answers against `grade()`.
+- Badges/achievements are still parked.
+
+### 2026-10-29 01:00 UTC · Claude
+- Second Training drill, **Facing a Raise** (`#vsRaise`): one player opens to 2.5 BB before you and everyone else folds; 3-bet, call or fold. 6-max and 9-max, every seat after UTG including both blinds. After you answer: the verdict, why (the hand and the spot), and your seat's 3-bet / call / fold chart against that opener, with the other openers one tap away. Progress is kept under `localStorage` key `rivlRaiseTrainer`.
+- The answers are `RivlRating.gradePreflop()` itself (now exported with `bookWindows`), fed the same book `analyze()` builds for the spot, and 3-bets go to 3x in position or 4x from the blinds, so the drill can never disagree with the grader. Correct = Best, Close = Excellent or Good, Miss = anything worse. `tests.js` checks the labels against `analyze()` + `grade()` for every seat and opener.
+- `training.js` is now one shared drill page (`makeDrill`) plus a config per drill, and each drill renders into an empty `<section>` in index.html. To add a drill: add a config to `DRILLS` and an empty `<section id="…" class="view content-view">`, and map the id to `training` in `NAV_FOR`.
 - Badges/achievements are still parked.
