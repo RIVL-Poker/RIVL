@@ -1072,6 +1072,53 @@ console.log('PASS: '+checks+' room server checks');
       }
       checkStats(big.env);
     }
+    // Champion banners: every player's night is saved for their banner (stack line, knockouts, the winner's hand), and
+    // banners don't exist for anyone until they open the vault.
+    {
+      const env=big.env,dir=env.DIRECTORY.instances.get('global'),win=Object.values(big.t.players).find(p=>p.place===1);
+      const rows=dir.rows('SELECT account,place,detail FROM freeroll_results WHERE night=?',big.t.night).map(r=>({...r,d:JSON.parse(r.detail)}));
+      assert.equal(rows.length,40,'every player’s night has details');
+      const w=rows.find(r=>r.place===1).d;
+      assert.equal(w.series[0],FREEROLL.stack,'the line starts on the starting stack');
+      assert.equal(w.series.at(-1),40*FREEROLL.stack,'the winner’s line ends on every chip');
+      assert.ok(w.series.length>=3&&w.series.length<=97,'the line is thinned to under a hundred points');
+      assert.ok(rows.every(r=>r.place===1||r.d.series.at(-1)===0),'a busted player’s line ends at zero');
+      assert.ok(w.end>=w.start&&w.start===big.t.startAt,'the night’s start and end');
+      const kos=rows.reduce((n,r)=>n+r.d.kos.length,0);
+      assert.ok(kos>=35&&kos<=39,'each bust is one knockout for the hand’s winner ('+kos+')');
+      assert.ok(rows.every(r=>r.place===1||r.d.hand===null),'only the winner keeps a winning hand');
+      assert.ok(w.hand&&w.hand.five.length===5&&w.hand.five.every(c=>/^[2-9TJQKA][SHDC]$/.test(c))&&w.hand.name,'the hand that won the night');
+      const me=big.accts.find(a=>a.account.id===win.id),other=big.accts.find(a=>a.account.id!==win.id),key=me.key;
+      assert.equal((await api(env,'/api/banners/me',{key})).data.unlocked,false,'no banners before the vault');
+      assert.equal((await api(env,'/api/banners/save',{key,art:'wolf'})).status,404,'nothing to save before the vault');
+      assert.deepEqual((await api(env,'/api/banners',{ids:[win.id]})).data.banners,{},'nobody wears a banner yet');
+      assert.equal((await api(env,'/api/me',{key})).data.account.bannersUnlocked,false);
+      assert.equal((await api(env,'/api/banners/save',{art:'wolf'})).status,401,'saving needs a key');
+      let r=(await api(env,'/api/banners/save',{key,unlock:true})).data;
+      assert.equal(r.unlocked,true);assert.deepEqual([r.prefs.art,r.prefs.stat],['throne','line'],'opening the vault starts on The Throne');
+      assert.equal(r.banner.place,1);assert.equal(r.banner.wins,1);assert.equal(r.banner.detail.series.at(-1),40*FREEROLL.stack,'the banner comes from the win');
+      assert.equal((await api(env,'/api/me',{key})).data.account.bannersUnlocked,true,'the account keeps the unlock');
+      r=(await api(env,'/api/banners/save',{key,art:'wolf',stat:'ko'})).data;
+      assert.deepEqual([r.prefs.art,r.prefs.stat,r.banner.art,r.banner.stat],['wolf','ko','wolf','ko']);
+      r=(await api(env,'/api/banners/save',{key,art:'unicorn',stat:'everything',night:'2001-01-01'})).data;
+      assert.deepEqual([r.prefs.art,r.prefs.stat,r.prefs.night],['wolf','ko',''],'unknown artwork, stats and nights are ignored');
+      r=(await api(env,'/api/banners/save',{key,night:big.t.night})).data;assert.equal(r.prefs.night,big.t.night,'a night they played');
+      assert.deepEqual(r.nights.map(n=>n.night),[big.t.night]);
+      const seen=(await api(env,'/api/banners',{ids:[win.id,other.account.id,'nobody']})).data;
+      assert.equal(seen.champion,win.id,'the latest winner is the reigning champion');
+      assert.deepEqual(Object.keys(seen.banners),[win.id],'only players who chose a banner have one');
+      assert.equal(seen.banners[win.id].name,win.name);assert.equal(seen.banners[win.id].art,'wolf');
+      // Player cards: open to anyone, with the friend button a signed-in viewer needs.
+      const card=(await api(env,'/api/player',{id:win.id,key:other.key})).data;
+      assert.equal(card.player.name,win.name);assert.equal(card.freeroll.wins,1);assert.equal(card.freeroll.played,1);assert.equal(card.champion,true);
+      assert.equal(card.relation,'add');assert.equal(card.game,'freeroll:'+big.t.night,'a friend request can name the night they shared');
+      assert.ok(!/key_hash|google_sub|friend_code|at_table/.test(JSON.stringify(card)),'no private account fields');
+      assert.equal((await api(env,'/api/player',{id:win.id})).data.relation,null,'signed out: no friend button');
+      assert.equal((await api(env,'/api/player',{id:win.id,key})).data.relation,'you');
+      assert.equal((await api(env,'/api/player',{id:'nobody'})).status,404);
+      assert.equal((await api(env,'/api/friends/request',{key:other.key,id:win.id,game:card.game})).status,200,'the card’s friend request works');
+      assert.equal((await api(env,'/api/player',{id:win.id,key:other.key})).data.relation,'requested');
+    }
     const view=(await api(big.env,'/api/freeroll')).data;
     assert.equal(view.status,'finished');assert.equal(view.players[0].place,1);assert.equal(view.players.length,40);
     assert.ok(!JSON.stringify(view).includes(big.t.players[big.accts[0].account.id].token),'seat tokens are never public');

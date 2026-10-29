@@ -120,16 +120,16 @@
     list.innerHTML=d.players.map(p=>{
       const out=p.place!=null,pos=out?p.place:++rank,mine=a&&p.id===a.id,signup=st==='registering'||st==='scheduled'||st==='starting';
       const right=signup?'':out?(p.place===1&&st==='finished'?'<span class="frl-win">WINNER</span>':`<span class="frl-out">${st==='finished'?'':'OUT · '}${ordinal(p.place)}</span>`):`<b>${chips(p.stack)}</b><small>T${p.table}</small>`;
-      return `<div class="frl-row${mine?' me':''}${out&&st!=='finished'?' busted':''}"><span class="frl-pos">${pos}</span><span class="frl-name">${esc(p.name)}${mine?' <i>YOU</i>':''}</span><span class="frl-right">${right}</span></div>`;
+      return `<div class="frl-row${mine?' me':''}${out&&st!=='finished'?' busted':''}"><span class="frl-pos">${pos}</span><span class="frl-name" data-player="${esc(p.id)}">${esc(p.name)}${mine?' <i>YOU</i>':''}</span><span class="frl-right">${right}</span></div>`;
     }).join('');
   }
   function renderBoard(){
     if(!board)return;
     const month=new Date(board.month+'-15T12:00:00Z').toLocaleDateString([],{month:'long',timeZone:'UTC'});
     $('frlMonth').textContent=month.toUpperCase()+' POINTS';
-    $('frlLeaders').innerHTML=board.leaders.length?board.leaders.map((p,i)=>`<div class="frl-row"><span class="frl-pos">${i+1}</span><span class="frl-name">${esc(p.name)}${p.wins?` <span class="frl-cups" title="${p.wins} ${p.wins===1?'win':'wins'}">${'★'.repeat(Math.min(5,p.wins))}</span>`:''}</span><span class="frl-right"><b>${p.points}</b><small>PTS</small></span></div>`).join('')
+    $('frlLeaders').innerHTML=board.leaders.length?board.leaders.map((p,i)=>`<div class="frl-row"><span class="frl-pos">${i+1}</span><span class="frl-name" data-player="${esc(p.id)}">${esc(p.name)}${p.wins?` <span class="frl-cups" title="${p.wins} ${p.wins===1?'win':'wins'}">${'★'.repeat(Math.min(5,p.wins))}</span>`:''}</span><span class="frl-right"><b>${p.points}</b><small>PTS</small></span></div>`).join('')
       :'<p class="frl-empty">No results yet this month. Win a freeroll to top the table.</p>';
-    $('frlChamps').innerHTML=board.champions.length?board.champions.map(c=>`<div class="frl-row"><span class="frl-pos">★</span><span class="frl-name">${esc(c.name)}</span><span class="frl-right"><small>${new Date(c.night+'T12:00:00Z').toLocaleDateString([],{month:'short',day:'numeric',timeZone:'UTC'})} · ${c.entrants} players</small></span></div>`).join('')
+    $('frlChamps').innerHTML=board.champions.length?board.champions.map(c=>`<div class="frl-row"><span class="frl-pos">★</span><span class="frl-name" data-player="${esc(c.id)}">${esc(c.name)}</span><span class="frl-right"><small>${new Date(c.night+'T12:00:00Z').toLocaleDateString([],{month:'short',day:'numeric',timeZone:'UTC'})} · ${c.entrants} players</small></span></div>`).join('')
       :'<p class="frl-empty">The first champion is still to be crowned.</p>';
   }
   function resultCard(){

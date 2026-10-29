@@ -9,6 +9,8 @@ import '../hand-stats.js';
 // rating.js (loaded by grading.js) defines the Ranked leagues shared with the site; hand-stats.js the player stats.
 const R=globalThis.RivlRating,HS=globalThis.RivlHandStats;
 const NAME_RE=/^[A-Za-z0-9_\- ]{3,20}$/;
+// Champion banner artwork (assets/banners/) and the one stat a banner shows: chip count, knockouts or the winning hand.
+const BANNER_ARTS=['dragon','throne','frost','wolf','olympus','abyss'],BANNER_STATS=['line','ko','hand'];
 const FRIEND_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MAX_FRIENDS=100;
 // The page sends a presence heartbeat every minute while it's on screen (account.js), and says when it's hidden.
 // If that last message never arrives (a phone that loses signal), the player drops off "active now" after 5 minutes.
@@ -76,6 +78,11 @@ export class Directory {
     // Nightly freeroll results: one row per player per night. Points are entrants minus place plus one, summed by month.
     this.sql.exec('CREATE TABLE IF NOT EXISTS freeroll_results(night TEXT NOT NULL,account TEXT NOT NULL,place INTEGER NOT NULL,entrants INTEGER NOT NULL,points INTEGER NOT NULL,PRIMARY KEY(night,account))');
     this.sql.exec('CREATE INDEX IF NOT EXISTS freeroll_results_place ON freeroll_results(place,night)');
+    // Champion banners: each night's details for a player's banner (stack line, knockouts, the winning hand), and on the
+    // account the banner they chose once they've found the vault in Support (empty until then).
+    if(!this.rows('PRAGMA table_info(freeroll_results)').some(c=>c.name==='detail'))this.sql.exec('ALTER TABLE freeroll_results ADD COLUMN detail TEXT');
+    if(!this.rows('PRAGMA table_info(accounts)').some(c=>c.name==='banner'))this.sql.exec("ALTER TABLE accounts ADD COLUMN banner TEXT NOT NULL DEFAULT ''");
+    this.sql.exec('CREATE INDEX IF NOT EXISTS freeroll_results_account ON freeroll_results(account,night)');
     // Freerolls finished before game history existed get their history card from the saved results.
     for(const {night} of this.rows("SELECT DISTINCT night FROM freeroll_results WHERE 'freeroll:'||night NOT IN (SELECT id FROM game_history)"))
       this.freerollHistory(night,startOf(night),0);
@@ -129,7 +136,25 @@ export class Directory {
     return {id:a.id,name:a.name,avatar:a.avatar_blocked?'':(a.avatar||''),rating:Math.round(displayed),rd:Math.round(a.rrd),games:a.rgames,wins:a.rwins,rank,provisional:a.rrd>110,league:t.name,leagueKey:t.key};
   }
   // What the signed-in player sees about their own account (others only ever get publicAccount).
-  selfAccount(a){return {...this.publicAccount(a),google:!!a.google_sub}}
+  selfAccount(a){return {...this.publicAccount(a),google:!!a.google_sub,bannersUnlocked:!!this.bannerPrefs(a)}}
+  bannerPrefs(a){try{const b=JSON.parse(a.banner||'null');return b&&b.u?b:null}catch{return null}}
+  // The most recent freeroll winner wears the crown until the next night is won.
+  champion(){return this.one('SELECT account FROM freeroll_results WHERE place=1 ORDER BY night DESC LIMIT 1')?.account||null}
+  // A player's banner: their artwork and stat, filled in from the night they picked, else their latest win, else their best finish.
+  bannerOf(a){
+    const b=this.bannerPrefs(a);if(!b?.art)return null;
+    const rows=this.rows('SELECT night,place,entrants,detail FROM freeroll_results WHERE account=? ORDER BY night DESC LIMIT 200',a.id);
+    const pick=rows.find(r=>r.night===b.night)||rows.find(r=>r.place===1)||[...rows].sort((x,y)=>x.place-y.place||(x.night<y.night?1:-1))[0]||null;
+    let detail=null;try{detail=pick?.detail?JSON.parse(pick.detail):null}catch{}
+    return {art:b.art,stat:b.stat,wins:rows.filter(r=>r.place===1).length,night:pick?.night||null,place:pick?.place||null,entrants:pick?.entrants||null,detail};
+  }
+  // Only well-formed details are kept: names, chip counts, five real cards and the night's start and end.
+  cleanDetail(d){
+    if(!d||typeof d!=='object')return null;
+    const n=v=>Math.max(0,Math.floor(Number(v)||0));
+    const five=d.hand?.five,hand=Array.isArray(five)&&five.length===5&&five.every(c=>/^[2-9TJQKA][SHDC]$/.test(c))?{five,name:String(d.hand.name||'').slice(0,20)}:null;
+    return JSON.stringify({kos:(Array.isArray(d.kos)?d.kos:[]).slice(-60).map(x=>String(x).slice(0,20)),series:(Array.isArray(d.series)?d.series:[]).slice(0,200).map(n),hand,start:n(d.start),end:n(d.end)});
+  }
   async byKey(key){
     if(typeof key!=='string'||key.length<20||key.length>64)return null;
     const h=await sha256(key);
@@ -472,7 +497,7 @@ export class Directory {
         if(!/^\d{4}-\d{2}-\d{2}$/.test(night)||!Array.isArray(body.players))return this.reply({error:'Bad results'},400);
         for(const p of body.players){
           const place=Math.floor(Number(p?.place));if(!place||place<1||place>entrants)continue;
-          this.sql.exec('INSERT OR IGNORE INTO freeroll_results(night,account,place,entrants,points) VALUES (?,?,?,?,?)',night,String(p.id),place,entrants,entrants-place+1);
+          this.sql.exec('INSERT OR IGNORE INTO freeroll_results(night,account,place,entrants,points,detail) VALUES (?,?,?,?,?,?)',night,String(p.id),place,entrants,entrants-place+1,this.cleanDetail(p.detail));
         }
         this.freerollHistory(night,Date.now(),body.duration);
         this.boards.clear();return this.reply({ok:true});
@@ -484,6 +509,48 @@ export class Directory {
             WHERE f.night LIKE ? GROUP BY f.account ORDER BY pts DESC,w DESC,a.name LIMIT 10`,month+'-%').map(a=>({...this.publicAccount(a,false),avatar:undefined,points:a.pts,wins:a.w,played:a.n})),
           champions:this.rows(`SELECT f.night,f.entrants,a.* FROM freeroll_results f JOIN accounts a ON a.id=f.account WHERE f.place=1 ORDER BY f.night DESC LIMIT 7`)
             .map(a=>({night:a.night,entrants:a.entrants,...this.publicAccount(a,false),avatar:undefined,wins:this.one('SELECT COUNT(*) AS n FROM freeroll_results WHERE account=? AND place=1',a.id).n}))})));
+      }
+      // Champion banners. Anyone can read the banners of the players at a table; only someone who has opened the
+      // vault (or is opening it now) can save one.
+      if(path==='/banners/get'){
+        const ids=[...new Set((Array.isArray(body.ids)?body.ids:[]).slice(0,12).map(String))],banners={};
+        for(const id of ids){const a=this.one('SELECT id,name,banner FROM accounts WHERE id=?',id),b=a&&this.bannerOf(a);if(b)banners[id]={name:a.name,...b}}
+        return this.reply({champion:this.champion(),banners});
+      }
+      if(path==='/banners/me'||path==='/banners/save'){
+        const a=await this.byKey(body.key);
+        if(!a)return this.reply({error:'Sign in again to see your banners.'},401);
+        let prefs=this.bannerPrefs(a);
+        if(path==='/banners/save'){
+          if(!prefs&&!body.unlock)return this.reply({error:'Not found'},404);
+          // An empty night means "my latest win"; any other must be a night this player played.
+          let night=prefs?.night||'';
+          if(body.night==='')night='';
+          else if(typeof body.night==='string'&&this.one('SELECT 1 AS x FROM freeroll_results WHERE account=? AND night=?',a.id,body.night))night=body.night;
+          prefs={u:1,art:BANNER_ARTS.includes(body.art)?body.art:prefs?.art||'throne',stat:BANNER_STATS.includes(body.stat)?body.stat:prefs?.stat||'line',night};
+          a.banner=JSON.stringify(prefs);this.sql.exec('UPDATE accounts SET banner=? WHERE id=?',a.banner,a.id);
+        }
+        if(!prefs)return this.reply({unlocked:false});
+        return this.reply({unlocked:true,prefs,banner:this.bannerOf(a),champion:this.champion()===a.id,
+          nights:this.rows('SELECT night,place,entrants FROM freeroll_results WHERE account=? ORDER BY place=1 DESC,night DESC LIMIT 20',a.id)});
+      }
+      // A player's card: their public account, freeroll record and banner. A signed-in viewer also learns whether
+      // they're friends, and the latest game they shared (which a friend request needs).
+      if(path==='/player'){
+        const a=this.one('SELECT * FROM accounts WHERE id=?',String(body.id||''));
+        if(!a)return this.reply({error:'Player not found.'},404);
+        const viewer=body.key?await this.byKey(body.key):null;
+        const fr=this.one('SELECT COUNT(*) AS n,COALESCE(SUM(place=1),0) AS w,MIN(place) AS best FROM freeroll_results WHERE account=?',a.id);
+        const points=this.one('SELECT COALESCE(SUM(points),0) AS p FROM freeroll_results WHERE account=? AND night LIKE ?',a.id,day().slice(0,7)+'-%').p;
+        let relation=null,game=null;
+        if(viewer&&viewer.id===a.id)relation='you';
+        else if(viewer){
+          game=this.one('SELECT p.game FROM game_history_players p JOIN game_history_players q ON q.game=p.game JOIN game_history g ON g.id=p.game WHERE p.account=? AND q.account=? ORDER BY g.t DESC LIMIT 1',viewer.id,a.id)?.game||null;
+          relation=this.one('SELECT 1 AS x FROM friends WHERE account=? AND friend=?',viewer.id,a.id)?'friends'
+            :this.one('SELECT 1 AS x FROM friend_requests WHERE sender=? AND target=?',viewer.id,a.id)?'requested'
+            :this.one('SELECT 1 AS x FROM friend_requests WHERE sender=? AND target=?',a.id,viewer.id)?'accept':game?'add':'none';
+        }
+        return this.reply({player:this.publicAccount(a),freeroll:{played:fr.n,wins:fr.w,best:fr.best,points},banner:this.bannerOf(a),champion:this.champion()===a.id,relation,game});
       }
       if(path==='/puzzle/counts')return this.reply({counts:this.puzzleCounts(url.searchParams.get('day')||day())});
       if(path==='/usage/room'||path==='/usage/hand'){

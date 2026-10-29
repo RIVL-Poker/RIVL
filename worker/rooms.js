@@ -161,6 +161,18 @@ export default {
         if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many attempts. Try again in a minute.'},429);
         return send(await dir(env,'/accounts/me',await readBody(request)));
       }
+      // Champion banners and player cards. Reading the banners at a table or someone's card is open to anyone;
+      // a player's own banners need their key.
+      if(url.pathname==='/api/banners'||url.pathname==='/api/player'){
+        if(await limited(env.PING_LIMITER,request))return json({error:'Too many requests. Try again in a minute.'},429);
+        return send(await dir(env,url.pathname==='/api/banners'?'/banners/get':'/player',await readBody(request)));
+      }
+      if(url.pathname==='/api/banners/me'||url.pathname==='/api/banners/save'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many requests. Try again in a minute.'},429);
+        const body=await readBody(request);
+        if(!body.key)return json({error:'Sign in to keep a banner.'},401);
+        return send(await dir(env,url.pathname.replace('/api',''),body));
+      }
       // Player stats: the signed-in player's own totals and games, a finished practice match to save, Match History's MINE.
       const pstats={'/api/player-stats':'/pstats/me','/api/player-stats/practice':'/pstats/practice','/api/history/mine':'/history/mine'}[url.pathname];
       if(pstats){
@@ -578,8 +590,8 @@ export class Room {
       return [0,...vals];
     };
     let best=null;for(let a=0;a<cards.length-4;a++)for(let b=a+1;b<cards.length-3;b++)for(let c=b+1;c<cards.length-2;c++)for(let d=c+1;d<cards.length-1;d++)for(let e=d+1;e<cards.length;e++){
-      const s=score5([cards[a],cards[b],cards[c],cards[d],cards[e]]);
-      if(!best||this.compare(s,best)>0)best=s;
+      const five=[cards[a],cards[b],cards[c],cards[d],cards[e]],s=score5(five);
+      if(!best||this.compare(s,best)>0){best=s;best.five=five}
     }return best;
   }
   compare(a,b){for(let i=0;i<Math.max(a.length,b.length);i++){const d=(a[i]||0)-(b[i]||0);if(d)return d}return 0}
@@ -608,7 +620,8 @@ export class Room {
     }
     // Every hand that reached showdown is revealed so players can verify the result.
     g.shown=contenders.map(p=>p.seat);
-    g.winners=[...awarded].map(([seat,amount])=>({seat,name:g.players.find(p=>p.seat===seat).name,amount,hand:HAND_NAMES[values.get(seat)[0]]}));
+    // The five cards that won go with each winner, for the freeroll champion's banner (worker/tournament.js).
+    g.winners=[...awarded].map(([seat,amount])=>({seat,name:g.players.find(p=>p.seat===seat).name,amount,hand:HAND_NAMES[values.get(seat)[0]],five:values.get(seat).five}));
     g.result=g.winners.map(w=>w.name+' wins '+w.amount+' with '+w.hand).join(' · ')||'Hand ended';
     g.pot=0;this.handStats();
   }
@@ -821,12 +834,17 @@ export class Room {
   // Between hands: report stacks, follow the plan (knock-outs, moves, new seats, final standings), then deal.
   async tCycle(halted=false){
     const room=this.room,t=room.tourney,g=room.game;
+    // For the champion banners: who the hand's biggest winner knocked out, and the five cards each showdown winner won with.
+    const ended=g?.phase==='showdown'&&!this.matchOver(g),top=ended?[...(g.winners||[])].sort((a,b)=>b.amount-a.amount)[0]:null;
+    const busted=ended?g.players.filter(p=>p.start>0&&p.stack<=0&&p.seat!==top?.seat).map(p=>p.name):[];
     const players=Object.values(room.members).map(m=>{
       const p=g?.players.find(x=>x.seat===m.seat&&x.name===m.name);
       if(p)t.stacks[m.accountId]=p.stack;
-      return {id:m.accountId,stack:t.stacks[m.accountId]??0,start:p?.start??t.stacks[m.accountId]??0,ext:t.ext?.[m.accountId]||0};
+      const w=ended&&p?g.winners.find(x=>x.seat===p.seat):null;
+      return {id:m.accountId,stack:t.stacks[m.accountId]??0,start:p?.start??t.stacks[m.accountId]??0,ext:t.ext?.[m.accountId]||0,
+        ...(top&&p&&top.seat===p.seat&&busted.length?{ko:busted}:{}),...(w?.five?{won:{five:w.five,name:w.hand}}:{})};
     });
-    const plan=await this.tourneyCall('/report',{table:t.table,players,halted});
+    const plan=await this.tourneyCall('/report',{table:t.table,hand:ended?g.handNumber:0,players,halted});
     if(!plan){t.wakeAt=Date.now()+10000;t.waiting=true;await this.save();return}
     t.info=plan.info||t.info;t.blinds=plan.blinds||t.blinds;
     const keep=new Set((plan.seats||[]).map(s=>s.id));

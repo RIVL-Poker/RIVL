@@ -99,6 +99,7 @@
         row.className='online-row'+(state&&p.id===state.id?' me':'');
         const cells=[i+1,p.name,p.league,Number(p.rating||0).toLocaleString(),p.games??0,p.wins??0];
         for(const value of cells){const cell=document.createElement('span');cell.textContent=value;row.append(cell)}
+        if(p.id)row.children[1].dataset.player=p.id;
         window.rivlLeagueIcons?.decorate(row.children[1],p.leagueKey||window.RivlRating?.tier(p.rating).key,{prepend:true});
         row.children[2].className='league-'+p.leagueKey;
         rows.append(row);
