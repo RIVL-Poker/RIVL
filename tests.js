@@ -156,4 +156,83 @@ assert(cont(9,'UTG','BTN')<=6,'at a full table the button continues with about 5
 assert(cont(6,'BTN','BB')>=55&&cont(6,'BTN','BB')>cont(6,'HJ','BB'),'the big blind defends most hands against the button, and more than against the hijack');
 const near=(size,pos,lo,hi)=>{const p=TR.openPct(size,pos);return p>=lo&&p<=hi};
 assert(near(9,'UTG',.09,.13)&&near(6,'UTG',.17,.22)&&near(9,'BTN',.44,.5),'opening ranges: about 11% under the gun at a full table, 20% at 6-max, 48% on the button');
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers');
+// Player stats (hand-stats.js): seats are named from the small blind, a hand's record counts the way tracking software
+// counts it, a bad record from a browser is refused, and totals are exact sums in any order.
+require(__dirname+'/hand-stats.js');
+let hsChecks=0;
+const hsEq=(a,b,m)=>{assert.deepStrictEqual(a,b,m);hsChecks++},hsOk=(c,m)=>{assert(c,m);hsChecks++},hsNear=(a,b,m)=>hsOk(Math.abs(a-b)<1e-9,m+': '+a+' is not '+b);
+{
+const HS=globalThis.RivlHandStats;
+hsEq([0,1,2,3,4,5].map(k=>HS.position(6,k)),['SB','BB','EP','MP','CO','BTN'],'6-max seats');
+hsEq([...Array(9).keys()].map(k=>HS.position(9,k)),['SB','BB','EP','EP','MP','MP','MP','CO','BTN'],'9-max seats');
+hsEq([0,1].map(k=>HS.position(2,k)).concat([0,1,2].map(k=>HS.position(3,k))),['SB','BB','SB','BB','BTN'],'heads-up and 3-handed seats');
+// A room's log becomes one record: seats renumbered from the small blind, a seat not dealt in left out, only this player's grades kept.
+const hsBest={label:'Best',acc:100,weight:2.1,lossBB:0},hsExc={label:'Excellent',acc:95,weight:3,lossBB:.12};
+const steal=HS.pack({order:[5,0,1,3],me:3,bb:20,net:70,won:130,hole:['A♠','K♦'],board:['A♥','7♣','2♦'],log:[
+  {seat:1,street:0,type:'f'},{seat:7,street:0,type:'f'},{seat:3,street:0,type:'r',to:60,grade:hsBest},{seat:5,street:0,type:'f'},{seat:0,street:0,type:'c',grade:hsBest},
+  {seat:0,street:1,type:'k'},{seat:3,street:1,type:'r',to:80,grade:hsExc},{seat:0,street:1,type:'f'}]});
+hsEq(steal,[4,3,20,'2f,3r60,0f,1c/1k,3r80,1f',70,130,'AsKd','Ah7c2d',[[1,1,10000,2100,0],[5,2,9500,3000,12]]],'a hand packs to its record');
+hsEq(HS.pack({order:[4,2],me:4,bb:10,net:-5,won:0,log:[{seat:4,street:0,type:'f'}]}),[2,0,10,'0f',-5,0,'','',[]],'a hand that ends before the flop');
+// The same hands from other seats: a 3-bet and the opener folding to it, a heads-up showdown from both sides, a c-bet and the fold to it.
+const threeBet='2f,3f,4r50,5f,0f,1r150,4f',showdown='0c,1k/1k,0r20,1c/1k,0k/1r40,0c',cbet='2r30,0f,1c/1k,2r30,1f';
+const hsHands={steal,bb3:[6,1,20,threeBet,60,110,'QsQh','',[]],co3:[6,4,20,threeBet,-50,0,'AhTc','',[]],
+  sdWin:[2,0,10,showdown,70,140,'9s9d','9h5c2dKsQh',[]],sdLose:[2,1,10,showdown,-70,0,'AsKs','9h5c2dKsQh',[]],
+  fcb:[3,1,10,cbet,-30,0,'8s7s','Kd4h2c',[[2,3,9000,1500,40],[3,1,10000,500,0],[5,5,6000,2000,150]]],cb:[3,2,10,cbet,35,65,'AdJc','Kd4h2c',[]]};
+const KEYS=['vpip','pfr','tbo','tb','ft3o','ft3','sto','st','cbo','cb','fcbo','fcb','sf','sd','wsd','won','net'];
+const hsCounts=Object.fromEntries(Object.entries(hsHands).map(([k,r])=>[k,HS.count(r)])),flags=k=>KEYS.map(x=>hsCounts[k][x]);
+hsOk(Object.values(hsHands).every(HS.valid),'every crafted record is valid');
+hsEq(flags('steal'),[1,1,0,0,0,0,1,1,1,1,0,0,1,0,0,1,350],'button steal, then a c-bet that takes it down');
+hsEq(flags('bb3'),[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,300],'the big blind 3-bets');
+hsEq(flags('co3'),[1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,-250],'the cutoff steals and folds to the 3-bet');
+hsEq(flags('sdWin'),[1,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,700],'heads-up the button limps (a steal chance not taken) and wins at showdown');
+hsEq(flags('sdLose'),[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,-700],'the big blind checks it through and loses at showdown');
+hsEq(flags('fcb'),[1,0,1,0,0,0,0,0,0,0,1,1,1,0,0,0,-300],'calls a raise (a 3-bet chance) and folds to the c-bet');
+hsEq(flags('cb'),[1,1,0,0,0,0,1,1,1,1,0,0,1,0,0,1,350],'the button steals and c-bets');
+hsEq([hsCounts.sdWin.bets,hsCounts.sdWin.calls,hsCounts.sdWin.checks,hsCounts.sdLose.bets,hsCounts.sdLose.calls,hsCounts.sdLose.checks],
+  [[0,1,0,0],[1,0,0,1],[0,0,1,0],[0,0,0,1],[0,1,0,0],[1,1,1,0]],'bets, calls and checks by street');
+hsEq(hsCounts.steal.g,[2,10000*2100+9500*3000,5100,12],'graded decisions add accuracy times weight');
+hsEq([hsCounts.steal.gx[2],hsCounts.steal.gx[5],hsCounts.steal.gp[3]],[[1,21000000,2100,0],[1,28500000,3000,12],hsCounts.steal.g],'by street and kind, and by seat');
+hsEq([hsCounts.fcb.gx[1],hsCounts.fcb.gx[3],hsCounts.fcb.gx[4],hsCounts.fcb.gp[5]],[[1,13500000,1500,40],[1,12000000,2000,150],[1,5000000,500,0],[3,30500000,4000,190]],'a call, a check and a fold');
+// A bad record is refused.
+const plain=[...steal.slice(0,8),[]],set=(r,i,v)=>Object.assign([...r],{[i]:v});
+hsOk(HS.valid(plain),'a record with no grades');
+for(const [r,why] of [[null,'not a record'],[steal.slice(0,8),'too short'],[set(plain,0,1),'one player'],[set(plain,0,10),'ten players'],
+  [set(plain,1,4),'a seat not dealt in'],[set(plain,2,0),'no big blind'],[set(plain,4,1.5),'part of a chip'],[set(plain,5,-1),'won less than nothing'],
+  [set(plain,3,'2f,3x'),'an unknown action'],[set(plain,3,'2f,5f'),'a seat past the table'],[set(plain,3,'2f/3f/0f/1f/2f'),'five streets'],
+  [set(plain,3,'2f,'.repeat(130)+'2f'),'too many actions'],[set(plain,3,'2r123456789,'.repeat(80)+'2f'),'too long'],
+  [set(plain,6,'AsKdQh'),'three hole cards'],[set(plain,6,'XxYy'),'cards that do not exist'],[set(plain,7,'AhKhQhJhTh9h'),'six board cards'],
+  [set(steal,8,[[0,1,10000,2100,0]]),'a grade on another player’s action'],[set(steal,8,[[8,1,10000,2100,0]]),'a grade on an action not there'],
+  [set(steal,8,[[1,7,10000,2100,0]]),'an unknown grade'],[set(steal,8,[[1,1,10001,2100,0]]),'over 100%'],[set(steal,8,[[1,1,10000,2100]]),'a short grade'],
+  [set(steal,8,Array(61).fill([1,1,10000,2100,0])),'too many grades']])hsOk(!HS.valid(r),'refused: '+why);
+// Totals: exact sums, the same in any order, only of known counts.
+const all=Object.values(hsCounts),t=HS.total(all);
+const whole=x=>Array.isArray(x)?x.every(whole):x&&typeof x==='object'?Object.values(x).every(whole):Number.isInteger(x);
+hsEq(t,HS.total([...all].reverse()),'the same total in any order');hsOk(whole(t),'every count is a whole number');
+hsEq(HS.total([]),HS.blank(),'no hands');hsEq(HS.add(HS.blank(),{h:3,junk:5}),{...HS.blank(),h:3},'a key it does not know is ignored');
+hsEq(HS.add(HS.total(all.slice(0,3)),HS.total(all.slice(3))),t,'totals of totals');
+const r=HS.rates(t);
+hsEq([r.hands,r.vpip,r.pfr,r.threeBet,r.foldTo3,r.steal,r.cbet,r.foldToCbet,r.af,r.wtsd,r.wsd,r.decisions],[7,600/7,400/7,50,100,75,100,100,2,40,50,5],'the Profile’s rates');
+hsNear(r.sawFlop,500/7,'saw the flop');hsNear(r.won,400/7,'won the hand');hsNear(r.bb100,450/7,'big blinds won per 100 hands');hsNear(r.loss100,202/7,'big blinds given up per 100 hands');
+hsNear(r.acc,80000000/9100/100,'accuracy is weighted by how much each decision matters');
+hsEq(r.streets.map(x=>[x.name,x.n,x.lossBB]),[['Preflop',2,.4],['Flop',3,1.62],['Turn',0,0],['River',0,0]],'decisions by street');
+hsNear(r.streets[1].acc,45500000/5500/100,'flop accuracy');hsEq([r.streets[2].acc,r.seats[0].acc],[null,null],'no accuracy without decisions');
+hsEq(r.leaks.map(x=>[x.street,x.kind,x.lossBB]),[['Flop','fold',1.5],['Preflop','call',.4],['Flop','raise',.12]],'biggest leaks first');
+hsEq(r.labels.map(x=>x.n),[0,2,1,1,0,1,0],'grades by label');
+const none=HS.rates(HS.blank());
+hsEq([none.hands,none.vpip,none.af,none.bb100,none.acc,none.leaks],[0,null,null,null,null,[]],'nothing to show yet');
+hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
+}
+// Bot practice lifetime accuracy (rating.js) weighs every decision; matches from before that keep their averages and
+// count as a typical match since does, so nobody's accuracy jumps when the weighting starts.
+{
+  const st=R.store();st.players.Old={r:1500,rd:350,vol:.06,games:2,wins:0,accSum:160,accN:2};
+  hsNear(R.lifetimeAccuracy(st.players.Old),80,'before any weighted match: the average of match averages');
+  const grade=(acc,weight)=>({acc,weight,label:'Good',lossBB:0});
+  R.recordMatch([{name:'Old',grades:[grade(70,10),grade(50,10),grade(60,30)]},{name:'New',grades:[grade(90,1),grade(30,3)]}],[1,2]);
+  const o=st.players.Old,n=st.players.New;
+  hsEq([o.accOldN,o.accOldSum,o.accN,o.accS,o.accW],[2,160,3,3000,50],'the older averages are kept apart');
+  hsNear(R.lifetimeAccuracy(o),(80+80+60)/3,'one weighted match since: it counts as one of three');
+  hsNear(R.lifetimeAccuracy(n),(90+90)/4,'a new player: Σ accuracy×weight over Σ weight');
+  hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
+}
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+hsChecks+' player stats checks');

@@ -35,7 +35,7 @@
     window.rivlPaintName?.();
     window.refreshRatingUI?.();
   }
-  function setAccount(account,key,via){const was=state?.key;state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render();if(state?.key!==was){onScreen();document.dispatchEvent(new Event('rivl:account'))}}
+  function setAccount(account,key,via){const was=state?.key;state=account?{...account,key,via:via||state?.via||'code'}:null;persist();render();if(state?.key!==was){onScreen();if(historyFilter==='Mine')loadMine();else mineGames=null;document.dispatchEvent(new Event('rivl:account'))}}
   // Presence for friends' "active now": a heartbeat every minute while this page is on screen, and a last
   // message when it's hidden or closed. A background tab or a locked phone sends nothing, so it drops off.
   // The reply carries game invites and friend requests, which friends.js shows (rivl:invites).
@@ -107,7 +107,8 @@
   }
 
 
-  let historyGames=[],historyFilter='All';
+  // MINE shows the signed-in player's own Ranked and freeroll games, loaded when it is picked.
+  let historyGames=[],historyFilter='All',mineGames=null,mineError='';
   const historyDate=t=>new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
   const historyNumber=n=>n==null?'—':Number(n).toLocaleString();
   async function showHistoryGame(id,container){
@@ -149,8 +150,11 @@
   function paintHistory(){
     const root=$('historyGames');if(!root)return;
     root.replaceChildren();
-    const games=historyGames.filter(g=>historyFilter==='All'||g.mode===historyFilter);
-    if(!games.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='No completed '+(historyFilter==='All'?'online matches':historyFilter.toLowerCase()+' games')+' saved yet.';root.append(empty);return}
+    const mine=historyFilter==='Mine',say=text=>{const p=document.createElement('p');p.className='muted';p.textContent=text;root.append(p)};
+    if(mine&&!state)return say('Sign in to see the games you played.');
+    if(mine&&!mineGames)return say(mineError||'Loading your games…');
+    const games=mine?mineGames:historyGames.filter(g=>historyFilter==='All'||g.mode===historyFilter);
+    if(!games.length)return say(mine?'None of your Ranked or freeroll games are saved yet.':'No completed '+(historyFilter==='All'?'online matches':historyFilter.toLowerCase()+' games')+' saved yet.');
     for(const g of games){
       const card=document.createElement('div');card.className='rivl-history-game';
       const toggle=document.createElement('button');toggle.type='button';toggle.className='rivl-history-game-toggle';toggle.setAttribute('aria-label','Show results for '+g.mode+' match');
@@ -172,15 +176,21 @@
   }
   async function loadHistory(){
     const root=$('historyGames');if(!root)return;
+    if(historyFilter==='Mine')loadMine();
     try{const data=await call('/api/history');historyGames=Array.isArray(data.games)?data.games:[];paintHistory()}
     catch(err){root.textContent=err.message||'Unable to load match history.'}
+  }
+  async function loadMine(){
+    mineGames=null;mineError='';
+    if(state)try{const data=await call('/api/history/mine',{key:state.key});mineGames=Array.isArray(data.games)?data.games:[]}catch(err){mineError=err.message||'Unable to load your games.'}
+    paintHistory();
   }
   function initHistory(){
     $('historyRefresh')?.addEventListener('click',loadHistory);
     document.querySelectorAll('[data-history-filter]').forEach(b=>b.addEventListener('click',()=>{
       historyFilter=b.dataset.historyFilter;
       document.querySelectorAll('[data-history-filter]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b))});
-      paintHistory();
+      if(historyFilter==='Mine')loadMine();else paintHistory();
     }));
     document.querySelectorAll('.nav[data-view="leaderboard"]').forEach(b=>b.addEventListener('click',loadHistory));
     loadHistory();

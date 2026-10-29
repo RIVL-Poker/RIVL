@@ -291,6 +291,22 @@ async function api(env,path,body){
   return {status:r.status,data:await r.json()};
 }
 const roomOf=(env,code)=>env.ROOMS.instances.get(code);
+// Player stats (hand-stats.js): the saved matches of one player, and the check that every total is exactly the sum of
+// the saved matches, and every match's counts exactly what its hand records add up to.
+const HS=globalThis.RivlHandStats;
+const statsRows=(env,id)=>env.DIRECTORY.instances.get('global').rows('SELECT * FROM player_matches WHERE account=? ORDER BY t,part',id);
+function checkStats(env){
+  const dir=env.DIRECTORY.instances.get('global');let n=0;
+  for(const t of dir.rows('SELECT * FROM player_totals')){
+    const rows=dir.rows('SELECT stats FROM player_matches WHERE account=? AND mode=?',t.account,t.mode);
+    assert.deepEqual(JSON.parse(t.stats),HS.total(rows.map(r=>JSON.parse(r.stats))),'a player’s totals are the sum of their saved matches');n++;
+  }
+  for(const r of dir.rows('SELECT * FROM player_matches WHERE detail IS NOT NULL')){
+    const hands=JSON.parse(r.detail);assert.equal(hands.length,r.hands);assert.ok(hands.every(HS.valid),'every saved hand record is well formed');
+    assert.deepEqual(JSON.parse(r.stats),HS.total(hands.map(HS.count)),'a match’s counts are what its hand records add up to');
+  }
+  return n;
+}
 async function sit(env,code,token){const room=roomOf(env,code);return connect(room,room.fakeState,token)}
 
 // 8. Accounts: names are validated and unique; a key signs in; a room seat uses the account name and is marked verified.
@@ -386,6 +402,18 @@ async function sit(env,code,token){const room=roomOf(env,code);return connect(ro
   assert.equal(board.length,4);assert.ok(board.every(p=>p.games===1));
   assert.ok(board.some(p=>p.name==='Cat'&&p.rating===0),'leaver remains at zero displayed Elo');
   assert.equal(board.reduce((n,p)=>n+p.wins,0),1,'only the match winner is credited a win');
+  // Ranked hands are in each player's stats, every explicit decision graded, and the Profile chart has the Elo shown after.
+  for(const [k,a] of acc.slice(0,4).entries()){
+    const me=(await api(env,'/api/player-stats',{key:a.key})).data,c=changes.find(x=>x.id===a.account.id);
+    assert.ok(me.totals.ranked.h>=1&&me.games[0].mode==='ranked'&&me.games[0].id===sent.matchId,'the Ranked match is in the player’s games');
+    assert.equal(me.totals.ranked.g[0],sent.players.find(p=>p.id===a.account.id).decisions,'every Ranked decision graded for Elo is in the stats');
+    assert.equal(me.ranked.length,1);assert.equal(me.ranked[0].after,c.after,'the Elo after the match is saved for the chart');
+    assert.equal(me.games[0].place,me.ranked[0].place);
+    assert.equal((await api(env,'/api/history/mine',{key:a.key})).data.games[0].id,sent.matchId,'MINE lists the player’s own games');
+    if(k===2)assert.equal(me.totals.ranked.g[0],0,'Cat left before deciding anything');
+  }
+  assert.ok(checkStats(env)>=4);
+  assert.ok((await api(env,'/api/history')).data.games[0].hands>0,'game history counts the hands played');
   checks++;
 }
 
@@ -1030,6 +1058,20 @@ console.log('PASS: '+checks+' room server checks');
     const board=(await api(big.env,'/api/freeroll/board')).data;
     assert.equal(board.leaders[0].points,40,'the winner scores 40 points');assert.equal(board.champions.length,1);assert.equal(board.champions[0].wins,1);
     assert.ok(!('avatar' in board.leaders[0]),'no photos in the board');
+    // Every player's freeroll hands are saved table by table under the night, and the Profile shows their place.
+    {
+      const rows=big.env.DIRECTORY.instances.get('global').rows("SELECT * FROM player_matches WHERE mode='freeroll'");
+      assert.equal(new Set(rows.map(r=>r.account)).size,40,'every entrant has freeroll stats');
+      assert.ok(rows.reduce((n,r)=>n+r.hands,0)>=5*rows.length,'hands are saved table by table, not one at a time');
+      assert.ok(rows.every(r=>r.game==='freeroll:'+big.t.night&&r.hands>0),'saved under tonight’s freeroll');
+      assert.ok(rows.some(r=>r.part.split(':')[0]!==rows[0].part.split(':')[0]),'players moved between tables have a record for each');
+      for(const a of big.accts.slice(0,5)){
+        const me=(await api(big.env,'/api/player-stats',{key:a.key})).data,mine=rows.filter(r=>r.account===a.account.id);
+        assert.equal(me.games[0].mode,'freeroll');assert.equal(me.games[0].place,big.t.players[a.account.id].place,'the freeroll place');
+        assert.equal(me.totals.freeroll.h,mine.reduce((n,r)=>n+r.hands,0));assert.equal(me.games[0].hands,me.totals.freeroll.h,'one night’s tables add up to one game');
+      }
+      checkStats(big.env);
+    }
     const view=(await api(big.env,'/api/freeroll')).data;
     assert.equal(view.status,'finished');assert.equal(view.players[0].place,1);assert.equal(view.players.length,40);
     assert.ok(!JSON.stringify(view).includes(big.t.players[big.accts[0].account.id].token),'seat tokens are never public');
@@ -1207,6 +1249,138 @@ console.log('PASS: '+checks+' room server checks');
   await say(room,adaWs,{type:'leave'});
   assert.ok(room.room,'the table plays on with Dan');assert.equal(danWs.readyState,1);
   assert.equal(benWs.readyState,3,'the spectator leaves with their friend');assert.match(benWs.last('removed').reason,/friend has left/);
+  checks++;
+}
+
+// Player stats in casual rooms: every hand a signed-in player is dealt is saved once to their account with each of their
+// decisions graded, with their place; guests and bots get nothing; a second copy of a match is ignored.
+{
+  const env=makeEnv();
+  const ann=(await api(env,'/api/accounts',{name:'Stat Ann'})).data,bob=(await api(env,'/api/accounts',{name:'Stat Bob'})).data;
+  const created=(await api(env,'/api/rooms',{key:ann.key})).data,code=created.code,room=roomOf(env,code);
+  const joined=(await api(env,'/api/rooms/'+code+'/join',{key:bob.key})).data,guest=(await api(env,'/api/rooms/'+code+'/join',{name:'Guest'})).data;
+  const ws={};for(const t of [created.token,joined.token,guest.token])ws[t]=await sit(env,code,t);
+  await say(room,ws[created.token],{type:'addBot',seat:3,level:'Expert'});
+  await say(room,ws[created.token],{type:'startMatch'});
+  const ids={[created.token]:ann.account.id,[joined.token]:bob.account.id},dealt={},acted={},matchId=room.room.match.id;
+  let hand=0;
+  for(let i=0;i<20000&&!room.matchOver();i++){
+    const g=room.room.game;
+    if(g.handNumber!==hand){hand=g.handNumber;for(const [t,id] of Object.entries(ids))if(g.players.some(p=>p.seat===room.room.members[t]?.seat))dealt[id]=(dealt[id]||0)+1}
+    if(g.phase==='showdown'){g.nextHandAt=0;await room.alarm();continue}
+    const tok=Object.keys(ws).find(t=>room.room.members[t]?.seat===g.turn);
+    if(!tok){g.deadline=0;await room.alarm();continue}
+    const l=room.legal(g.turn),r=Math.random(),to=5*Math.ceil(l.raiseToMin/5);
+    const msg=r<.2?{action:'fold'}:r<.65||!l.canRaise?{action:l.check?'check':'call'}:r<.9&&to<l.raiseToMax?{action:'raise',amount:to}:{action:'allin'};
+    const before=ws[tok].messages.filter(m=>m.type==='error').length;
+    await say(room,ws[tok],{type:'action',...msg});
+    if(ids[tok]&&ws[tok].messages.filter(m=>m.type==='error').length===before)acted[ids[tok]]=(acted[ids[tok]]||0)+1;
+  }
+  assert.ok(room.matchOver(),'match finished');
+  assert.ok(!room.room.pendingStats&&!Object.keys(room.room.stats||{}).length,'the room has handed every record to the Directory');
+  const dir=env.DIRECTORY.instances.get('global');
+  assert.deepEqual([...new Set(dir.rows('SELECT account FROM player_matches').map(r=>r.account))].sort(),[ann.account.id,bob.account.id].sort(),'guests and bots have no stats');
+  for(const [t,id] of Object.entries(ids)){
+    const rows=statsRows(env,id),me=(await api(env,'/api/player-stats',{key:t===created.token?ann.key:bob.key})).data;
+    assert.ok(rows.every(r=>r.mode==='casual'&&r.game===matchId));
+    assert.equal(rows.reduce((n,r)=>n+r.hands,0),dealt[id],'every hand they were dealt is saved once');
+    assert.equal(me.totals.casual.h,dealt[id]);assert.equal(me.totals.ranked.h+me.totals.practice.h+me.totals.freeroll.h,0);
+    assert.equal(me.totals.casual.g[0],acted[id]||0,'each of their decisions is graded, in a casual room too');
+    assert.equal(me.games.length,1);assert.equal(me.games[0].hands,dealt[id]);
+    assert.ok(me.games[0].place>=1&&me.games[0].place<=4,'with the place they finished');
+  }
+  checkStats(env);
+  // The same records sent again change nothing.
+  const totals=dir.rows('SELECT * FROM player_totals');
+  const again=statsRows(env,ann.account.id).map(r=>({account:r.account,game:r.game,part:r.part,mode:r.mode,t:r.t,t0:r.t0,size:r.size,hands:JSON.parse(r.detail)}));
+  await dir.fetch(new Request('https://dir/pstats/record',{method:'POST',body:JSON.stringify({records:again})}));
+  assert.deepEqual(dir.rows('SELECT * FROM player_totals'),totals,'a match sent twice counts once');
+  assert.equal((await api(env,'/api/player-stats',{})).status,401,'stats are only for the signed-in player');
+  checks++;
+}
+
+// Leaving: a player who busts out and then leaves still gets their place when the match ends; one who walks out with
+// chips has every hand saved, the one they walked out of too, with no place (the Profile says they left).
+{
+  const env=makeEnv();
+  const mk=async name=>(await api(env,'/api/accounts',{name})).data;
+  const ann=await mk('Leave Ann'),bob=await mk('Leave Bob'),cat=await mk('Leave Cat');
+  const created=(await api(env,'/api/rooms',{key:ann.key})).data,code=created.code,room=roomOf(env,code);
+  const tok={ann:created.token,bob:(await api(env,'/api/rooms/'+code+'/join',{key:bob.key})).data.token,cat:(await api(env,'/api/rooms/'+code+'/join',{key:cat.key})).data.token};
+  const ws={};for(const [k,t] of Object.entries(tok))ws[k]=await sit(env,code,t);
+  await say(room,ws.ann,{type:'addBot',seat:3,level:'Beginner'});
+  await say(room,ws.ann,{type:'startMatch'});
+  const seat={};for(const k of Object.keys(tok))seat[k]=room.room.members[tok[k]].seat;
+  const play=async until=>{for(let i=0;i<20000&&!room.matchOver()&&!until();i++){const g=room.room.game;
+    if(g.phase==='showdown'){g.nextHandAt=0;await room.alarm();continue}
+    const k=Object.keys(tok).find(k=>room.room.members[tok[k]]&&seat[k]===g.turn);
+    if(!k){g.deadline=0;await room.alarm();continue}
+    const l=room.legal(g.turn);await say(room,ws[k],{type:'action',action:l.check?'check':'call'})}};
+  // After the first hand Bob's chips go to Ann, so he is out of the next deal.
+  await play(()=>room.room.game.phase==='showdown');
+  {const g=room.room.game,a=g.players.find(p=>p.seat===seat.ann),b=g.players.find(p=>p.seat===seat.bob);a.stack+=b.stack;b.stack=0;g.nextHandAt=0;await room.alarm()}
+  assert.ok(room.room.match.out.flat().includes(seat.bob),'Bob busted out');
+  await say(room,ws.bob,{type:'leave'});
+  assert.ok(room.room.stats[bob.account.id]?.hands.length===1,'a busted player’s hands wait for the end of the match');
+  // Cat walks out in the middle of hand 2.
+  assert.ok(room.room.game.handNumber===2&&room.room.game.phase!=='showdown');
+  await say(room,ws.cat,{type:'leave'});
+  await play(()=>room.room.game.phase==='showdown');
+  assert.ok(!room.room.stats[cat.account.id],'the hand Cat walked out of is sent as soon as it ends');
+  await play(()=>false);
+  assert.ok(room.matchOver());
+  const me=async a=>(await api(env,'/api/player-stats',{key:a.key})).data;
+  const b=await me(bob),c=await me(cat),a=await me(ann);
+  assert.deepEqual([b.games.length,b.games[0].hands,b.games[0].place,b.games[0].size],[1,1,4,4],'Bob’s game has his place: first out of four');
+  assert.deepEqual([c.games.length,c.games[0].hands,c.games[0].place],[1,2,null],'Cat’s two hands, and that she left');
+  assert.deepEqual(statsRows(env,cat.account.id).map(r=>r.hands),[1,1],'her last hand as its own record');
+  assert.ok(a.games[0].place>=1&&a.games[0].place<=2&&a.games[0].hands===room.room.game.handNumber,'Ann played every hand to the end');
+  checkStats(env);
+  checks++;
+}
+
+// Stats survive a Directory outage: the room keeps the closed records and sends them once it can.
+{
+  const env=makeEnv();
+  const a=(await api(env,'/api/accounts',{name:'Retry Ann'})).data;
+  const created=(await api(env,'/api/rooms',{key:a.key})).data,room=roomOf(env,created.code),ws=await sit(env,created.code,created.token);
+  await say(room,ws,{type:'addBot',seat:1,level:'Beginner'});
+  await say(room,ws,{type:'startMatch'});
+  const original=room.dir.bind(room);let down=true;
+  room.dir=async(path,body)=>path==='/pstats/record'&&down?null:original(path,body);
+  for(let i=0;i<50&&room.room.game.phase!=='showdown';i++){const g=room.room.game;if(g.turn===0)await say(room,ws,{type:'action',action:'fold'});else{g.deadline=0;await room.alarm()}}
+  room.closeAllStats();await room.save();
+  assert.equal(room.room.pendingStats?.length,1,'the hand waits in the room while the Directory is unreachable');
+  await room.save();assert.equal(room.room.pendingStats.length,1,'and is not lost or doubled by more saves');
+  down=false;room.room.game.result='Match complete';await room.alarm();
+  assert.equal(room.room.pendingStats,null,'the next try delivers it');
+  assert.equal(statsRows(env,a.account.id).length,1);assert.equal(statsRows(env,a.account.id)[0].hands,1);
+  checks++;
+}
+
+// Bot practice stats come from the browser, one finished match at a time. Only a signed-in player can send them; the
+// server counts the hand records itself (a bad record is dropped, a sent total ignored), keeps each match once, and past
+// the day's practice budget the rest wait in the browser.
+{
+  const env=makeEnv({DAILY_PRACTICE_LIMIT:'3'});
+  const a=(await api(env,'/api/accounts',{name:'Practicer'})).data;
+  const hand=[6,5,20,'2f,3f,4f,5r60,0f,1c/1k,5r80,1f',70,130,'AsKd','Ah7c2d',[[3,1,10000,2100,0],[7,2,9500,3000,12]]];
+  const match=(id,hands=[hand,hand])=>({id,t:Date.now(),t0:Date.now()-60000,size:6,place:2,hands});
+  const up=matches=>api(env,'/api/player-stats/practice',{key:a.key,matches});
+  assert.equal((await api(env,'/api/player-stats/practice',{matches:[match('m-0000001')]})).status,401,'signed-in players only');
+  assert.deepEqual((await up([match('m-0000001')])).data.saved,['m-0000001']);
+  assert.deepEqual((await up([match('m-0000001')])).data.saved,['m-0000001'],'a second copy is let go of');
+  let me=(await api(env,'/api/player-stats',{key:a.key})).data;
+  assert.equal(me.totals.practice.h,2,'and counted once');
+  assert.deepEqual([me.totals.practice.st,me.totals.practice.sto,me.totals.practice.cb,me.totals.practice.g[0],me.totals.practice.net],[2,2,2,4,700]);
+  await up([{...match('m-0000002',[hand,['junk'],[6,9,20,'',0,0,'','',[]],[6,5,20,'9f',0,0,'','',[]]]),mode:'ranked',stats:{h:1000}}]);
+  me=(await api(env,'/api/player-stats',{key:a.key})).data;
+  assert.equal(me.totals.practice.h,3,'only the valid hand counts');assert.equal(me.totals.ranked.h,0,'a browser cannot add online stats');
+  assert.deepEqual([me.games[0].mode,me.games[0].place,me.games[0].hands],['practice',2,1]);
+  const r=(await up([match('m-0000003'),match('m-0000004')])).data;
+  assert.deepEqual(r.saved,['m-0000003']);assert.ok(r.full,'the daily practice budget is kept');
+  assert.equal((await api(env,'/api/status')).data.usage.practice,3);
+  checkStats(env);
   checks++;
 }
 
