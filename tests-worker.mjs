@@ -1426,7 +1426,8 @@ console.log('PASS: '+checks+' room server checks');
   assert.deepEqual([me.games[0].mode,me.games[0].place,me.games[0].hands],['practice',2,1]);
   const r=(await up([match('m-0000003'),match('m-0000004')])).data;
   assert.deepEqual(r.saved,['m-0000003']);assert.ok(r.full,'the daily practice budget is kept');
-  assert.equal((await api(env,'/api/status')).data.usage.practice,3);
+  // Read the Directory itself: /api/status is cached for 10 seconds across every test env, so a recent call elsewhere would answer.
+  assert.equal(env.DIRECTORY.instances.get('global').one('SELECT practice FROM usage WHERE day=?',new Date().toISOString().slice(0,10)).practice,3);
   checkStats(env);
   checks++;
 }
