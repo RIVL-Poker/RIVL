@@ -111,4 +111,22 @@ SH.forEach((h,k)=>{const all=[...h.hole.flat(),...h.board];assert(h.hole.length=
     const d=ctx.window.rivlScriptedDeck(k+1,ps);assert(new Set(d).size===52,'scripted deck '+(k+1)+' is a full deck');
     ps.forEach((p,i)=>{if(p.stack>0)assert.strictEqual(String([d.pop(),d.pop()]),String(h.hole[i]),'scripted hand '+(k+1)+' seat '+i)});
     assert.strictEqual(String([d.pop(),d.pop(),d.pop(),d.pop(),d.pop()]),String(h.board),'scripted hand '+(k+1)+' board')}});
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks');
+// Hand range trainer (training.js): every answer is the grader's first-in chart play, from every seat at 6-max and 9-max.
+vm.runInContext(fs.readFileSync(__dirname+'/training.js','utf8'),rctx);
+const TR=rctx.RivlTraining,holeOf=c=>c.length===2?[c[0]+'♠',c[0]+'♥']:[c[0]+'♠',c[1]+(c[2]==='s'?'♠':'♥')];
+const firstIn=(n,at,hole)=>({bb:10,minRaise:10,currentBet:10,pot:15,board:[],hand:1,street:0,sbSeat:n-2,bbSeat:n-1,
+  players:[...Array(n)].map((_,k)=>({name:'p'+k,hole:k===at?hole:['2♣','3♦'],bet:k===n-2?5:k===n-1?10:0,stack:990,folded:k<at,allin:false,raiseLocked:false,line:0}))});
+let trChecks=0;
+for(const size of [6,9])TR.SEATS[size].slice(0,-1).forEach((pos,at)=>TR.CLASSES.forEach(c=>{
+  const A=R.analyze(firstIn(size,at,holeOf(c)),at,1);
+  for(const act of ['raise','fold']){
+    const {open,v}=TR.judge(size,pos,c,act),label=R.grade(A,act,act==='raise'?25:0).label;trChecks++;
+    // In the small blind the grader also allows a limp with its widest hands, so folding them is Good there, not Best.
+    const ok=v==='right'?label==='Best'||pos==='SB'&&act==='fold'&&TR.tierOf(c)===8&&label==='Good':v==='close'?label==='Good':!['Best','Excellent','Good'].includes(label);
+    assert(ok,`range trainer ${size}-max ${pos} ${c} ${act}: trainer says ${v}, grader says ${label}`);
+    assert(!/undefined|NaN/.test(TR.handText(size,pos,c,open)+TR.seatText(size,pos)),`range trainer text for ${c} from ${pos}`);
+  }
+}));
+const near=(size,pos,lo,hi)=>{const p=TR.openPct(size,pos);return p>=lo&&p<=hi};
+assert(near(9,'UTG',.09,.13)&&near(6,'UTG',.17,.22)&&near(9,'BTN',.44,.5),'opening ranges: about 11% under the gun at a full table, 20% at 6-max, 48% on the button');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers');

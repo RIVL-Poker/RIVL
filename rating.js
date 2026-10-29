@@ -487,5 +487,5 @@ const LEAGUES=[['Prospect',0,350,'prospect'],['Challenger',350,700,'challenger']
 const BAND=350;
 function tier(r){const t=LEAGUES.find(([,lo,hi])=>r>=lo&&r<hi)||LEAGUES[0];const lo=t[1]||t[2]-BAND,hi=t[2]===Infinity?lo+BAND:t[2];return{name:t[0],key:t[3],lo,progress:Math.max(0,Math.min(1,(r-lo)/(hi-lo))),next:t[2]===Infinity?null:t[2]}}
 
-root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,handTier,handClass,equity,analyze,grade,chooseBot,chooseBest,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LEAGUES,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
+root.RivlRating={GRADE_ITERS:1500,mulberry32,toInt,rankHand,handCategory,handTier,handClass,TIERS,rfiTier,equity,analyze,grade,chooseBot,chooseBest,glicko,recordMatch,matchAccuracy,store,save,resetLadder,tier,LEAGUES,LABELS,GLYPH,BOTS,W_PLACE,W_DEC};
 })(typeof window!=='undefined'?window:globalThis);
