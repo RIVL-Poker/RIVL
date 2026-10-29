@@ -1,4 +1,5 @@
 /* Installed app: starts the offline helper (sw.js) and, on phones, offers "Add RIVL to your home screen"
+   right after the freeroll reminder is closed (or straight away when there is no reminder), and again
    once a player is back on the home screen after a game. Android gets a one-tap Install button; iPhone
    (which has no install button for websites) gets the Share > Add to Home Screen steps. */
 (()=>{
@@ -22,8 +23,9 @@
 
   const phone=matchMedia('(pointer: coarse) and (max-width: 1024px)');
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1;
-  let prompt=null,played=false,card=null;
-  addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e});
+  let prompt=null,played=false,card=null,ready=false;
+  // Chrome may offer its install prompt only after the reminder has gone, so a late one still brings up the card.
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(ready)setTimeout(offer,600)});
   addEventListener('appinstalled',()=>{write({...read(),installed:true});close()});
 
   const SHARE='<svg viewBox="0 0 24 24" aria-label="Share"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M8 10H5.5v10.5h13V10H16"/></svg>';
@@ -31,10 +33,12 @@
   function dismiss(){const s=read();write({...s,dismissed:(s.dismissed||0)+1,until:Date.now()+7*864e5});close()}
   function offer(){
     if(card||standalone()||!phone.matches||resting()||!(prompt||ios))return;
+    // Never over a game, the login screen or the freeroll reminder.
+    if(inMatch()||document.getElementById('welcomeOverlay')?.hidden===false||document.getElementById('frlPopup'))return;
     card=document.createElement('div');
     card.className='install-card';
     card.setAttribute('role','dialog');card.setAttribute('aria-label','Add RIVL to your home screen');
-    card.innerHTML=`<img src="icons/icon-192.png" alt=""><div class="install-text"><strong>ADD RIVL TO YOUR HOME SCREEN</strong>`+
+    card.innerHTML=`<img src="icons/rivl-192.png" alt=""><div class="install-text"><strong>ADD RIVL TO YOUR HOME SCREEN</strong>`+
       (prompt?`<span>Opens full screen with no browser bars.</span></div><button type="button" class="gold install-go">INSTALL</button>`
              :`<span>Tap Share ${SHARE} then <b>Add to Home Screen</b>. It opens full screen with no browser bars.</span></div>`)+
       `<button type="button" class="install-close" aria-label="Not now">×</button>`;
@@ -44,6 +48,7 @@
     document.body.appendChild(card);
   }
 
+  document.addEventListener('rivl:freeroll-popup-settled',()=>{ready=true;setTimeout(offer,600)});
   // A game counts once the table or an online match has been on screen; the card waits for the home screen.
   document.addEventListener('rivl:view',e=>{
     if(played&&e.detail==='play'){played=false;setTimeout(offer,600)}

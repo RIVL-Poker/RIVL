@@ -42,7 +42,7 @@ Then run the workflow from the Actions tab (or push to `main`). The site appears
 - worker/google.js — verifies Google ID tokens
 - worker/bug-report.js — emails anonymous bug reports to support (Cloudflare Email Routing)
 - backroom.js, backroom-spots.js — the Back Room easter egg (knock five times on the spade in Support); spots built by scripts/make-backroom.mjs
-- install-app.js, sw.js, manifest.webmanifest, icons/ — the installable app: home-screen icon and full-screen settings, an offline copy of the site (scripts/build-site.mjs stamps each deploy's version into sw.js) and the "Add RIVL to your home screen" card shown on phones after a game
+- install-app.js, sw.js, manifest.webmanifest, icons/, apple-touch-icon.png — the installable app: home-screen icon and full-screen settings, an offline copy of the site (scripts/build-site.mjs stamps each deploy's version into sw.js) and the "Add RIVL to your home screen" card shown on phones once the freeroll reminder is closed (and again after a game)
 - training.js — the Training section: a hub of drills that share one drill page. The hand range trainer (open-raise or fold from each seat, then the seat's full opening chart) and facing a raise (3-bet, call or fold against one open, then that seat's defending chart against each opener). Both use the grader's preflop charts from rating.js
 
 ## Tests
