@@ -146,6 +146,14 @@ for(const size of [6,9])TR.SEATS[size].forEach((pos,at)=>TR.SEATS[size].slice(0,
   }
   assert(!/undefined|NaN/.test(VR.spotText(size,opener,pos)),`facing a raise text for ${pos} v ${opener}`);
 }));
+// The charts stay close to standard ones: you continue with less than the opener opens (the big blind aside), early raises
+// get tight answers, and the big blind defends more the later the raise.
+const openP=(size,p)=>Math.round(100*TR.openPct(size,p)),cont=(size,op,pos)=>{const x=VR.shares(size,op,pos);return x.raise+x.call};
+for(const size of [6,9])TR.SEATS[size].forEach((pos,at)=>{if(pos!=='BB')TR.SEATS[size].slice(0,at).forEach(op=>
+  assert(cont(size,op,pos)<openP(size,op),`${size}-max ${pos} continues against ${op} with fewer hands than ${op} opens`))});
+assert(VR.shares(6,'UTG','SB').raise<=7&&VR.shares(9,'UTG','SB').raise<=7,'the small blind 3-bets about 5% against a UTG raise');
+assert(cont(9,'UTG','BTN')<=6,'at a full table the button continues with about 5% against UTG');
+assert(cont(6,'BTN','BB')>=55&&cont(6,'BTN','BB')>cont(6,'HJ','BB'),'the big blind defends most hands against the button, and more than against the hijack');
 const near=(size,pos,lo,hi)=>{const p=TR.openPct(size,pos);return p>=lo&&p<=hi};
 assert(near(9,'UTG',.09,.13)&&near(6,'UTG',.17,.22)&&near(9,'BTN',.44,.5),'opening ranges: about 11% under the gun at a full table, 20% at 6-max, 48% on the button');
 console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers');

@@ -139,7 +139,7 @@
   const drills={};
   root.RivlTraining={SEATS,CLASSES,tierOf,cutoff,openPct,
     open:{judge,handText,seatText},
-    vsRaise:{OPEN_TO,threeBetTo,labels,best:bestOf,judge:vsJudge,handText:vsHandText,spotText:vsSpotText},
+    vsRaise:{OPEN_TO,threeBetTo,labels,best:bestOf,shares:vsShares,judge:vsJudge,handText:vsHandText,spotText:vsSpotText},
     drill:view=>drills[view]};
   const doc=root.document;if(!doc||!doc.getElementById('training'))return;
   const $=id=>doc.getElementById(id);
