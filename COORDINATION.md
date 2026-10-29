@@ -34,6 +34,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Multiplayer infrastructure test | (none, test only) | none | Done, see log |
 | Claude | Stricter decision grading (preflop charts, tighter thresholds) | `claude/decision-grading-accuracy-cnnv3r` | rating.js, worker/grading.js, tests.js, README.md | PR open |
 | Claude | Launch notices: Terms of Use, public privacy page, Support notices, 18+ line | `claude/support-launch-notices-a26yoz` | index.html, style.css, welcome-support.js, privacy.html, terms.html, legal.css, scripts/build-site.mjs | PR open |
+| Claude | Training section + hand range trainer | `claude/project-thread-bkyllm` | training.js, index.html, style.css, script.js, rating.js (exports only), tests.js, scripts/build-site.mjs | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -144,3 +145,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Spectator mode, only for freeroll tables and friends' tables. Freeroll page → "Watch a table" (anyone not still playing); Friends page → 👁 WATCH on a friend who is seated at any online table. Spectators get the seatless view (only hands shown at showdown) plus, away from the freeroll, their own friends' hole cards (`game.friendCards`, built per spectator socket); freeroll spectators see no hole cards at all. They can't act or chat, and are capped at 25 per table. Players see "👁 N WATCHING" on the felt.
 - Spectators connect to `/ws/watch/<object id>` and send `{type:'watch',key}`; the room checks it's a freeroll table or that the key's account is a friend of someone seated, and drops a friend-spectator when no friend is left at the table. The table's join code is never sent: friends' heartbeats now carry `table` (stored as `accounts.at_table`), the Friends list only gets `watchable`, and `/api/watch` returns the object id. The freeroll view lists `watch` (table, object id, players) while running.
 
+### 2026-10-29 01:10 UTC · Claude
+- New **Training** section in the sidebar (`#training`, a hub of drill cards built from `DRILLS` in `training.js`; each drill is its own view, kept lit under Training via `NAV_FOR` in script.js). To add a drill: add an entry to `DRILLS` and a `<section>` in index.html.
+- First drill, the **Hand Range Trainer** (`#rangeTrainer`): seat + hand with everyone folded to you, raise or fold, then the verdict (Correct, Close or Miss), why, and the seat's 13×13 opening chart with the other seats one tap away. 6-max and 9-max, any seat or all seats. Progress (streak, accuracy per seat, last hands) is kept in this browser (`localStorage` key `rivlRangeTrainer`).
+- The charts are rating.js's preflop tiers (now exported as `RivlRating.TIERS` and `rfiTier`), so the trainer teaches exactly what the decision grader rewards. `tests.js` checks all 4,394 trainer answers against `grade()`.
+- Badges/achievements are still parked.
