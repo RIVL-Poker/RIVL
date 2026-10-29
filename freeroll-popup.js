@@ -57,20 +57,23 @@
     el.querySelector('.frl-popup-when').textContent=live?'Free to enter · up to 40 players':`${day} at ${local}${local===central?'':` (${central} Central)`} · free to enter`;
     if(s===0&&!live){clearInterval(tick);setTimeout(()=>{if(el)close()},1500)}
   }
-  function close(){clearInterval(tick);el?.remove();el=null}
+  // Tells install-app.js the reminder is out of the way (closed, or not needed this time) so its card can follow.
+  const settled=()=>document.dispatchEvent(new Event('rivl:freeroll-popup-settled'));
+  function close(){clearInterval(tick);el?.remove();el=null;settled()}
 
   async function check(){
     if(shown||checking||!API||busy())return;
     checking=true;
     try{
-      const r=await fetch(API.replace(/\/$/,'')+'/api/freeroll');if(!r.ok)return;
+      const r=await fetch(API.replace(/\/$/,'')+'/api/freeroll');if(!r.ok)return settled();
       const d=await r.json();
-      if(!d?.night||stored()===d.night||busy()||d.status==='starting'||(d.status==='running'&&!d.lateRegEndsAt))return;
+      if(!d?.night||stored()===d.night||d.status==='starting'||(d.status==='running'&&!d.lateRegEndsAt))return settled();
+      if(busy())return;
       offset=(d.serverNow||Date.now())-Date.now();
       shown=true;remember(d.night);
       build(d);paint(d);tick=setInterval(()=>paint(d),1000);
       el.querySelector('.frl-popup-card').focus();
-    }catch{}finally{checking=false}
+    }catch{settled()}finally{checking=false}
   }
 
   // Show it once the login screen is out of the way, whether the visitor signed in or chose to play as a guest.
