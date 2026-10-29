@@ -70,7 +70,9 @@
     fetchTimer=setTimeout(async()=>{
       const ids=[...pending].slice(0,12);pending=new Set([...pending].slice(12));fetchTimer=null;
       for(const id of ids)cache.set(id,{t:Date.now(),b:cache.get(id)?.b||null});
-      try{const r=await call('/api/banners',{ids});champion=r.champion||null;for(const id of ids)cache.set(id,{t:Date.now(),b:r.banners?.[id]||null})}catch{}
+      // A failed lookup is tried again in 15 seconds rather than leaving the seats plain for five minutes.
+      try{const r=await call('/api/banners',{ids});champion=r.champion||null;for(const id of ids)cache.set(id,{t:Date.now(),b:r.banners?.[id]||null})}
+      catch{for(const id of ids)cache.set(id,{t:Date.now()-STALE+15000,b:cache.get(id)?.b||null})}
       if(lastSeats?.isConnected)decorate(lastSeats);
       if(pending.size)want([]);
     },60);
@@ -160,19 +162,31 @@
     $('rbVaultHint').hidden=open;
     const shown=$('rbVaultOpen');shown.hidden=!open;
     if(open)shown.innerHTML=`<h4>CHAMPION BANNERS UNLOCKED</h4><p class="rb-note">All six banners are yours. Pick one on your Profile and it shows at every online table, built from your own freeroll nights.</p>
+      <p class="rb-note" id="rbSync">${esc(syncNote())}</p>
       <div class="rb-vault-arts">${Object.entries(ARTS).map(([k,a])=>`<span style="--rb-img:${img(k)};--rb-c:${a.c}" title="${esc(a.title)}"></span>`).join('')}</div>
       <div><button type="button" class="gold" id="rbChoose">CHOOSE YOUR BANNER</button></div>`;
     $('rbChoose')?.addEventListener('click',()=>{if(typeof show==='function')show('profile');setTimeout(()=>$('rbPanel')?.scrollIntoView({block:'start',behavior:'smooth'}),60)});
   }
+  // Other players only see a banner the server has, so the unlock must reach the account. The vault says whether it did.
+  let syncError='';
+  async function syncUnlock(){
+    const key=window.rivlAccount?.key();
+    if(!key||account()?.bannersUnlocked){syncError='';return}
+    try{await call('/api/banners/save',{key,unlock:true});syncError='';await window.rivlAccount.refresh()}
+    catch(e){syncError=e.message||'Could not reach RIVL.'}
+  }
+  function syncNote(){
+    if(account()?.bannersUnlocked)return 'Saved to your account, so other players see your banner and your other devices have it too.';
+    if(!window.rivlAccount?.key())return 'Only on this device for now. Sign in and they move to your account.';
+    return 'Not saved to your account yet'+(syncError?' ('+syncError+')':'')+'. Open the vault again to retry.';
+  }
   async function unlock(){
     try{localStorage.setItem(KEY,'1')}catch{}
-    const key=window.rivlAccount?.key();
-    if(key&&!account()?.bannersUnlocked){try{await call('/api/banners/save',{key,unlock:true});await window.rivlAccount.refresh()}catch{}}
-    paintVault();paintPanel();
+    paintVault();await syncUnlock();paintVault();paintPanel();
   }
   function setupVault(){
     const hole=$('rbKeyhole'),v=$('rbVault');if(!hole||!v)return;
-    hole.addEventListener('click',()=>{v.hidden=!v.hidden;if(!v.hidden){paintVault();v.scrollIntoView({block:'nearest',behavior:'smooth'})}});
+    hole.addEventListener('click',async()=>{v.hidden=!v.hidden;if(!v.hidden){paintVault();v.scrollIntoView({block:'nearest',behavior:'smooth'});if(local()){await syncUnlock();paintVault()}}});
     $('rbDials').addEventListener('click',e=>{
       const b=e.target.closest('[data-dial]');if(!b||unlocked())return;
       const i=+b.dataset.dial;dials[i]=(dials[i]+1)%RANKS.length;paintVault();$('rbDials').querySelector(`[data-dial="${i}"]`)?.focus();
@@ -229,6 +243,6 @@
   setupVault();paintPanel();
   // Opened on this device but the account never heard (signed out then, or the save failed): tell it now, so
   // the player's other devices see banners too.
-  setTimeout(()=>{if(local()&&window.rivlAccount?.key()&&!account()?.bannersUnlocked)loadMine()},4000);
+  setTimeout(async()=>{if(local()&&window.rivlAccount?.key()&&!account()?.bannersUnlocked){await syncUnlock();loadMine()}},4000);
   window.rivlBanners={decorate,openCard,unlocked,banner};
 })();
