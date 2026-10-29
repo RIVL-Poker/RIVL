@@ -7,7 +7,7 @@
     <title>RIVL | Rated Poker</title>
     <meta name="description" content="RIVL: free Texas Hold'em where every decision is graded. No real money.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=training-20261029">
+    <link rel="stylesheet" href="style.css?v=raise-drill-20261029">
     <script src="screen-modes.js?v=sidebar-drawer-20261020"></script>
 </head>
 
@@ -322,36 +322,8 @@
                 <p class="tr-lead">Short drills that build the habits the decision grader rewards. Pick one to start.</p>
                 <div class="tr-hub" id="trHub"></div>
             </section>
-            <section id="rangeTrainer" class="view content-view">
-                <button class="rivl-back outline" id="hrBack" type="button">← BACK TO TRAINING</button>
-                <h1>HAND RANGE TRAINER</h1>
-                <div class="hr-head"><div class="hr-seats" id="hrSeats" role="group" aria-label="Seats to practice"></div>
-                    <div class="hr-seg" id="hrSize" role="group" aria-label="Table size"><button type="button" data-size="6">6-MAX</button><button type="button" data-size="9">9-MAX</button></div></div>
-                <div class="pz-layout hr-layout">
-                    <div class="panel hr-spot">
-                        <div class="hr-felt" id="hrFelt" role="img"></div>
-                        <h3 class="pz-q" id="hrQ">EVERYONE FOLDS TO YOU. OPEN OR FOLD?</h3>
-                        <div class="pz-choices hr-choices" id="hrChoices"><button type="button" class="pz-choice" data-act="raise">RAISE<kbd>R</kbd></button><button type="button" class="pz-choice" data-act="fold">FOLD<kbd>F</kbd></button></div>
-                        <div class="hr-answer" id="hrAnswer" hidden aria-live="polite">
-                            <div id="hrVerdict" class="pz-verdict"></div>
-                            <div id="hrWhy" class="pz-why"></div>
-                            <button type="button" class="gold hr-next" id="hrNext">NEXT HAND</button>
-                            <p class="hr-keys">Keys: R raise, F fold, Enter next hand</p>
-                        </div>
-                    </div>
-                    <div class="panel hr-chart">
-                        <div class="hr-chart-head"><h3 class="pz-sub" id="hrChartTitle">OPENING RANGE</h3><span id="hrChartPct" class="hr-pct"></span></div>
-                        <div class="hr-tabs" id="hrTabs" role="group" aria-label="Show the range for a seat"></div>
-                        <div class="hr-grid-wrap"><div class="hr-grid" id="hrGrid"></div><div class="hr-lock" id="hrLock"><span>Make your call to see the chart</span></div></div>
-                        <div class="hr-legend"><span><i class="hr-key hr-in-old"></i><span id="hrKeyOld">Open</span></span><span id="hrKeyNew"><i class="hr-key hr-in-new"></i>Added at this seat</span><span><i class="hr-key hr-out"></i>Fold</span></div>
-                        <p class="hr-fine">Standard 100 BB charts with no antes, the same ones RIVL grades your preflop play against. The small blind plays raise-or-fold.</p>
-                        <button type="button" class="gold hr-next hr-next-low" id="hrNext2" hidden>NEXT HAND</button>
-                        <h3 class="pz-sub hr-prog-title">YOUR PROGRESS</h3>
-                        <div class="pz-stats hr-stats"><div><b id="hrStreak">0</b><small>STREAK</small></div><div><b id="hrAcc">–</b><small>CORRECT</small></div><div><b id="hrBest">0</b><small>BEST STREAK</small></div></div>
-                        <div class="hr-recent" id="hrRecent" aria-label="Your last hands"></div>
-                    </div>
-                </div>
-            </section>
+            <section id="rangeTrainer" class="view content-view"></section>
+            <section id="vsRaise" class="view content-view"></section>
             <section id="friends" class="view content-view">
                 <h1>FRIENDS</h1>
                 <div id="frSignedOut" class="panel fr-signed-out"><p>Sign in to add friends and see when they're playing.</p><a href="#" id="frSignIn" class="gold fr-signin-btn">SIGN IN</a></div>

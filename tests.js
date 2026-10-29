@@ -111,7 +111,7 @@ SH.forEach((h,k)=>{const all=[...h.hole.flat(),...h.board];assert(h.hole.length=
     const d=ctx.window.rivlScriptedDeck(k+1,ps);assert(new Set(d).size===52,'scripted deck '+(k+1)+' is a full deck');
     ps.forEach((p,i)=>{if(p.stack>0)assert.strictEqual(String([d.pop(),d.pop()]),String(h.hole[i]),'scripted hand '+(k+1)+' seat '+i)});
     assert.strictEqual(String([d.pop(),d.pop(),d.pop(),d.pop(),d.pop()]),String(h.board),'scripted hand '+(k+1)+' board')}});
-// Hand range trainer (training.js): every answer is the grader's first-in chart play, from every seat at 6-max and 9-max.
+// Training drills (training.js): every answer is the grader's own chart play, from every seat at 6-max and 9-max.
 vm.runInContext(fs.readFileSync(__dirname+'/training.js','utf8'),rctx);
 const TR=rctx.RivlTraining,holeOf=c=>c.length===2?[c[0]+'♠',c[0]+'♥']:[c[0]+'♠',c[1]+(c[2]==='s'?'♠':'♥')];
 const firstIn=(n,at,hole)=>({bb:10,minRaise:10,currentBet:10,pot:15,board:[],hand:1,street:0,sbSeat:n-2,bbSeat:n-1,
@@ -120,13 +120,32 @@ let trChecks=0;
 for(const size of [6,9])TR.SEATS[size].slice(0,-1).forEach((pos,at)=>TR.CLASSES.forEach(c=>{
   const A=R.analyze(firstIn(size,at,holeOf(c)),at,1);
   for(const act of ['raise','fold']){
-    const {open,v}=TR.judge(size,pos,c,act),label=R.grade(A,act,act==='raise'?25:0).label;trChecks++;
+    const {open,v}=TR.open.judge(size,pos,c,act),label=R.grade(A,act,act==='raise'?25:0).label;trChecks++;
     // In the small blind the grader also allows a limp with its widest hands, so folding them is Good there, not Best.
     const ok=v==='right'?label==='Best'||pos==='SB'&&act==='fold'&&TR.tierOf(c)===8&&label==='Good':v==='close'?label==='Good':!['Best','Excellent','Good'].includes(label);
     assert(ok,`range trainer ${size}-max ${pos} ${c} ${act}: trainer says ${v}, grader says ${label}`);
-    assert(!/undefined|NaN/.test(TR.handText(size,pos,c,open)+TR.seatText(size,pos)),`range trainer text for ${c} from ${pos}`);
+    assert(!/undefined|NaN/.test(TR.open.handText(size,pos,c,open)+TR.open.seatText(size,pos)),`range trainer text for ${c} from ${pos}`);
   }
+}));
+// Facing a raise: one open to 2.5 BB, everyone else before you folded. The drill's 3-bet, call and fold get the grader's labels.
+const facing=(n,o,at,hole)=>({bb:10,minRaise:15,currentBet:25,pot:25+(o===n-2?0:5)+10,board:[],hand:1,street:0,sbSeat:n-2,bbSeat:n-1,
+  players:[...Array(n)].map((_,k)=>{const bet=k===o?25:k===n-2?5:k===n-1?10:0;
+    return{name:'p'+k,hole:k===at?hole:['2♣','3♦'],bet,stack:1000-bet,folded:k<at&&k!==o,allin:false,raiseLocked:false,line:k===o?2:0}})});
+// The chart sees only a hand's tier (and whether it is aces or kings), so one hand per tier, plus QQ and 72o, covers a spot.
+const VR=TR.vsRaise,EACH_TIER=[...R.TIERS.map(l=>l.split(' ')[0]),'QQ','72o'];let vrChecks=0;
+for(const size of [6,9])TR.SEATS[size].forEach((pos,at)=>TR.SEATS[size].slice(0,at).forEach((opener,o)=>{
+  for(const c of TR.CLASSES){
+    const L=VR.labels(size,opener,pos,c);
+    if(EACH_TIER.includes(c)){
+      const A=R.analyze(facing(size,o,at,holeOf(c)),at,1);
+      for(const act of ['raise','call','fold']){vrChecks++;
+        assert.strictEqual(L[act],R.grade(A,act,act==='raise'?VR.threeBetTo(pos)*10:0).label,`facing a raise ${size}-max ${pos} v ${opener} ${c} ${act}`)}
+    }
+    assert(['raise','call','fold'].some(a=>L[a]==='Best'),`facing a raise ${size}-max ${pos} v ${opener} ${c} has a Best answer`);
+    assert(!/undefined|NaN/.test(VR.handText(size,opener,pos,c)),`facing a raise text for ${c} ${pos} v ${opener}`);
+  }
+  assert(!/undefined|NaN/.test(VR.spotText(size,opener,pos)),`facing a raise text for ${pos} v ${opener}`);
 }));
 const near=(size,pos,lo,hi)=>{const p=TR.openPct(size,pos);return p>=lo&&p<=hi};
 assert(near(9,'UTG',.09,.13)&&near(6,'UTG',.17,.22)&&near(9,'BTN',.44,.5),'opening ranges: about 11% under the gun at a full table, 20% at 6-max, 48% on the button');
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers');
