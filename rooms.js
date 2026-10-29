@@ -136,13 +136,13 @@
     $('roomEntry').hidden=true;$('roomFinder').hidden=true;$('capacityNote').hidden=true;$('roomLobby').hidden=false;$('roomCodeLabel').textContent=(fr?'· FREEROLL TABLE '+fr.table:snapshot.ranked?'· RANKED '+(snapshot.rankedMax||6)+' PLAYERS':spectator?'':roomCode)+(spectator?' · WATCHING':'');
     $('leaveRoom').textContent=spectator?'STOP WATCHING':'LEAVE ROOM';
     $('rooms').classList.toggle('rivl-spectating',spectator);
-    const eye=$('roomWatchers');if(eye){eye.hidden=!snapshot.watchers;eye.textContent='👁 '+snapshot.watchers+' WATCHING';eye.title=spectator?'Spectators at this table, you included':'Spectators see the table but never your cards, unless they are shown at showdown'}
+    const eye=$('roomWatchers');if(eye){eye.hidden=!snapshot.watchers;eye.textContent='👁 '+snapshot.watchers+' WATCHING';eye.title=spectator?'Spectators at this table, you included':(fr?'Spectators never see your cards unless they are shown at showdown':'Spectators are your friends or other players’ friends. Only your own friends can see your cards')}
     for(const id of ['roomLobbyChatForm','roomChatForm'])if($(id))$(id).hidden=spectator;
     const playing=!!snapshot.started&&!!snapshot.game;
     $('roomLobbyChat').hidden=playing;
     if(!playing)renderLobbyChat();
     const disclaimer=document.querySelector('.room-disclaimer');
-    if(disclaimer)disclaimer.textContent=spectator?'You are watching as a spectator. You see the board and any hand shown at showdown, never anyone’s hole cards.':fr?'Nightly Freeroll · free to play, no real money, no Elo change. Your seat is kept if you refresh or lose connection.':(snapshot.ranked?'Ranked':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
+    if(disclaimer)disclaimer.textContent=spectator?(fr?'You are watching as a spectator. You see the board and any hand shown at showdown, never anyone’s hole cards.':'You are watching as a spectator. You see your friends’ cards and any hand shown at showdown, never anyone else’s.'):fr?'Nightly Freeroll · free to play, no real money, no Elo change. Your seat is kept if you refresh or lose connection.':(snapshot.ranked?'Ranked':'Unranked')+' multiplayer · server-controlled betting · no real-money wagering. Your seat is kept if you refresh or lose connection.';
     const heading=document.querySelector('.crumb');
     if(heading)heading.textContent=fr?'TEXAS HOLD’EM · NIGHTLY FREEROLL':playing?'TEXAS HOLD’EM · '+(snapshot.ranked?'RANKED':'UNRANKED')+' MULTIPLAYER':'TEXAS HOLD’EM · ONLINE ROOMS';
     $('rooms').classList.toggle('rivl-match-mode',playing);
@@ -189,7 +189,7 @@
       $('roomPlayerCount').textContent=active.length;
       // A spectator sees the table from the seat of the friend they came to watch (or the first player), cards face down.
       const me=g.players.find(p=>p.seat===snapshot.mySeat)||(spectator?g.players.find(p=>watchFocus&&snapshot.seats[p.seat]?.accountId===watchFocus)||g.players[0]:null);
-      const myCards=g.holeCards||(spectator&&me?g.shown?.[me.seat]:null)||null;
+      const myCards=g.holeCards||(spectator&&me?g.friendCards?.[me.seat]||g.shown?.[me.seat]:null)||null;
       // Opponents are laid out clockwise starting at your left, in the server's turn order (seat index order
       // starting after yours), so the action, dealer and blinds travel around the table instead of jumping.
       const after=p=>me?(p.seat-me.seat+9)%9:p.seat;
@@ -253,7 +253,8 @@
         const label=document.createElement('span');label.className='rivl-seat-label';const who=document.createElement('b');who.textContent=p.name;if(snapshot?.ranked&&p.id===window.rivlAccount?.current()?.id)window.rivlLeagueIcons?.decorate(who,window.rivlAccount.current().leagueKey||window.RivlRating?.tier(window.rivlAccount.current().rating).key,{prepend:true});const info=document.createElement('small');info.textContent=amt(p.stack)+(p.left?' · LEFT':p.away&&snapshot.seats[p.seat]?.online===false?' · AWAY':'')+(p.folded?' · FOLD':p.allIn?' · ALL IN':p.bet?' · BET '+amt(p.bet):'')+(p.seat===g.turn&&!thinking?' ◀ TURN':'');label.append(who,info);
         item.append(avatar,label);
         if(thinking){const dots=document.createElement('i');dots.className='think-dots';dots.setAttribute('aria-hidden','true');dots.append(...[0,1,2].map(()=>document.createElement('b')));item.append(dots)}
-        const cards=g.shown?.[p.seat];
+        // A spectator also sees the cards of any other friend at the table (the server sends only friends', never in a freeroll).
+        const cards=g.shown?.[p.seat]||(!p.folded&&g.friendCards?.[p.seat])||null;
         if(cards){const shown=document.createElement('span');shown.className='rivl-shown';cards.forEach(c=>shown.append(cardNode(c)));item.append(shown)}
         // Evenly distribute opponents along a mirrored arc around the Cairo table.
         const total=opponents.length;
@@ -323,7 +324,7 @@
         slider.value=amount.value;window.rivlAmounts.raiseLabel($('roomAmountLabel'),amount.value,snapshot?.game?.bigBlind);
         $('roomBetInfo').parentElement.hidden=true;
         $('roomBetInfo').textContent='Raise to '+l.raiseToMin+'–'+l.raiseToMax+' chips'+(window.rivlAmounts.unit()==='bb'?' ('+amt(l.raiseToMin)+'–'+amt(l.raiseToMax)+')':'')+' · 12-second turn';
-      }else{roomBetKey='';$('roomBetInfo').parentElement.hidden=false;$('roomBetInfo').textContent=spectator?(g.matchOver?'This match is over':'Watching'+(me?' '+me.name:'')+' · hole cards stay hidden unless shown at showdown'):fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
+      }else{roomBetKey='';$('roomBetInfo').parentElement.hidden=false;$('roomBetInfo').textContent=spectator?(g.matchOver?'This match is over':'Watching'+(me?' '+me.name:'')+(fr?' · hole cards stay hidden unless shown at showdown':' · you see your friends’ cards, nobody else’s')):fr&&g.matchOver?'The freeroll is over':fr&&!me?'You are seated. You will be dealt in on the next hand.':fr&&me?.away?'You are sitting out. Your hands are folded until you come back.':g.matchOver?(snapshot.ranked?'Find your next Ranked match or go back to the lobby':host?'Start a rematch or go back to the lobby':'Waiting for the host'):me?.away?'You are sitting out. Act on your turn to rejoin.':g.phase==='showdown'?'Next hand starts shortly':g.players.find(x=>x.seat===g.turn&&x.bot)?g.players.find(x=>x.seat===g.turn).name+' is thinking…':'Waiting for next turn';}
       clearInterval(clockTimer);
       const tick=()=>{
         // The ring drains over the whole turn, extensions included, so an extension refills it.

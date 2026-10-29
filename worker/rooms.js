@@ -60,7 +60,8 @@ const RANKED_SIZES=[3,6,9],RANKED_COUNTDOWN_MS=15000;
 // Players can add 5 seconds to their own turn clock: three times per Ranked match, five times per freeroll.
 const RANKED_EXTENSIONS=3,FREEROLL_EXTENSIONS=5,EXTENSION_MS=5000;
 // Spectators: anyone can watch a freeroll table; other tables only by a friend of someone seated there.
-// They get the same view as a player with no seat (no hole cards until showdown) and cannot act or chat.
+// They get the same view as a player with no seat (no hole cards until showdown) plus, away from the freeroll, the
+// hole cards of the friends they came to watch. They cannot act or chat.
 const MAX_WATCHERS=25;
 const rankedSize=room=>RANKED_SIZES.includes(Number(room?.rankedMax))?Number(room.rankedMax):6;
 const RANKED_SIGN_IN='Sign in or create an account to play Ranked.';
@@ -327,6 +328,12 @@ export class Room {
     const seated=new Set(Object.values(this.room.members).map(m=>m.accountId));
     return !friends.some(id=>seated.has(id));
   }
+  // Someone watching a friend sees that friend's own hole cards. Freeroll spectators never see any (friends get no list there).
+  friendCards(ws){
+    const g=this.room.game,friends=ws.deserializeAttachment()?.friends;
+    if(this.room.tourney||!g||!friends?.length)return {};
+    return Object.fromEntries(Object.values(this.room.members).filter(m=>friends.includes(m.accountId)&&g.hands[m.seat]).map(m=>[m.seat,g.hands[m.seat]]));
+  }
   async watch(ws,msg){
     const room=this.room,out=reason=>{this.send(ws,{type:'removed',reason,watch:true});try{ws.close(1000,reason)}catch{}};
     if(this.watchers().length>=MAX_WATCHERS)return out('This table has as many spectators as it can take. Try again later.');
@@ -371,6 +378,7 @@ export class Room {
     for(const ws of this.watchers()){
       if(this.friendGone(ws)){this.send(ws,{type:'removed',reason:'Your friend has left this table.',watch:true});try{ws.close(1000,'Friend left')}catch{}continue}
       const state={...view,seats:view.seats.map(s=>s&&{...s})};
+      if(state.game)state.game={...state.game,friendCards:this.friendCards(ws)};
       if(this.photosSent.get(ws)===photos){for(const seat of state.seats)if(/^data:/.test(seat?.avatar||''))delete seat.avatar}
       else this.photosSent.set(ws,photos);
       this.send(ws,{type:'state',state,isHost:false});

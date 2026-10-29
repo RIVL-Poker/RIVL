@@ -1143,6 +1143,7 @@ console.log('PASS: '+checks+' room server checks');
   assert.equal(view.game.holeCards,null,'no hole cards for a spectator');
   assert.equal(view.game.legal,null,'a spectator never has a turn');
   assert.deepEqual(view.game.shown,{},'nothing is shown before showdown');
+  assert.deepEqual(view.game.friendCards,{},'freeroll spectators see no one’s cards, friends included');
   for(const hand of Object.values(g.hands))assert.ok(!JSON.stringify(eye.messages).includes(JSON.stringify(hand)),'no hole cards anywhere in what a spectator receives');
   assert.equal(ann.last('state').state.watchers,1,'players see how many are watching');
   assert.equal(ann.last('state').state.watching,false);
@@ -1194,7 +1195,11 @@ console.log('PASS: '+checks+' room server checks');
   await say(room,adaWs,{type:'startMatch'});
   const s=benWs.last('state').state;
   assert.equal(s.game.holeCards,null);assert.equal(s.game.legal,null);assert.deepEqual(s.game.shown,{});
-  assert.ok(!JSON.stringify(benWs.messages).includes(JSON.stringify(room.room.game.hands[0])),'Ada’s cards never reach Ben');
+  // Ben sees his friend Ada's cards, but never Dan's or the bot's.
+  const seatOf=t=>room.room.members[t].seat,hands=room.room.game.hands;
+  assert.deepEqual(s.game.friendCards,{[seatOf(room.room.hostToken)]:hands[seatOf(room.room.hostToken)]},'a friend spectator sees the friend’s cards');
+  for(const seat of [seatOf(dan.token),1])assert.ok(!JSON.stringify(benWs.messages).includes(JSON.stringify(hands[seat])),'nobody else’s cards reach Ben');
+  assert.ok(!('friendCards' in danWs.last('state').state.game),'players never get friendCards');
   await say(room,benWs,{type:'startMatch'});assert.match(benWs.last('error').error,/Spectators/,'host controls are off for spectators');
   // A heartbeat from anywhere else clears the table, and a friend who leaves takes their spectators with them.
   await api(env,'/api/presence',{key:ada.key});
