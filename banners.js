@@ -80,7 +80,7 @@
   // Called by rooms.js after it paints the opponents' seats.
   function decorate(container){
     lastSeats=container;
-    if(!unlocked()||!container)return;
+    if(!container)return;
     const seats=[...container.querySelectorAll('.rivl-pvp-seat[data-account]')];
     want(seats.map(el=>el.dataset.account));
     for(const el of seats){
@@ -106,7 +106,7 @@
   }
   function hideFloat(){if(float){float.classList.remove('on')}hoverId=''}
   document.addEventListener('pointerover',e=>{
-    if(!unlocked()||!canHover())return;
+    if(!canHover())return;
     const el=e.target.closest?.('#roomGame .rivl-pvp-seat.rb-seat');
     if(el)showFloat(el);else if(hoverId)hideFloat();
   });
@@ -127,7 +127,7 @@
     let data;
     try{data=await call('/api/player',{id,key:window.rivlAccount?.key()||undefined})}
     catch(e){d.innerHTML=`<div class="rb-card-body"><p class="rb-card-status">${esc(e.message||'Could not load that player.')}</p><div class="rb-card-btns"><button type="button" class="outline" data-close>CLOSE</button></div></div>`;d.querySelector('[data-close]').onclick=()=>d.close();return}
-    const p=data.player,fr=data.freeroll||{},b=unlocked()?data.banner:null;
+    const p=data.player,fr=data.freeroll||{},b=data.banner||null;
     const head=b?banner(b,{name:p.name,avatar:p.avatar}):`<div class="rb-card-head"><span class="rb-card-av">${avatarHTML(p.avatar,p.name)}</span><h2>${esc(p.name)}</h2></div>`;
     const pills=[data.champion?'<span class="rb-pill champ">★ FREEROLL CHAMPION</span>':'',p.league?`<span class="rb-pill">${esc(p.league.toUpperCase())} LEAGUE</span>`:''].join('');
     const friend={add:'+ ADD FRIEND',accept:'ACCEPT REQUEST',requested:'REQUESTED',friends:'FRIENDS ✓'}[data.relation];
