@@ -4,6 +4,9 @@
    moves from you replay the same hand. Blinds stay 5/10 and anyone under 1,000 chips tops up
    to 1,000 before each hand, so every hand is played 100 big blinds deep by all five seats.
    "best" is who holds the best hand if everyone goes to the river. */
+// The champion banner each bot wears at this table (banners.js artwork). Only the Set Hands table
+// shows these, and to every player whether or not they have opened the vault.
+window.RIVL_SCRIPTED_BANNERS={Ace:'throne',Rico:'dragon',Luna:'wolf',Nash:'frost'};
 window.RIVL_SCRIPTED_HANDS=[
   {title:'Aces vs kings',best:'You (set of aces on the river)',
    hole:[['A♠','A♥'],['K♣','K♦'],['9♠','8♠'],['7♦','2♣'],['Q♥','J♣']],

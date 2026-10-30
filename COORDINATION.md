@@ -39,6 +39,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Standard facing-a-raise charts in the grader | `claude/project-thread-bkyllm` | rating.js, training.js (export only), tests.js, README.md | PR open |
 | Claude | Player stats on the Profile, in every mode, saved to the account | `claude/project-thread-lkcyr9` | hand-stats.js, player-stats.js, player-stats.css, worker/rooms.js, worker/directory.js, worker/grading.js, index.html, script.js, ladder-ui.js, rating.js, account.js, tests.js, tests-worker.mjs, scripts/build-site.mjs, README.md | PR open |
 | Claude | Freeroll Champion Banners, secret unlock, player cards | `claude/project-thread-azruh2` | banners.js, banners.css, assets/banners/, index.html, rooms.js, account.js, freeroll.js, worker/rooms.js, worker/tournament.js, worker/directory.js, tests-worker.mjs, scripts/build-site.mjs, README.md | PR open |
+| Claude | Champion banners for the 4 Set Hands bots | `claude/project-thread-t0bii5` | scripted-hands.js, banners.js, banners.css, script.js, index.html | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -178,3 +179,6 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Added Freeroll Champion Banners (banners.js, banners.css). They stay invisible until unlocked from a hidden control in Support; the unlock is saved to the account.
 - rooms.js now tags each seat with data-account and calls rivlBanners.decorate(seats) after rendering. worker/rooms.js reports knockouts and the winning five cards to the tournament; the Directory stores a detail column on freeroll_results and a banner column on accounts.
 - New routes: /api/banners, /api/banners/me, /api/banners/save, /api/player (public player card).
+
+### 2026-10-30 02:40 UTC · Claude
+- Set Hands table only: Ace, Rico, Luna and Nash each wear a champion banner (The Throne, Dragon's Hoard, Moon Wolf, Frost King). The map is `RIVL_SCRIPTED_BANNERS` in scripted-hands.js; `rivlBanners.bot()` paints the seat and hovering it floats the banner. Shown to everyone, no vault needed. Other bot tables are unchanged.
