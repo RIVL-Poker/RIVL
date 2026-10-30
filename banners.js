@@ -28,7 +28,8 @@
   const nightDate=n=>n?new Date(n+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'}).toUpperCase():'';
   const clock=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).toUpperCase();
   const photo=a=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a||'')&&a.length<=45000;
-  const avatarHTML=(p,name)=>photo(p)?`<img src="${p}" alt="">`:esc((name||'?')[0].toUpperCase());
+  // A player's own photo, or a practice bot's picture from assets/bots/.
+  const avatarHTML=(p,name)=>photo(p)||/^assets\/bots\/[\w-]+\.jpg$/.test(p||'')?`<img src="${p}" alt="">`:esc((name||'?')[0].toUpperCase());
 
   /* ---------- the banner ---------- */
   // b: {art, stat, wins, night, place, entrants, detail:{series, kos, hand, start, end}}; who: {name, avatar}.
@@ -92,14 +93,25 @@
     }
   }
 
+  /* ---------- the Set Hands bots ---------- */
+  // Called by script.js for each bot seat. k is the bot's artwork at the Set Hands table, or nothing at other bot
+  // tables. Bots are not players with accounts, so their banners show to everyone, vault or not.
+  function bot(el,name,k){
+    const a=k&&ARTS[k];
+    el.classList.toggle('rb-seat',!!a);
+    if(a){el.dataset.banner=k;el.dataset.bot=name;el.style.setProperty('--rb-c',a.c);el.style.setProperty('--rb-img',img(k))}
+    else if(el.dataset.banner){delete el.dataset.banner;delete el.dataset.bot;el.style.removeProperty('--rb-c');el.style.removeProperty('--rb-img')}
+  }
+
   /* ---------- the hover banner ---------- */
   let float=null,hoverId='';
   const canHover=()=>matchMedia('(hover:hover) and (pointer:fine)').matches;
   function showFloat(el){
-    const id=el.dataset.account,b=cache.get(id)?.b;if(!b||document.querySelector(".rb-card[open]"))return hideFloat();
+    const id=el.dataset.account||'bot:'+el.dataset.bot,b=el.dataset.account?cache.get(id)?.b:el.dataset.banner&&{art:el.dataset.banner};
+    if(!b||document.querySelector(".rb-card[open]"))return hideFloat();
     float||=Object.assign(document.createElement('div'),{className:'rb-float'});
     if(!float.isConnected)document.body.append(float);
-    if(hoverId!==id){const name=el.querySelector('.rivl-seat-label b')?.textContent||b.name;float.innerHTML=banner(b,{name,avatar:el.querySelector('.avatar img')?.src||''});hoverId=id}
+    if(hoverId!==id){const name=el.dataset.bot||el.querySelector('.rivl-seat-label b')?.textContent||b.name;float.innerHTML=banner(b,{name,avatar:el.dataset.bot?window.rivlBotAvatars?.photo(el.dataset.bot):el.querySelector('.avatar img')?.src||''});hoverId=id}
     const r=el.getBoundingClientRect(),w=float.offsetWidth||340,x=Math.min(innerWidth-w/2-8,Math.max(w/2+8,r.left+r.width/2));
     float.style.left=x+'px';float.style.top=Math.max(float.offsetHeight+8,r.top-8)+'px';
     requestAnimationFrame(()=>float.classList.add('on'));
@@ -107,7 +119,7 @@
   function hideFloat(){if(float){float.classList.remove('on')}hoverId=''}
   document.addEventListener('pointerover',e=>{
     if(!canHover())return;
-    const el=e.target.closest?.('#roomGame .rivl-pvp-seat.rb-seat');
+    const el=e.target.closest?.('#roomGame .rivl-pvp-seat.rb-seat,#table .seat.rb-seat');
     if(el)showFloat(el);else if(hoverId)hideFloat();
   });
   addEventListener('scroll',hideFloat,{passive:true});
@@ -244,5 +256,5 @@
   // Opened on this device but the account never heard (signed out then, or the save failed): tell it now, so
   // the player's other devices see banners too.
   setTimeout(async()=>{if(local()&&window.rivlAccount?.key()&&!account()?.bannersUnlocked){await syncUnlock();loadMine()}},4000);
-  window.rivlBanners={decorate,openCard,unlocked,banner};
+  window.rivlBanners={decorate,bot,openCard,unlocked,banner};
 })();
