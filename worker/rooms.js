@@ -47,7 +47,8 @@ async function dir(env,path,body){
 // Short in-memory cache for public lists, so polling pages do not each wake the Directory.
 const cache=new Map();
 async function cached(env,path,ttl){
-  const hit=cache.get(path);if(hit&&Date.now()-hit.t<ttl)return hit.value;
+  // Fresh means saved within the last ttl ms; an entry stamped in the future (the clock went back) is stale.
+  const hit=cache.get(path),age=hit?Date.now()-hit.t:-1;if(age>=0&&age<ttl)return hit.value;
   const value=await dir(env,path);if(value.status===200)cache.set(path,{t:Date.now(),value});return value;
 }
 // One Tournament object per night runs the nightly freeroll (see worker/tournament.js).
@@ -56,7 +57,7 @@ async function tourney(env,night,path,body){
   return {status:response.status,data:await response.json()};
 }
 async function cachedTourney(env,night){
-  const key='freeroll:'+night,hit=cache.get(key);if(hit&&Date.now()-hit.t<3000)return hit.value;
+  const key='freeroll:'+night,hit=cache.get(key),age=hit?Date.now()-hit.t:-1;if(age>=0&&age<3000)return hit.value;
   const value=await tourney(env,night,'/view',{});if(value.status===200)cache.set(key,{t:Date.now(),value});return value;
 }
 // Ranked is matchmaking only: tables fill from the queue, start on their own, and are never joined by code.
