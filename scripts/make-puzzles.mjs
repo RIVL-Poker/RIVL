@@ -27,7 +27,7 @@ const tier=h=>R.handTier(I(h[0]),I(h[1]));
 /* ---------- the spot ---------- */
 // kind: 'barrel' (you defend the big blind; the opener bets into you), 'xr' (you opened and c-bet; the big
 // blind check-raises), 'lead' (you opened; the big blind bets into you on the turn or river).
-function spot(rand){
+export function spot(rand){
   const pick=a=>a[Math.floor(rand()*a.length)],chance=p=>rand()<p;
   const deck=DECK.slice();for(let i=deck.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}
   const hero=[deck.pop(),deck.pop()];
@@ -161,7 +161,7 @@ export function clearAnswer(grades){
 export const difficultyOf=(grades,best)=>{const m=Math.min(...Object.keys(grades).filter(k=>k!==best).map(k=>grades[k].lossBB));return m<1?null:m>=6?'Easy':m>=2.5?'Medium':'Hard'};
 const weekdayTarget=d=>['Hard','Easy','Easy','Medium','Medium','Hard','Hard'][new Date(Date.parse(START+'T00:00:00Z')+d*86400000).getUTCDay()];
 
-function build(s,best,r,difficulty,n){
+export function build(s,best,r,difficulty,n){
   const hand=describe(s.hero,s.board);
   return {n,kind:s.kind,hero:s.hero,board:s.board,street:s.street,pot:s.pot,heroBet:s.heroBet,bet:s.bet,stack:s.stack,raiseTo:s.raiseTo,
     position:s.position,heroPos:s.heroPos,villainPos:s.villainPos,villain:s.villain,story:s.story,difficulty,

@@ -496,7 +496,9 @@
     // Friends can be invited to a casual room until its match starts (friends.js).
     casual:()=>!!snapshot&&!snapshot.watching&&!snapshot.ranked&&!snapshot.tourney&&!snapshot.started,
     // Accepting a friend's invite: leave any other room first, then take a seat at theirs.
-    join(code){if(code===roomCode){show('rooms');return}if(token&&leaveRoom()===false)return;show('rooms');$('roomCodeInput').value=code;enter('join')}};
+    join(code){if(code===roomCode){show('rooms');return}if(token&&leaveRoom()===false)return;show('rooms');$('roomCodeInput').value=code;enter('join')},
+    // The clip playthrough (clip-mode.js) paints scripted hands on this same table, with no server behind it.
+    preview(state,offset=0){snapshot=state;roomCode='CLIP';clockOffset=offset;render()}};
   // Resume a saved seat after a refresh or a closed tab.
   try{const saved=JSON.parse(stored(SESSION)||'null');if(API&&saved?.code&&saved?.token){roomCode=saved.code;token=saved.token;show('rooms');status('Rejoining room '+roomCode+'…');connect()}}catch{}
 })();
