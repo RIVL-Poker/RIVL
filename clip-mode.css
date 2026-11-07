@@ -1,0 +1,87 @@
+/* The clip playthrough (clip-mode.js, ?clips): the Ranked table with nothing on screen but the hand, the question and
+   the answer, laid out for a phone held upright so a screen recording is ready for TikTok, Reels and Shorts. */
+body.clip-mode #app{padding-left:0}
+body.clip-mode .sidebar,body.clip-mode main>header,body.clip-mode #welcomeOverlay,
+body.clip-mode #roomLobby>:not(#roomGame),body.clip-mode #roomGame .gamebar-actions,body.clip-mode #roomGame .rivl-fullscreen,
+body.clip-mode #roomGame .gamebar>button,body.clip-mode .rivl-room-panel-toggle,body.clip-mode #roomGamePanel,
+body.clip-mode #roomWinner,body.clip-mode #roomRatings,body.clip-mode #roomNext,body.clip-mode #roomExtend,
+body.clip-mode #roomGame .rivl-pvp-raise,body.clip-mode #roomGame .rivl-timer-row,body.clip-mode #roomAllin,
+body.clip-mode #roomGame .rivl-pot-stats,body.clip-mode #roomGame .gamebar{display:none!important}
+body.clip-mode #roomActions.is-waiting{visibility:hidden}
+body.clip-mode{overflow:hidden}
+
+.clip-layer{position:fixed;inset:0;z-index:60;pointer-events:none;font-family:inherit;color:#f8f4ed}
+.clip-layer button{pointer-events:auto}
+.clip-brand{font-weight:900;letter-spacing:.14em;color:var(--gold,#efbd70)}
+.clip-brand.big{font-size:20px}
+
+.clip-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top)) 16px 10px;
+  background:linear-gradient(#000d,#0000);font-size:13px;letter-spacing:.12em}
+.clip-count{font-weight:800}
+.clip-street{margin-left:auto;font-weight:900;color:var(--gold,#efbd70)}
+.clip-caption{position:absolute;top:52px;left:50%;transform:translate(-50%,-6px);max-width:calc(100% - 32px);padding:9px 16px;border-radius:999px;
+  background:#0b0b0cdd;border:1px solid #6b4b2c;font-size:15px;font-weight:600;text-align:center;white-space:nowrap;opacity:0;transition:opacity .2s,transform .2s}
+.clip-caption.on{opacity:1;transform:translate(-50%,0)}
+.clip-caption b{color:var(--gold,#efbd70)}
+.clip-mini{display:inline-block;margin:0 1px;padding:0 4px;border-radius:4px;background:#f8f4ed;color:#111;font-weight:800;line-height:1.35}
+.clip-mini.red{color:#c8202c}
+
+/* The question: over the sky, above the table, while your clock runs. */
+.clip-ask{position:absolute;top:100px;left:16px;right:16px;padding:16px 14px 14px;border-radius:18px;text-align:center;
+  background:linear-gradient(#141211f2,#0b0b0cf2);border:2px solid var(--gold,#efbd70);box-shadow:0 10px 40px #000a;animation:clip-pop .35s cubic-bezier(.2,1.4,.4,1)}
+.clip-ask strong{display:block;font-size:24px;font-weight:900;letter-spacing:.04em;color:var(--gold,#efbd70)}
+.clip-choices{display:flex;gap:8px;justify-content:center;margin:12px 0 8px;flex-wrap:wrap}
+.clip-choice{padding:8px 12px;border-radius:10px;border:1px solid #6b4b2c;background:#1d1a17;font-weight:800;font-size:15px}
+.clip-choice.c-fold{border-color:#a3303a}.clip-choice.c-raise{border-color:var(--gold,#efbd70)}
+.clip-hint{font-size:13px;opacity:.75}
+
+/* The answer: where the question was, over the sky, so the board and your cards stay in view. */
+.clip-reveal{position:absolute;left:12px;right:12px;top:48px;padding:14px;border-radius:18px;
+  background:linear-gradient(#151312f7,#0a0a0bf7);border:2px solid var(--g-best,#4bd28e);box-shadow:0 10px 40px #000b;animation:clip-up .4s cubic-bezier(.2,1.2,.4,1)}
+.clip-verdict{display:flex;align-items:center;gap:12px}
+.clip-glyph{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--g-best,#4bd28e);color:#07140d;font-size:24px;font-weight:900;flex-shrink:0}
+.clip-verdict small{display:block;font-size:12px;letter-spacing:.14em;opacity:.8}
+.clip-verdict strong{display:block;font-size:28px;font-weight:900;line-height:1.1;color:var(--g-best,#4bd28e)}
+.clip-eq{display:flex;gap:10px;margin:10px 0}
+.clip-eq>div{flex:1;padding:8px 10px;border-radius:12px;background:#ffffff0d;text-align:center}
+.clip-eq small{display:block;font-size:11px;letter-spacing:.12em;opacity:.75}
+.clip-eq b{font-size:24px;font-weight:900}
+.clip-grades{display:flex;gap:6px}
+.clip-grade{flex:1;padding:7px 6px;border-radius:10px;background:#ffffff0a;border:1px solid #ffffff1a;text-align:center;font-size:12px}
+.clip-grade span{display:block;font-weight:800;font-size:13px}
+.clip-grade b{display:block;margin:2px 0}
+.clip-grade small{opacity:.7}
+.clip-grade.g-brilliant b{color:var(--g-brilliant)}.clip-grade.g-best b{color:var(--g-best)}.clip-grade.g-excellent b{color:var(--g-excellent)}
+.clip-grade.g-good b{color:var(--g-good)}.clip-grade.g-inaccuracy b{color:var(--g-inaccuracy)}.clip-grade.g-mistake b{color:var(--g-mistake)}.clip-grade.g-blunder b{color:var(--g-blunder)}
+.clip-grade.best{border-color:var(--g-best,#4bd28e);background:#4bd28e1a}
+.clip-lesson{margin:10px 0 0;font-size:13.5px;line-height:1.38}
+
+/* The title card between hands: where to cut. */
+.clip-title,.clip-start,.clip-paused{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:radial-gradient(#1a140ef2,#050505fa)}
+.clip-title{animation:clip-fade .3s}
+.clip-title strong{display:block;font-size:56px;font-weight:900;letter-spacing:.04em;margin:6px 0}
+.clip-title small{font-size:14px;letter-spacing:.16em;color:var(--gold,#efbd70)}
+.clip-title{grid-auto-flow:row;align-content:center}
+.clip-start,.clip-paused{pointer-events:auto;padding:24px}
+.clip-start>div,.clip-paused>div{max-width:420px}
+.clip-start h2{margin:8px 0 12px;font-size:28px;letter-spacing:.06em}
+.clip-start p{line-height:1.5;opacity:.9}
+.clip-keys{font-size:13px}
+.clip-keys kbd{padding:1px 6px;border:1px solid #6b4b2c;border-radius:5px;font-family:inherit}
+.clip-start button{margin-top:12px;padding:14px 48px;font-size:18px}
+.clip-countdown{font-size:120px;font-weight:900;color:var(--gold,#efbd70)}
+.clip-paused{background:#000c}
+.clip-paused strong{display:block;font-size:30px;letter-spacing:.12em;margin-bottom:16px}
+.clip-paused-row{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
+.clip-paused button{padding:10px 16px}
+[hidden].clip-ask,[hidden].clip-reveal,[hidden].clip-title,[hidden].clip-paused{display:none}
+
+@keyframes clip-pop{from{transform:scale(.85);opacity:0}}
+@keyframes clip-up{from{transform:translateY(-30px);opacity:0}}
+@keyframes clip-fade{from{opacity:0}}
+
+/* On a wide screen the overlays keep to a phone-sized column in the middle, over the table. */
+@media(min-width:700px){
+  .clip-ask,.clip-reveal{left:50%;right:auto;width:440px;transform:translateX(-50%)}
+  .clip-ask{animation:none}.clip-reveal{animation:none}
+}
