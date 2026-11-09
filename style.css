@@ -2508,6 +2508,12 @@ body.in-game #table .poker-table>.pot,#roomGame .rivl-pvp-table>.pot{z-index:6}
 /* "1.5 BB" is wider than a chip count: let the pot total shrink inside its half of the bot stats box. */
 body.in-game #table .rivl-pov-pot-balance-row .rivl-pot-stats-value{min-width:0}
 #botPotTotal,#rivlPovBalance{white-space:nowrap;min-width:0;font-size:min(1em,max(.72em,1.6vw))}
+/* Phone room table (online rooms and ?clips): beside the board, the pot and its readout sat on the left seat's
+   label. As on the bot table, the pot now sits straight above the board, its readout between the chips and the cards. */
+@media(max-width:600px){
+  #roomGame .rivl-pvp-table .pot{top:calc(46% - 18px)!important;left:50%!important;right:auto!important;transform:translate(-50%,-100%)!important}
+  #roomGame .rivl-pvp-table .pot .pot-amount{left:50%;transform:translateX(-50%)}
+}
 /* Phone bot table: the pot sits straight above the board, so its readout goes above the chip pile, clear of the cards. */
 @media(max-width:600px){
   body.in-game #table .pot .pot-amount{top:auto;bottom:calc(100% + 1px);left:50%;transform:translateX(-50%)}
