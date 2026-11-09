@@ -7,7 +7,7 @@ const {chromium}=require('playwright');const fs=require('fs');
   const c=await b.newContext({viewport:{width:390,height:+(process.env.CLIP_H||844)},deviceScaleFactor:3,isMobile:true,hasTouch:true});
   const p=await c.newPage();p.on('pageerror',e=>console.log('ERR',e.message));
   await p.goto('http://localhost:8765/?clips='+start);await p.waitForSelector('#clipGo');
-  // Optional stylesheet for the recording only (CLIP_CSS=path), e.g. scripts/clips/clip-fixes.css.
+  // Optional stylesheet added for the recording only (CLIP_CSS=path to a .css file).
   if(process.env.CLIP_CSS)await p.addStyleTag({content:fs.readFileSync(process.env.CLIP_CSS,'utf8')});await p.waitForTimeout(1500);
   const cdp=await c.newCDPSession(p);const list=[];let n=0;
   cdp.on('Page.screencastFrame',async f=>{const name=`f${String(n++).padStart(5,'0')}.jpg`;

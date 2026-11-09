@@ -16,6 +16,6 @@ This folder is not part of the website build (`scripts/build-site.mjs` copies a 
 
 ## TikTok versions
 
-`tiktok/videos/hand-NN.mp4` are made for TikTok's iPhone app. Each hand is recorded at 390 × 780 and placed at 780 × 1560 in the middle of a 1080 × 2338 frame, so the header, every seat and the FOLD / CALL / RAISE TO bar stay clear of TikTok's search bar, caption and button column. `scripts/clips/tiktok_frame.sh` has the measurements. `scripts/clips/clip-fixes.css` changes the recording only: it moves the pot label off the left seat. So far only hand 1 is made this way. To make them:
+`tiktok/videos/hand-NN.mp4` are made for TikTok's iPhone app. Each hand is recorded at 390 × 780 and placed at 780 × 1560 in the middle of a 1080 × 2338 frame, so the header, every seat and the FOLD / CALL / RAISE TO bar stay clear of TikTok's search bar, caption and button column. `scripts/clips/tiktok_frame.sh` has the measurements. So far only hand 1 is made this way. To make them:
 
     TIKTOK=1 scripts/clips/all.sh 1 20

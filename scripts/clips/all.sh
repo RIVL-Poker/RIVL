@@ -9,9 +9,9 @@ W=${3:-$(mktemp -d)}; mkdir -p "$W"
 (cd "$REPO" && setsid python3 -m http.server 8765 </dev/null >/dev/null 2>&1 &); sleep 1
 OUT="$REPO/media/clips"; VF="fps=30,scale=1080:-2:flags=lanczos,format=yuv420p"; CRF=17
 if [ "${TIKTOK:-}" = 1 ]; then
-  # A 390 x 780 layout keeps every seat clear of the question box. clip-fixes.css applies to the recording
-  # only. Keep the full 3x picture until tiktok_frame.sh places it clear of TikTok's buttons and text.
-  export CLIP_H=780 CLIP_CSS="${CLIP_CSS:-$HERE/clip-fixes.css}"; OUT="$REPO/media/clips/tiktok"
+  # A 390 x 780 layout keeps every seat clear of the question box. Keep the full 3x picture until
+  # tiktok_frame.sh places it clear of TikTok's buttons and text.
+  export CLIP_H=780; OUT="$REPO/media/clips/tiktok"
   VF="fps=30,format=yuv420p"; CRF=12
 fi
 finish() { if [ "${TIKTOK:-}" = 1 ]; then bash "$HERE/tiktok_frame.sh" "$1" "$2"; else cp "$1" "$2"; fi; }
