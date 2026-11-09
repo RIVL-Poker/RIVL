@@ -25,11 +25,22 @@ self.addEventListener('fetch',event=>{
   if(req.headers.has('range')||req.destination==='audio'||req.destination==='video')return;
   if(req.mode==='navigate'){
     const key=PAGES.has(url.pathname)?url.pathname:'/';
-    event.respondWith(caches.match(key,{cacheName:CACHE}).then(hit=>hit||fetch(req)));
+    event.respondWith(fetch(req).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(cache=>cache.put(key,copy)).catch(()=>{});}return res;}).catch(()=>caches.match(key,{cacheName:CACHE})));
     return;
   }
   // Site files are matched without their ?v= tags: the cached copy is always the one this deploy shipped.
   // Anything not kept up front (backgrounds, avatars) is saved the first time it loads.
+  // Always check the network for updated scripts and styles before using the offline copy.
+  if(/\.(js|css|html)$/.test(url.pathname)){
+    event.respondWith(fetch(req).then(res=>{
+      if(res.ok&&res.type==='basic'){
+        const copy=res.clone();
+        caches.open(CACHE).then(cache=>cache.put(url.pathname,copy)).catch(()=>{});
+      }
+      return res;
+    }).catch(()=>caches.open(CACHE).then(cache=>cache.match(req,{ignoreSearch:true}))));
+    return;
+  }
   event.respondWith(caches.open(CACHE).then(cache=>cache.match(req,{ignoreSearch:true}).then(hit=>hit||fetch(req).then(res=>{
     if(res.ok&&res.type==='basic')cache.put(url.pathname,res.clone());
     return res;
