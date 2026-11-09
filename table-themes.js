@@ -2,6 +2,7 @@
 // To add a theme, upload the image to assets/ and add one line here. The first entry is the default.
 const TABLE_THEMES = [
   {id: 'original', file: 'ORIGINAL Background aligned.png', name: 'Original', description: 'The classic black and gold table.'},
+  {id: 'royal', file: 'royal.png', name: 'Royal', description: 'A royal poker room with crimson felt, gilded details, and RIVL branding.'},
   {id: 'cairo-sunset', file: 'CAIRO BACKGROUND TEST 3.png', name: 'Cairo Sunset', description: 'The Nile and the pyramids at sunset.'},
   {id: 'future-city', file: 'future-city.png', name: 'Future City', description: 'A skyline of glass towers and flying cars at dusk.'},
   {id: 'neon-tokyo', file: 'neon-tokyo.png', name: 'Neon Tokyo', description: 'Cherry blossoms and neon signs over Tokyo at night.'},
