@@ -1,0 +1,3 @@
+/* Clip recording only: lift the pot above the board so it no longer sits on the left seat's label. */
+html body #roomGame #roomPokerTable .pot{top:44px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important}
+html body #roomGame #roomPokerTable .pot .pot-amount{left:50%!important;right:auto!important;transform:translateX(-50%)!important}
