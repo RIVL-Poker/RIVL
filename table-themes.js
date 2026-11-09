@@ -1,9 +1,8 @@
 // Table Themes: each entry is a background image in assets/ that players can pick.
 // To add a theme, upload the image to assets/ and add one line here. The first entry is the default.
 const TABLE_THEMES = [
-  {id: 'cairo-sunset', file: 'CAIRO BACKGROUND TEST 3.png', name: 'Cairo Sunset', description: 'The Nile and the pyramids at sunset.'},
-  {id: 'cairo-overcast', file: 'CAIRO BACKGROUND (OVERCAST) TEST 1.png', name: 'Cairo Overcast', description: 'The same terrace under a stormy sky.'},
   {id: 'original', file: 'ORIGINAL Background aligned.png', name: 'Original', description: 'The classic black and gold table.'},
+  {id: 'cairo-sunset', file: 'CAIRO BACKGROUND TEST 3.png', name: 'Cairo Sunset', description: 'The Nile and the pyramids at sunset.'},
   {id: 'future-city', file: 'future-city.png', name: 'Future City', description: 'A skyline of glass towers and flying cars at dusk.'},
   {id: 'neon-tokyo', file: 'neon-tokyo.png', name: 'Neon Tokyo', description: 'Cherry blossoms and neon signs over Tokyo at night.'},
   {id: 'pirate-ship', file: 'pirate-ship.png', name: 'Pirate Ship', description: 'Below deck, with a galleon on the sunset sea.'},
@@ -29,7 +28,7 @@ const TABLE_THEMES = [
     if (!grid) return;
     grid.querySelectorAll('.table-theme').forEach(el => el.remove());
     const chosen = current();
-    TABLE_THEMES.slice().reverse().forEach(theme => {
+    TABLE_THEMES.forEach(theme => {
       const card = document.createElement('div');
       card.className = 'panel table-theme' + (theme === chosen ? ' chosen' : '');
       const preview = document.createElement('div');
@@ -46,7 +45,7 @@ const TABLE_THEMES = [
       button.disabled = theme === chosen;
       button.onclick = () => { try { localStorage.setItem(KEY, theme.id) } catch(e) {} apply(theme); render() };
       card.append(preview, title, text, button);
-      grid.prepend(card);
+      grid.append(card);
     });
   }
 
