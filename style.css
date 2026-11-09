@@ -2802,3 +2802,19 @@ html.sidebar-open .nav .nav-icon{width:15px;height:15px;vertical-align:-2px}
 .install-card .install-close{flex:none;width:44px;height:44px;margin:-6px -4px -6px 0;padding:0;background:none;border:0;color:#a99e8f;font-size:26px;line-height:1}
 @keyframes install-in{from{transform:translateY(20px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.install-card{animation:none}}
+
+
+/* Table theme selector: wide landscape banners instead of three-column cards. */
+#themes .theme-grid{grid-template-columns:minmax(0,1fr);gap:18px}
+#themes .table-theme{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(220px,1fr);grid-template-rows:auto 1fr auto;column-gap:24px;align-items:center;padding:16px;min-height:205px}
+#themes .table-theme .theme-preview{grid-column:1;grid-row:1 / 4;height:185px;width:100%;margin:0;background-position:center 25%}
+#themes .table-theme h3{grid-column:2;grid-row:1;align-self:end;margin:0 0 8px;color:var(--gold);font-size:20px}
+#themes .table-theme p{grid-column:2;grid-row:2;align-self:start;margin:0;line-height:1.5}
+#themes .table-theme button{grid-column:2;grid-row:3;margin:12px 0 0;max-width:280px}
+@media(max-width:700px){
+  #themes .table-theme{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;gap:10px;min-height:0}
+  #themes .table-theme .theme-preview{grid-column:1;grid-row:1;height:155px}
+  #themes .table-theme h3{grid-column:1;grid-row:2;margin:0}
+  #themes .table-theme p{grid-column:1;grid-row:3}
+  #themes .table-theme button{grid-column:1;grid-row:4;max-width:none;margin:2px 0 0}
+}
