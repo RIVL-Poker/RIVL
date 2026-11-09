@@ -2804,16 +2804,16 @@ html.sidebar-open .nav .nav-icon{width:15px;height:15px;vertical-align:-2px}
 @media (prefers-reduced-motion:reduce){.install-card{animation:none}}
 
 
-/* Table theme selector: wide landscape banners instead of three-column cards. */
-#themes .theme-grid{grid-template-columns:minmax(0,1fr);gap:12px}
-#themes .table-theme{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(220px,1fr);grid-template-rows:auto 1fr auto;column-gap:20px;align-items:center;padding:12px;min-height:158px}
-#themes .table-theme .theme-preview{grid-column:1;grid-row:1 / 4;height:145px;width:100%;margin:0;background-position:center 25%}
-#themes .table-theme h3{grid-column:2;grid-row:1;align-self:end;margin:0 0 8px;color:var(--gold);font-size:20px}
-#themes .table-theme p{grid-column:2;grid-row:2;align-self:start;margin:0;line-height:1.5}
-#themes .table-theme button{grid-column:2;grid-row:3;margin:12px 0 0;max-width:280px}
+/* Compact, single-column table theme banners. */
+#themes .theme-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+#themes .table-theme{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(220px,1fr);grid-template-rows:auto 1fr auto;column-gap:18px;align-items:center;padding:10px;min-height:0}
+#themes .table-theme .theme-preview{grid-column:1;grid-row:1 / 4;height:112px;width:100%;margin:0;background-position:center 25%}
+#themes .table-theme h3{grid-column:2;grid-row:1;align-self:end;margin:0 0 5px;color:var(--gold);font-size:18px}
+#themes .table-theme p{grid-column:2;grid-row:2;align-self:start;margin:0;line-height:1.4}
+#themes .table-theme button{grid-column:2;grid-row:3;margin:8px 0 0;max-width:280px;padding:8px}
 @media(max-width:700px){
-  #themes .table-theme{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;gap:10px;min-height:0}
-  #themes .table-theme .theme-preview{grid-column:1;grid-row:1;height:125px}
+  #themes .table-theme{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;gap:8px}
+  #themes .table-theme .theme-preview{grid-column:1;grid-row:1;height:115px}
   #themes .table-theme h3{grid-column:1;grid-row:2;margin:0}
   #themes .table-theme p{grid-column:1;grid-row:3}
   #themes .table-theme button{grid-column:1;grid-row:4;max-width:none;margin:2px 0 0}
