@@ -1,0 +1,493 @@
+{
+ "made": "2026-11-09",
+ "format": "1080x2338 vertical mp4, H.264, no audio",
+ "source": "RIVL ?clips mode, recorded by Claude",
+ "answers_sheet": "all-20-answers.png",
+ "scripts": [
+  "scripts/clips/record_clips.js",
+  "scripts/clips/cut_clips.py",
+  "scripts/clips/all.sh"
+ ],
+ "clips": [
+  {
+   "hand": 1,
+   "file": "videos/hand-01.mp4",
+   "poster": "posters/hand-01.jpg",
+   "seconds": 21.9,
+   "street": "Flop",
+   "difficulty": "Medium",
+   "hero": "6♦ 6♠",
+   "board": "2♠ 3♦ Q♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 9 BB",
+    "Re-raise to 31.5 BB"
+   ],
+   "answer": "Call 9 BB",
+   "equity": 44,
+   "needed": 30,
+   "why": {
+    "hand": "You have a middle pocket pair (6s).",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You have the 30% a call needs (about 44%). Raising is worse: the hands that call a raise have you beat (you'd have about 32%), so keep their bluffs in and call."
+   }
+  },
+  {
+   "hand": 2,
+   "file": "videos/hand-02.mp4",
+   "poster": "posters/hand-02.jpg",
+   "seconds": 24.8,
+   "street": "Turn",
+   "difficulty": "Medium",
+   "hero": "A♣ T♦",
+   "board": "K♦ K♥ 9♥ 3♥",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 7.5 BB",
+    "Check-raise to 22.5 BB"
+   ],
+   "answer": "Fold",
+   "equity": 12,
+   "needed": 28,
+   "why": {
+    "hand": "You have no pair of your own (ace-high; the pair is on the board).",
+    "range": "This bet is a mix of value hands, draws and some air.",
+    "lesson": "At 12% you are short of the 28% a call needs, and raising doesn't fold out enough of their range (about 11%) to work as a bluff. Let it go."
+   }
+  },
+  {
+   "hand": 3,
+   "file": "videos/hand-03.mp4",
+   "poster": "posters/hand-03.jpg",
+   "seconds": 21.9,
+   "street": "Flop",
+   "difficulty": "Easy",
+   "hero": "A♠ 8♦",
+   "board": "A♣ J♥ 8♥",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 10.5 BB",
+    "Re-raise to 35 BB"
+   ],
+   "answer": "Re-raise to 35 BB",
+   "equity": 76,
+   "needed": 31,
+   "why": {
+    "hand": "You have two pair.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You are ahead of most hands that would call a raise (about 73% when called), so raise for value and build the pot while they are willing to put chips in."
+   }
+  },
+  {
+   "hand": 4,
+   "file": "videos/hand-04.mp4",
+   "poster": "posters/hand-04.jpg",
+   "seconds": 26.6,
+   "street": "River",
+   "difficulty": "Medium",
+   "hero": "2♦ 2♠",
+   "board": "K♠ 9♠ 6♠ Q♠ J♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 6.5 BB",
+    "Raise to 19.5 BB"
+   ],
+   "answer": "Call 6.5 BB",
+   "equity": 42,
+   "needed": 26,
+   "why": {
+    "hand": "You have a flush.",
+    "range": "Leading the river into the player who raised before the flop usually means a hand that improved, or a missed draw turned into a bluff.",
+    "lesson": "You have the 25% a call needs (about 42%). Raising is worse: the hands that call a raise have you beat (you'd have about 9%), so keep their bluffs in and call."
+   }
+  },
+  {
+   "hand": 5,
+   "file": "videos/hand-05.mp4",
+   "poster": "posters/hand-05.jpg",
+   "seconds": 21.8,
+   "street": "Flop",
+   "difficulty": "Medium",
+   "hero": "J♣ Q♥",
+   "board": "A♣ 4♦ 8♠",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 9 BB",
+    "Re-raise to 30 BB"
+   ],
+   "answer": "Fold",
+   "equity": 17,
+   "needed": 31,
+   "why": {
+    "hand": "You have no pair, queen-high.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "At 17% you are short of the 31% a call needs, and raising doesn't fold out enough of their range (about 15%) to work as a bluff. Let it go."
+   }
+  },
+  {
+   "hand": 6,
+   "file": "videos/hand-06.mp4",
+   "poster": "posters/hand-06.jpg",
+   "seconds": 24,
+   "street": "Turn",
+   "difficulty": "Easy",
+   "hero": "J♣ 8♠",
+   "board": "K♣ 3♠ J♠ J♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 8.5 BB",
+    "Raise to 25.5 BB"
+   ],
+   "answer": "Raise to 25.5 BB",
+   "equity": 81,
+   "needed": 30,
+   "why": {
+    "hand": "You have trips (jacks) with a weak kicker.",
+    "range": "Leading into the player who raised before the flop usually means a hand that improved on this card, or a draw.",
+    "lesson": "You are ahead of most hands that would call a raise (about 74% when called), so raise for value and build the pot while they are willing to put chips in."
+   }
+  },
+  {
+   "hand": 7,
+   "file": "videos/hand-07.mp4",
+   "poster": "posters/hand-07.jpg",
+   "seconds": 27.3,
+   "street": "River",
+   "difficulty": "Medium",
+   "hero": "8♥ 6♥",
+   "board": "2♥ 7♣ 3♥ A♥ T♥",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 9 BB",
+    "Check-raise to 27 BB"
+   ],
+   "answer": "Call 9 BB",
+   "equity": 46,
+   "needed": 29,
+   "why": {
+    "hand": "You have a flush.",
+    "range": "A river bet this size is mostly made hands that beat a lot, plus some missed draws.",
+    "lesson": "You have the 29% a call needs (about 46%). Raising is worse: the hands that call a raise have you beat (you'd have about 22%), so keep their bluffs in and call."
+   }
+  },
+  {
+   "hand": 8,
+   "file": "videos/hand-08.mp4",
+   "poster": "posters/hand-08.jpg",
+   "seconds": 21.8,
+   "street": "Flop",
+   "difficulty": "Medium",
+   "hero": "5♣ 7♣",
+   "board": "T♦ 4♦ 9♥",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 7 BB",
+    "Re-raise to 26.5 BB"
+   ],
+   "answer": "Fold",
+   "equity": 10,
+   "needed": 26,
+   "why": {
+    "hand": "You have no pair, 7-high.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "At 10% you are short of the 26% a call needs, and raising doesn't fold out enough of their range (about 12%) to work as a bluff. Let it go."
+   }
+  },
+  {
+   "hand": 9,
+   "file": "videos/hand-09.mp4",
+   "poster": "posters/hand-09.jpg",
+   "seconds": 26.1,
+   "street": "Turn",
+   "difficulty": "Easy",
+   "hero": "A♣ Q♣",
+   "board": "8♦ 7♣ Q♥ 5♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 10 BB",
+    "Re-raise to 35 BB"
+   ],
+   "answer": "Re-raise to 35 BB",
+   "equity": 74,
+   "needed": 25,
+   "why": {
+    "hand": "You have top pair (queens) with a strong kicker.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You are ahead of most hands that would call a raise (about 70% when called), so raise for value and build the pot while they are willing to put chips in."
+   }
+  },
+  {
+   "hand": 10,
+   "file": "videos/hand-10.mp4",
+   "poster": "posters/hand-10.jpg",
+   "seconds": 21.8,
+   "street": "Flop",
+   "difficulty": "Medium",
+   "hero": "K♦ K♠",
+   "board": "Q♠ A♠ T♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 7 BB",
+    "Re-raise to 26.5 BB"
+   ],
+   "answer": "Call 7 BB",
+   "equity": 43,
+   "needed": 26,
+   "why": {
+    "hand": "You have a middle pocket pair (kings), plus a gutshot straight draw.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You have the 26% a call needs (about 43%). Raising is worse: the hands that call a raise have you beat (you'd have about 28%), so keep their bluffs in and call."
+   }
+  },
+  {
+   "hand": 11,
+   "file": "videos/hand-11.mp4",
+   "poster": "posters/hand-11.jpg",
+   "seconds": 27.3,
+   "street": "River",
+   "difficulty": "Easy",
+   "hero": "J♦ Q♣",
+   "board": "A♦ K♥ 6♦ 2♥ Q♥",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 17 BB",
+    "Check-raise to 51 BB"
+   ],
+   "answer": "Fold",
+   "equity": 12,
+   "needed": 36,
+   "why": {
+    "hand": "You have third pair (queens).",
+    "range": "A bet this big on the river is polarized: strong hands or bluffs, rarely anything in between.",
+    "lesson": "At 12% you are short of the 36% a call needs, and raising doesn't fold out enough of their range (about 24%) to work as a bluff. Let it go."
+   }
+  },
+  {
+   "hand": 12,
+   "file": "videos/hand-12.mp4",
+   "poster": "posters/hand-12.jpg",
+   "seconds": 21.7,
+   "street": "Flop",
+   "difficulty": "Easy",
+   "hero": "T♥ K♣",
+   "board": "6♠ K♥ K♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 7 BB",
+    "Re-raise to 26.5 BB"
+   ],
+   "answer": "Re-raise to 26.5 BB",
+   "equity": 89,
+   "needed": 26,
+   "why": {
+    "hand": "You have trips (kings) with a medium kicker.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You are ahead of most hands that would call a raise (about 86% when called), so raise for value and build the pot while they are willing to put chips in."
+   }
+  },
+  {
+   "hand": 13,
+   "file": "videos/hand-13.mp4",
+   "poster": "posters/hand-13.jpg",
+   "seconds": 24.3,
+   "street": "Turn",
+   "difficulty": "Medium",
+   "hero": "T♠ K♣",
+   "board": "Q♠ 6♣ T♦ 7♠",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 4 BB",
+    "Re-raise to 15 BB"
+   ],
+   "answer": "Call 4 BB",
+   "equity": 39,
+   "needed": 23,
+   "why": {
+    "hand": "You have second pair (10s).",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You have the 23% a call needs (about 39%). Raising is worse: the hands that call a raise have you beat (you'd have about 30%), so keep their bluffs in and call."
+   }
+  },
+  {
+   "hand": 14,
+   "file": "videos/hand-14.mp4",
+   "poster": "posters/hand-14.jpg",
+   "seconds": 28.6,
+   "street": "River",
+   "difficulty": "Easy",
+   "hero": "J♦ A♥",
+   "board": "Q♥ Q♠ 3♦ 4♣ 2♠",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 28.5 BB",
+    "All-in 86 BB"
+   ],
+   "answer": "Fold",
+   "equity": 18,
+   "needed": 33,
+   "why": {
+    "hand": "You have no pair of your own (ace-high; the pair is on the board).",
+    "range": "A bet this big on the river is polarized: strong hands or bluffs, rarely anything in between.",
+    "lesson": "At 18% you are short of the 33% a call needs, and raising doesn't fold out enough of their range (about 20%) to work as a bluff. Let it go."
+   }
+  },
+  {
+   "hand": 15,
+   "file": "videos/hand-15.mp4",
+   "poster": "posters/hand-15.jpg",
+   "seconds": 21.7,
+   "street": "Flop",
+   "difficulty": "Medium",
+   "hero": "7♠ A♠",
+   "board": "A♣ Q♠ 8♠",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 5 BB",
+    "Re-raise to 17.5 BB"
+   ],
+   "answer": "Re-raise to 17.5 BB",
+   "equity": 73,
+   "needed": 26,
+   "why": {
+    "hand": "You have top pair (aces) with a weak kicker, plus a flush draw.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You are ahead of most hands that would call a raise (about 68% when called), so raise for value and build the pot while they are willing to put chips in."
+   }
+  },
+  {
+   "hand": 16,
+   "file": "videos/hand-16.mp4",
+   "poster": "posters/hand-16.jpg",
+   "seconds": 26.3,
+   "street": "Turn",
+   "difficulty": "Easy",
+   "hero": "T♣ 6♣",
+   "board": "7♣ K♦ 9♣ 6♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 22.5 BB",
+    "All-in 94.5 BB"
+   ],
+   "answer": "Call 22.5 BB",
+   "equity": 44,
+   "needed": 32,
+   "why": {
+    "hand": "You have a low pair (6s), plus a flush draw and a gutshot straight draw.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You have the 31% a call needs (about 44%). Raising is worse: the hands that call a raise have you beat (you'd have about 33%), so keep their bluffs in and call."
+   }
+  },
+  {
+   "hand": 17,
+   "file": "videos/hand-17.mp4",
+   "poster": "posters/hand-17.jpg",
+   "seconds": 26.7,
+   "street": "River",
+   "difficulty": "Medium",
+   "hero": "A♣ 5♥",
+   "board": "K♣ A♦ 9♣ J♦ 3♦",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 6 BB",
+    "Raise to 18 BB"
+   ],
+   "answer": "Fold",
+   "equity": 13,
+   "needed": 26,
+   "why": {
+    "hand": "You have top pair (aces) with a weak kicker.",
+    "range": "Leading the river into the player who raised before the flop usually means a hand that improved, or a missed draw turned into a bluff.",
+    "lesson": "At 13% you are short of the 26% a call needs, and raising doesn't fold out enough of their range (about 5%) to work as a bluff. Let it go."
+   }
+  },
+  {
+   "hand": 18,
+   "file": "videos/hand-18.mp4",
+   "poster": "posters/hand-18.jpg",
+   "seconds": 21.8,
+   "street": "Flop",
+   "difficulty": "Easy",
+   "hero": "K♣ Q♠",
+   "board": "9♣ 3♦ Q♥",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 7.5 BB",
+    "Re-raise to 26.5 BB"
+   ],
+   "answer": "Re-raise to 26.5 BB",
+   "equity": 74,
+   "needed": 28,
+   "why": {
+    "hand": "You have top pair (queens) with a strong kicker.",
+    "range": "The big blind's check-raise is weighted toward strong hands (two pair and sets) and good draws, with a few bluffs.",
+    "lesson": "You are ahead of most hands that would call a raise (about 69% when called), so raise for value and build the pot while they are willing to put chips in."
+   }
+  },
+  {
+   "hand": 19,
+   "file": "videos/hand-19.mp4",
+   "poster": "posters/hand-19.jpg",
+   "seconds": 23.1,
+   "street": "Turn",
+   "difficulty": "Medium",
+   "hero": "6♠ A♦",
+   "board": "8♦ 7♦ A♥ 3♣",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 5.5 BB",
+    "Check-raise to 16.5 BB"
+   ],
+   "answer": "Call 5.5 BB",
+   "equity": 52,
+   "needed": 33,
+   "why": {
+    "hand": "You have top pair (aces) with a weak kicker.",
+    "range": "A pot-sized bet means a strong range: big made hands and strong draws, with some bluffs.",
+    "lesson": "You have the 33% a call needs (about 52%). Raising is worse: the hands that call a raise have you beat (you'd have about 30%), so keep their bluffs in and call."
+   }
+  },
+  {
+   "hand": 20,
+   "file": "videos/hand-20.mp4",
+   "poster": "posters/hand-20.jpg",
+   "seconds": 26.6,
+   "street": "River",
+   "difficulty": "Medium",
+   "hero": "3♠ 3♥",
+   "board": "T♠ 4♣ 7♠ 5♣ 8♠",
+   "question": "What's the best play?",
+   "options": [
+    "Fold",
+    "Call 6.5 BB",
+    "Raise to 19.5 BB"
+   ],
+   "answer": "Fold",
+   "equity": 11,
+   "needed": 29,
+   "why": {
+    "hand": "You have a pocket pair below the board (3s).",
+    "range": "Leading the river into the player who raised before the flop usually means a hand that improved, or a missed draw turned into a bluff.",
+    "lesson": "At 11% you are short of the 29% a call needs, and raising doesn't fold out enough of their range (about 12%) to work as a bluff. Let it go."
+   }
+  }
+ ]
+}
