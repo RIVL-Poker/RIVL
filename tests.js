@@ -146,6 +146,31 @@ for(const size of [6,9])TR.SEATS[size].forEach((pos,at)=>TR.SEATS[size].slice(0,
   }
   assert(!/undefined|NaN/.test(VR.spotText(size,opener,pos)),`facing a raise text for ${pos} v ${opener}`);
 }));
+// Facing a 3-bet: you open to 2.5 BB, one player 3-bets, everyone else folds. The drill's 4-bet, call and fold get the grader's labels,
+// it only deals hands you open from that seat, and its pot is the one the grader sees.
+const V3=TR.vs3Bet;let v3Checks=0;
+const threeBet=(n,at,o,hole)=>{const T=V3.threeBetTo(TR.SEATS[n][o])*10,players=[...Array(n)].map((_,k)=>{const bet=k===at?25:k===o?T:k===n-2?5:k===n-1?10:0;
+    return{name:'p'+k,hole:k===at?hole:['2♣','3♦'],bet,stack:1000-bet,folded:k!==at&&k!==o,allin:false,raiseLocked:false,line:k===at||k===o?2:0}});
+  return{bb:10,minRaise:T-25,currentBet:T,pot:players.reduce((a,p)=>a+p.bet,0),board:[],hand:1,street:0,sbSeat:n-2,bbSeat:n-1,players}};
+for(const size of [6,9])TR.SEATS[size].slice(0,-1).forEach((pos,at)=>TR.SEATS[size].slice(at+1).forEach((by,k)=>{const o=at+1+k;
+  const st0=threeBet(size,at,o,['2♣','3♦']);
+  assert.strictEqual(V3.pot(pos,by)*10,st0.pot,`facing a 3-bet ${size}-max ${pos} v ${by}: the pot matches the table`);
+  const m=V3.fourBetTo(by)/V3.threeBetTo(by);assert(m>=2&&m<=3,`facing a 3-bet ${pos} v ${by}: the 4-bet is a book size`);
+  for(const c of TR.CLASSES){
+    const L=V3.labels(size,pos,by,c);
+    if(EACH_TIER.includes(c)){
+      const A=R.analyze(threeBet(size,at,o,holeOf(c)),at,1);
+      assert.strictEqual(A.book.raisers,2,'the grader reads the spot as facing a 3-bet');
+      for(const act of ['raise','call','fold']){v3Checks++;
+        assert.strictEqual(L[act],R.grade(A,act,act==='raise'?V3.fourBetTo(by)*10:0).label,`facing a 3-bet ${size}-max ${pos} v ${by} ${c} ${act}`)}
+    }
+    assert(['raise','call','fold'].some(a=>L[a]==='Best'),`facing a 3-bet ${size}-max ${pos} v ${by} ${c} has a Best answer`);
+    if(TR.tierOf(c)<=TR.cutoff(size,pos))assert(!/undefined|NaN/.test(V3.handText(size,pos,by,c)),`facing a 3-bet text for ${c} ${pos} v ${by}`);
+  }
+  assert(!/undefined|NaN/.test(V3.spotText(size,pos,by)),`facing a 3-bet text for ${pos} v ${by}`);
+  const x=V3.shares(size,pos,by);assert(x.raise>0&&x.call>0&&x.keep<100,`facing a 3-bet ${pos} v ${by} keeps only the top of the range`);
+}));
+assert(V3.inPos('BTN','BB')&&V3.inPos('CO','SB')&&!V3.inPos('SB','BB')&&!V3.inPos('CO','BTN'),'position against the 3-bettor');
 // The charts stay close to standard ones: you continue with less than the opener opens (the big blind aside), early raises
 // get tight answers, and the big blind defends more the later the raise.
 const openP=(size,p)=>Math.round(100*TR.openPct(size,p)),cont=(size,op,pos)=>{const x=VR.shares(size,op,pos);return x.raise+x.call};
@@ -235,6 +260,36 @@ for(const size of [6,9])TR.SEATS[size].forEach(pos=>{
   }
 });
 }
+// Big blind defense (training-bb.js): you are the big blind, one open of 2 to 4 BB from any seat. Every answer is the grader's label for that game.
+vm.runInContext(fs.readFileSync(__dirname+'/training-bb.js','utf8'),rctx);
+const BD=TR.bbDefense;let bdChecks=0;
+const facingBB=(n,o,open,hole)=>({bb:10,minRaise:open*10-10,currentBet:open*10,pot:open*10+(o===n-2?0:5)+10,board:[],hand:1,street:0,sbSeat:n-2,bbSeat:n-1,
+  players:[...Array(n)].map((_,k)=>{const bet=k===o?open*10:k===n-2?5:k===n-1?10:0;
+    return{name:'p'+k,hole:k===n-1?hole:['2♣','3♦'],bet,stack:1000-bet,folded:k!==o&&k!==n-1,allin:false,raiseLocked:false,line:k===o?2:0}})});
+for(const size of [6,9])TR.SEATS[size].slice(0,-1).forEach((opener,o)=>{for(const open of BD.OPENS){
+  for(const c of TR.CLASSES){
+    const L=BD.labels(size,opener,open,c);
+    if(EACH_TIER.includes(c)){
+      const A=R.analyze(facingBB(size,o,open,holeOf(c)),size-1,1);
+      assert.strictEqual(A.toCall,open*10-10,`big blind defense ${size}-max v ${opener} ${open} BB: price`);
+      for(const act of ['raise','call','fold']){bdChecks++;
+        assert.strictEqual(L[act],R.grade(A,act,act==='raise'?BD.threeBetTo(open)*10:0).label,`big blind defense ${size}-max v ${opener} to ${open} BB ${c} ${act}`)}
+    }
+    assert(['raise','call','fold'].some(a=>L[a]==='Best'),`big blind defense ${size}-max v ${opener} to ${open} ${c} has a Best answer`);
+    assert.strictEqual(BD.judge(size,opener,open,c,BD.best(size,opener,open,c)).v,'right',`big blind defense ${c}: the chart play is marked correct`);
+    assert(!/undefined|NaN/.test(BD.handText(size,opener,open,c)),`big blind defense text for ${c} v ${opener} to ${open}`);
+  }
+  assert(!/undefined|NaN/.test(BD.priceText(size,opener,open)+BD.openerText(size,opener)),`big blind defense text v ${opener} to ${open}`);
+  // At 2.5 BB it is the facing-a-raise drill's big blind spot, so the two drills always agree.
+  if(open===2.5)TR.CLASSES.forEach(c=>assert.strictEqual(BD.best(size,opener,open,c),VR.best(VR.labels(size,opener,'BB',c)),`both drills agree on ${c} v ${opener}`));
+}
+  // Bigger raises are defended less, and the big blind defends more than the opener opens only against small raises.
+  const d=BD.OPENS.map(x=>BD.shares(size,opener,x).defend);
+  assert(d.every((x,i)=>!i||x<=d[i-1])&&d[d.length-1]<d[1],`${size}-max big blind defends less as ${opener}'s raise grows: ${d}`);
+});
+for(const size of [6,9]){const seats=TR.SEATS[size].slice(0,-1),d=seats.map(op=>BD.shares(size,op,2.5).defend);
+  assert(d.every((x,i)=>!i||x>=d[i-1]),`${size}-max big blind defends more against later openers: ${d}`)}
+assert(BD.price('BTN',2.5).need===27&&BD.price('SB',3).need===33,'pot odds: 1.5 BB to win 4 BB needs 27%, 2 BB to win the small blind\'s 4 BB needs 33%');
 // Player stats (hand-stats.js): seats are named from the small blind, a hand's record counts the way tracking software
 // counts it, a bad record from a browser is refused, and totals are exact sums in any order.
 require(__dirname+'/hand-stats.js');
@@ -315,4 +370,7 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
 console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+cbChecks+' flop c-bet checks + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+hsChecks+' player stats checks');
 require('./tests-river.js');
+require('./tests-potodds.js');

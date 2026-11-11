@@ -1,8 +1,9 @@
 /* RIVL Training: a hub of short drills (DRILLS below; each drill is its own view) built on one shared drill page:
-   a seat filter, a mini table, the choices, the verdict with why, and a 13x13 chart. Two drills so far:
+   a seat filter, a mini table, the choices, the verdict with why, and a 13x13 chart. The drills so far:
    - Hand range trainer: everyone folds to you, open-raise or fold.
    - Facing a raise: one player opens to 2.5 BB before you, 3-bet, call or fold.
-   The answers are rating.js's own preflop book (the tiers, and gradePreflop() for facing a raise), so the drills
+   - Facing a 3-bet: you open to 2.5 BB and one player re-raises, 4-bet, call or fold.
+   The answers are rating.js's own preflop book (the tiers, and gradePreflop() for facing a raise or a 3-bet), so the drills
    teach exactly what the decision grader rewards. Progress is kept in this browser. */
 (root=>{
   const R=root.RivlRating;if(!R)return;
@@ -136,11 +137,68 @@
     return `${cap(who(opener))} opens about ${p}% of hands${behind?`, and ${behind} player${behind>1?'s':''} still act behind you`:''}. Against that, the chart 3-bets ${s.raise}% and calls ${s.call}%.${feel}`;
   }
 
+  /* ---------- drill 3: you open to 2.5 BB and one player 3-bets, 4-bet, call or fold ---------- */
+  // 3-bets go to 3x the open in position and 4x from the blinds (as in drill 2); 4-bets go to 2.4x the 3-bet.
+  // All of these are standard sizes to the grader, so they never cap the grade.
+  const threeBy=by=>(by==='SB'||by==='BB'?4:3)*OPEN_TO,fourBetTo=by=>Math.round(2.4*threeBy(by));
+  // The blinds act first after the flop, so you have position on a 3-bettor in the blinds (unless you are the small blind
+  // facing the big blind) and are out of position against anyone else, who sits behind you.
+  const inPos=(pos,by)=>(by==='SB'||by==='BB')&&pos!=='SB';
+  // The pot you are calling into: your open, the 3-bet and any blind that folded.
+  const v3Pot=(pos,by)=>OPEN_TO+threeBy(by)+(pos!=='SB'&&by!=='SB'?.5:0)+(by!=='BB'?1:0);
+  // The same book analyze() builds for this spot: you opened (one raiser), the 3-bettor is the other, everyone else folded.
+  function v3Book(size,pos,by,c){
+    const heroBet=OPEN_TO*10,bet=threeBy(by)*10;
+    return{tier:tierOf(c),cls:c,hu:false,raisers:2,pos:pos==='SB'?'SB':'',toCall:bet-heroBet,bb:10,openTier:cutoff(size,by),
+      limpers:0,behind:0,eff:100,size:bet/10,shove:0,currentBet:bet,heroBet,stack:1000-heroBet};
+  }
+  function v3Labels(size,pos,by,c){
+    const b=v3Book(size,pos,by,c),A={book:b,toCall:b.toCall},L={};
+    for(const a of ACTS)L[a]=R.gradePreflop(A,a,a==='raise'?fourBetTo(by)*10:0).label;
+    return L;
+  }
+  function v3Judge(size,pos,by,c,act){
+    const L=v3Labels(size,pos,by,c),best=bestOf(L),label=L[act];
+    return{L,best,label,v:label==='Best'?'right':label==='Excellent'||label==='Good'?'close':'wrong'};
+  }
+  // Shares of all 1,326 hands, and of the hands you open from this seat (the only ones this spot can deal).
+  function v3Shares(size,pos,by){
+    const r=cutoff(size,pos),n={raise:0,call:0,fold:0};let all=0;
+    CLASSES.forEach(c=>{if(tierOf(c)>r)return;const k=combos(c);all+=k;n[bestOf(v3Labels(size,pos,by,c))]+=k});
+    const of=x=>Math.round(100*x/1326);
+    return{raise:of(n.raise),call:of(n.call),open:of(all),keep:Math.round(100*(n.raise+n.call)/all)};
+  }
+  // In chart order (pairs first, then by strength), as the tiers list them.
+  const handsWhere=(size,pos,by,a)=>R.TIERS.join(' ').split(' ').filter(c=>bestOf(v3Labels(size,pos,by,c))===a);
+  const aPot=x=>(/^(8|11|18)\b/.test(bbs(x))?'an ':'a ')+bbs(x);
+  const listHands=l=>l.length>1?l.slice(0,-1).join(', ')+' and '+l[l.length-1]:l.join('');
+  const ACT3_NAME={raise:'4-bet',call:'call',fold:'fold'},ACT3_VERB={raise:'4-bets',call:'calls',fold:'folds'};
+  function v3HandText(size,pos,by,c){
+    const best=bestOf(v3Labels(size,pos,by,c)),t=tierOf(c),pot=v3Pot(pos,by),toCall=threeBy(by)-OPEN_TO,need=Math.round(100*toCall/(pot+toCall));
+    if(best==='raise')return `${c} is at the very top of your range. 4-bet for value: it is ahead of most of the hands that 3-bet${c==='AA'||c==='KK'?', and folding it would be a blunder':''}, so you want more chips in the pot now.`;
+    if(best==='call')return `${c} is too good to fold against a 3-bet but not strong enough to 4-bet for value: the hands that would call a 4-bet have it beaten or close to it. Calling ${bbs(toCall)} into ${aPot(pot)} pot needs about ${need}% equity, and calling keeps the 3-bettor's weaker hands and bluffs in.`;
+    const k=kind(c),edge=t===2?' It is the first group of hands the chart lets go.':'';
+    if(k==='pair'||k==='bigPair')return `${c} is behind the bigger pairs that 3-bet for value and flops a set only about one time in eight, so after the flop it often has to give up the ${bbs(toCall)} it called.${edge}`;
+    if(k==='connector'||k==='suitedOther'||k==='offOther')return `${c} wins mostly by making straights and flushes, which needs cheap flops. Against a 3-bet the price is higher and the range you face is stronger, so the chart folds it.${edge}`;
+    return `${c} is often dominated against a 3-bet: the value hands that 3-bet hold bigger pairs and better kickers, so when it makes top pair it can lose a big pot.${edge}`;
+  }
+  function v3SpotText(size,pos,by){
+    const s=v3Shares(size,pos,by),ip=inPos(pos,by),pot=v3Pot(pos,by),toCall=threeBy(by)-OPEN_TO;
+    return `You opened ${posPhrase(pos)} and ${who(by)} 3-bet to ${bbs(threeBy(by))}, so you will be ${ip?'in position':'out of position'} after the flop. Calling costs ${bbs(toCall)} into ${aPot(pot)} pot. `
+      +`Against a 3-bet the chart continues with only the top of your range: it 4-bets ${listHands(handsWhere(size,pos,by,'raise'))}, calls ${listHands(handsWhere(size,pos,by,'call'))}, and folds the rest. `
+      +`You open about ${s.open}% of hands ${posPhrase(pos)}, so you keep about ${s.keep}% of them.`;
+  }
+
+  const CELL_VS={raise:'hr-3bet',call:'hr-call',fold:'hr-out'};
   const drills={};
   root.RivlTraining={SEATS,CLASSES,tierOf,cutoff,openPct,
     open:{judge,handText,seatText},
     vsRaise:{OPEN_TO,threeBetTo,labels,best:bestOf,shares:vsShares,judge:vsJudge,handText:vsHandText,spotText:vsSpotText},
+    vs3Bet:{threeBetTo:threeBy,fourBetTo,inPos,pot:v3Pot,labels:v3Labels,shares:v3Shares,judge:v3Judge,handText:v3HandText,spotText:v3SpotText},
     drill:view=>drills[view]};
+    drill:view=>drills[view],
+    // Shared pieces for drills that live in their own file (training-bb.js) and join the hub with add().
+    kit:{NAME,the,who,cap,kind,combos,share,bbs,ACT_NAME,ACT_VERB,CELL_VS}};
   const doc=root.document;if(!doc||!doc.getElementById('training'))return;
   const $=id=>doc.getElementById(id);
   const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -253,7 +311,7 @@
       if(!spot||spot.answered)return;spot.answered=true;
       const j=cfg.judge(spot,act),v=j.v;
       st.n++;if(v==='right'){st.c++;st.streak++;st.best=Math.max(st.best,st.streak)}else if(v==='wrong')st.streak=0;
-      const k=st.seats[spot.size+':'+spot.pos]||(st.seats[spot.size+':'+spot.pos]=[0,0]);k[0]++;if(v==='right')k[1]++;
+      const at=spot.size+':'+(cfg.seatOf?cfg.seatOf(spot):spot.pos),k=st.seats[at]||(st.seats[at]=[0,0]);k[0]++;if(v==='right')k[1]++;
       st.recent=[{c:spot.cls,p:cfg.tag(spot),v},...st.recent].slice(0,10);save();
       p('Choices').querySelectorAll('button').forEach(b=>{b.disabled=true;b.classList.toggle('best',b.dataset.act===j.best);b.classList.toggle('picked',b.dataset.act===act)});
       const [word,glyph,color]=VERDICT[v];
@@ -283,7 +341,7 @@
     };
   }
 
-  /* ---------- the two drills ---------- */
+  /* ---------- the drills ---------- */
   const rangeTrainer={view:'rangeTrainer',pre:'hr',key:'rivlRangeTrainer',title:'HAND RANGE TRAINER',chartName:'OPENING RANGE',
     eyebrow:'PREFLOP',name:'Hand Range Trainer',art:()=>{const r=cutoff(9,'BTN');return miniChart(c=>tierOf(c)<=2?'tr-a':tierOf(c)<=r?'tr-b':'')},
     text:'Everyone folds to you. Open or fold? Learn which hands to raise from every seat, at 6-max and full tables.',
@@ -311,7 +369,6 @@
       return locked||prev===r?[['hr-in-old','Open'],['hr-out','Fold']]:[['hr-in-old','Opens from earlier seats too'],['hr-in-new','Added at this seat'],['hr-out','Fold']];
     },
   };
-  const CELL_VS={raise:'hr-3bet',call:'hr-call',fold:'hr-out'};
   const vsRaise={view:'vsRaise',pre:'vr',key:'rivlRaiseTrainer',title:'FACING A RAISE',chartName:'DEFENDING RANGE',
     eyebrow:'PREFLOP',name:'Facing a Raise',art:()=>miniChart(c=>({raise:'tr-a',call:'tr-c',fold:''})[bestOf(labels(9,'BTN','BB',c))]),
     text:'Someone opens before you. 3-bet, call or fold? Learn how to answer a raise from every seat, blinds included.',
@@ -347,8 +404,44 @@
     legend:(s,t)=>[['hr-3bet','3-bet'],...vsShares(s.size,t,s.pos).call?[['hr-call','Call']]:[],['hr-out','Fold']],
   };
 
+  const vs3Bet={view:'vs3Bet',pre:'v3',key:'rivlThreeBetTrainer',title:'FACING A 3-BET',chartName:'CONTINUING RANGE',
+    eyebrow:'PREFLOP',name:'Facing a 3-Bet',art:()=>miniChart(c=>({raise:'tr-a',call:'tr-c',fold:''})[bestOf(v3Labels(6,'BTN','BB',c))]),
+    text:'You open and someone re-raises. 4-bet, call or fold? Learn which hands keep going against a 3-bet from every seat.',
+    fine:`Standard 100 BB charts for an opener facing one 3-bet with everyone else folded, the same ones RIVL grades your play against. You open to ${OPEN_TO} BB, 3-bets go to 3x in position and 4x from the blinds, and 4-bets to about 2.4x the 3-bet.`,
+    heroSeats:size=>SEATS[size].slice(0,-1),
+    // Only hands you open from this seat; half of them from the tiers where the answer changes.
+    deal(size,pos,last){
+      const seats=SEATS[size],by=seats[seats.indexOf(pos)+1+rnd(seats.length-1-seats.indexOf(pos))],r=cutoff(size,pos);
+      const near=CLASSES.filter(c=>tierOf(c)<=Math.min(3,r));
+      for(let k=0;k<50;k++){const c=Math.random()<.5?near[rnd(near.length)]:randomClass();if(tierOf(c)<=r&&c!==last)return{by,cls:c}}
+      return{by,cls:'AA'};
+    },
+    question:s=>`YOU OPEN, ${s.by} 3-BETS TO ${threeBy(s.by)} BB. 4-BET, CALL OR FOLD?`,
+    say:s=>`You open to ${OPEN_TO} BB, ${who(s.by)} 3-bets to ${bbs(threeBy(s.by))} and everyone else folds.`,
+    actions:s=>[{act:'raise',label:'4-BET',sub:`to ${bbs(fourBetTo(s.by))}`,key:'r',alt:'4'},{act:'call',label:'CALL',sub:bbs(threeBy(s.by)-OPEN_TO),key:'c'},{act:'fold',label:'FOLD',key:'f'}],
+    table:s=>{const seats=SEATS[s.size],h=seats.indexOf(s.pos),o=seats.indexOf(s.by);
+      return seats.map((x,i)=>({state:i===h?'me':i===o?'raise':'folded',em:i===o?'3-BET':'',bet:i===h?String(OPEN_TO):i===o?String(threeBy(s.by)):x==='SB'?'0.5':x==='BB'?'1':''}))},
+    judge(s,act){
+      const j=v3Judge(s.size,s.pos,s.by,s.cls,act),best=j.best,c=s.cls;
+      let text;
+      if(j.v==='right')text=`${c} against a 3-bet from ${the(s.by)} is a ${ACT3_NAME[best]}.`;
+      else if(j.v==='close')text=act==='call'&&best==='raise'?'Calling is sound, but the chart\'s first choice is a 4-bet.'
+        :act==='raise'?`${c} is just outside the 4-bet range. The chart ${ACT3_VERB[best]} it, so the 4-bet is a small mistake.`
+        :`${c} is right on the edge. The chart still ${ACT3_VERB[best]} it, so folding is a small mistake.`;
+      else text=`The chart ${ACT3_VERB[best]} ${c} against a 3-bet from ${the(s.by)}.`;
+      return{v:j.v,best,text};
+    },
+    why:s=>[['THE HAND',v3HandText(s.size,s.pos,s.by,s.cls)],['THE SPOT',v3SpotText(s.size,s.pos,s.by)]],
+    tag:s=>`${s.pos} v ${s.by}`,
+    tabs:()=>[],tab:s=>s.by,tabLabel:t=>t,
+    chartTitle:s=>`${s.pos} OPEN VS ${s.by} 3-BET`,
+    chartPct:s=>{const x=v3Shares(s.size,s.pos,s.by);return `4-bet ${x.raise}% · call ${x.call}% of all hands`},
+    cell:s=>c=>CELL_VS[bestOf(v3Labels(s.size,s.pos,s.by,c))],
+    legend:()=>[['hr-3bet','4-bet'],['hr-call','Call'],['hr-out','Fold']],
+  };
+
   /* ---------- the hub: add a drill to DRILLS and an empty <section class="view content-view"> in index.html ---------- */
-  const DRILLS=[rangeTrainer,vsRaise];
+  const DRILLS=[rangeTrainer,vsRaise,vs3Bet];
   DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
   // A drill in its own file (loaded after this one) joins the hub with RivlTraining.add(config).
   root.RivlTraining.miniChart=miniChart;
@@ -360,6 +453,7 @@
       +'<article class="panel tr-card tr-soon"><div class="tr-plus" aria-hidden="true">+</div><div class="tr-body"><div class="tr-eyebrow">COMING LATER</div><h3>More drills</h3><p>New drills will appear here as they are added.</p></div></article>';
     $('trHub').querySelectorAll('[data-drill]').forEach(b=>b.onclick=()=>show(DRILLS[+b.dataset.drill].view));
   }
+  Object.assign(root.RivlTraining.kit,{cardsFor,dealClass,miniChart});
   doc.addEventListener('keydown',e=>{
     if(e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
     const d=DRILLS.find(x=>$(x.view).classList.contains('active'));
