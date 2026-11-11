@@ -41,6 +41,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Freeroll Champion Banners, secret unlock, player cards | `claude/project-thread-azruh2` | banners.js, banners.css, assets/banners/, index.html, rooms.js, account.js, freeroll.js, worker/rooms.js, worker/tournament.js, worker/directory.js, tests-worker.mjs, scripts/build-site.mjs, README.md | PR open |
 | Claude | Champion banners for the 4 Set Hands bots | `claude/project-thread-t0bii5` | scripted-hands.js, banners.js, banners.css, script.js, index.html | PR open |
 | Claude | Training: push-or-fold drill | `claude/project-thread-umuty5` | pushfold.js, pushfold-charts.js, scripts/pushfold/, training.js (2 small hooks), index.html, script.js, tests.js, scripts/build-site.mjs, README.md | PR open |
+| Claude | Training: Pot Odds & Draws drill | `claude/project-thread-v95j1a` | potodds.js, potodds.css, tests-potodds.js (new); training.js (2 lines), index.html (3 lines), scripts/build-site.mjs, tests.js (1 line), README.md | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -188,6 +189,9 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - New Training drill, **Push or Fold** (`#pushFold`, its own file `pushfold.js`): tournament short stacks of 3 to 12 BB. Folded to you, shove or fold; in the big blind against a shove, call or fold. 6-max and 9-max, every seat. Progress is kept under `localStorage` key `rivlPushFold`.
 - Answers are push/fold Nash charts (chip EV, equal stacks, blinds 0.5/1, no ante) built in `scripts/pushfold/` and stored in `pushfold-charts.js`. They are not the live grader's: short stacks there are still graded by the EV model.
 - training.js gained `RivlTraining.add(config)`, so a drill can live in its own file loaded after training.js, and a table seat can carry its own `em` label (the drill shows ALL-IN).
+### 2026-11-11 03:20 UTC · Claude
+- Added the Pot Odds & Draws drill (potodds.js). It lives in its own file and joins the Training hub through `RivlTraining.add` with `make()`, like River: Call or Fold.
+- Equity is exact: `tests-potodds.js` recounts every spot with engine.js's evaluator and checks each answer against `grade()`'s EV-loss scale.
 
 ### 2026-11-11 03:10 UTC · Claude
 - Third Training drill, **Facing a 3-Bet** (`#vs3Bet`): you open to 2.5 BB from any seat but the big blind, one player behind you 3-bets (3x in position, 4x from the blinds) and everyone else folds; 4-bet (to 2.4x), call or fold. Only hands you open from that seat are dealt. Progress is kept under `localStorage` key `rivlThreeBetTrainer`.

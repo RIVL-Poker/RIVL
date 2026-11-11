@@ -1,0 +1,54 @@
+/* Training: Pot Odds & Draws (potodds.js). Builds on the shared drill styles in style.css (hr-*, pz-*). */
+.po-felt{min-height:340px}
+.po-villain,.po-hero{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:1}
+.po-villain{top:5%}
+.po-hero{bottom:4%}
+.po-cards{display:flex;gap:3px}
+.po-cards .pz-card.sm b,.po-cards .pz-card.sm i{font-size:15px}
+.po-villain .hr-tag,.po-villain .hr-blind{white-space:nowrap}
+.po-villain .hr-tag{border-color:#ff8a6b;box-shadow:0 0 14px #ff8a6b55}.po-villain .hr-tag em{color:#ffb39e}
+.po-you{background:linear-gradient(#ffdda0,#c68d46);border-color:#f8cc83;color:#170f06;box-shadow:0 0 0 3px #efbd7044,0 0 18px #efbd7066}
+.po-hero .pz-hand .pz-card{width:54px;height:76px;animation:pzDeal .35s ease-out both}
+.po-hero .pz-hand .pz-card b,.po-hero .pz-hand .pz-card i{font-size:26px}
+.po-hero .pz-hand .pz-card:last-child{animation-delay:70ms}
+.po-center{top:47%}
+.po-board{display:flex;gap:5px}
+.po-board .pz-card{width:44px;height:62px}
+.po-board .pz-card b,.po-board .pz-card i{font-size:20px}
+.po-board .po-next{opacity:.35;border-style:dashed}
+/* The outs chart: the whole deck, one row per suit */
+.po-deck{display:grid;grid-template-columns:18px repeat(13,minmax(0,1fr));gap:3px;font-variant-numeric:tabular-nums;transition:filter .25s,opacity .25s}
+.po-suit{display:grid;place-items:center;font-size:15px;color:#e9e2d6;font-variant-emoji:text}.po-suit.red{color:#ff6b7d}
+.po-cell{display:grid;place-items:center;aspect-ratio:.72;border-radius:4px;font-size:12px;font-weight:800;transition:background .25s,color .25s}
+.po-out{background:#3f9d6a;color:#07140c}
+.po-split{background:#ffdda0;color:#170f06}
+.po-dirty{background:#7a2a30;color:#ffd0d4}
+.po-blank{background:#1b1714;color:#8f8577}
+.po-seen{background:transparent;color:#5d554c;outline:1px dashed #4a3d2e;outline-offset:-1px}
+.hr-key.po-blank{border:1px solid #3a2d20}
+/* Equity against the price */
+.po-math{margin:14px 0 0}.po-math[hidden]{display:none}
+.po-bar{position:relative;height:12px;border-radius:999px;background:#1b1714;border:1px solid #3a2d20}
+.po-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+.po-bar i.po-good{background:linear-gradient(90deg,#2d7a50,#5cc28a)}.po-bar i.po-bad{background:linear-gradient(90deg,#6d2229,#c0182a)}
+.po-bar b{position:absolute;top:-5px;bottom:-5px;width:3px;margin-left:-1.5px;border-radius:2px;background:#ffdda0;box-shadow:0 0 6px #ffdda0aa}
+.po-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;text-align:center}
+.po-nums span{display:grid;gap:2px;padding:8px 4px;border-radius:8px;background:#1b1611;font-size:10px;letter-spacing:.1em;color:#d8cfc2}
+.po-nums b{font-size:18px;color:var(--gold);letter-spacing:0}
+.po-nums b.po-pos{color:var(--g-best)}.po-nums b.po-neg{color:var(--g-blunder)}
+.tr-mini.po-mini{row-gap:7px}.tr-mini.po-mini i{height:25px}
+.tr-mini.po-mini i.tr-b{background:#00000040;outline:1px dashed #ffdda0aa;outline-offset:-1px}
+@media(max-width:600px){
+  .po-felt{min-height:0}
+  .po-villain{top:6%;gap:5px}
+  #poTypes button{letter-spacing:.02em;font-size:10px}
+  .po-cards .pz-card.sm{width:26px;height:37px}
+  .po-board{gap:4px}
+  .po-board .pz-card{width:40px;height:56px}
+  .po-board .pz-card b,.po-board .pz-card i{font-size:18px}
+  .po-hero .pz-hand .pz-card{width:48px;height:68px}
+  .po-hero .pz-hand .pz-card b,.po-hero .pz-hand .pz-card i{font-size:22px}
+  .po-deck{grid-template-columns:14px repeat(13,minmax(0,1fr));gap:2px}
+  .po-cell{font-size:10px;border-radius:3px}
+  .po-nums b{font-size:16px}
+}
