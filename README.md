@@ -14,6 +14,13 @@ Every push to `main` tests and deploys the site and the rooms server together to
 ### Sign in with Google (optional)
 The site opens on a login screen. Its Google button appears once `GOOGLE_CLIENT_ID` in `wrangler.toml` holds an OAuth 2.0 **Web application** client ID from Google Cloud Console (APIs & Services > Credentials), with the site's addresses (for example `https://rivlpoker.com`) under Authorized JavaScript origins. The client ID is public, so it belongs in `wrangler.toml`; no client secret is needed. The server checks every Google token itself (`worker/google.js`).
 
+### RIVL COMMAND (owners only)
+`/command` is the owners' console: live site numbers, shared notes and tasks, an activity feed, and RIVER, an assistant built on Claude. It uses your normal RIVL sign-in, and the server answers only the accounts you list. It needs two secrets on the Worker. Add each one in the Cloudflare dashboard (Workers & Pages > rivl > Settings > Variables and Secrets > Add, type **Secret**, then Deploy) or with `npx wrangler secret put NAME`:
+1. `COMMAND_ACCOUNTS`: the account ids allowed in, separated by commas. Open `/command` while signed in and it shows your account id with a copy button.
+2. `ANTHROPIC_API_KEY`: an API key from the Claude Console (platform.claude.com). Without it RIVER is off and everything else works. Each question is a paid API call, billed through the Console, separately from a Claude subscription.
+
+Optional secrets: `COMMAND_MODEL` picks the Claude model RIVER uses (default `claude-sonnet-5-5`; `claude-haiku-5-5` costs far less per question), and `GITHUB_TOKEN` (a read-only fine-grained token) keeps RIVER's GitHub lookups from being rate limited. Deploys and test results reach the feed through `/api/command/hook`, guarded by a `COMMAND_HOOK_TOKEN` secret; the GitHub Actions step that posts to it is not added yet.
+
 Then run the workflow from the Actions tab (or push to `main`). The site appears at `https://rivl.<your-subdomain>.workers.dev`; a custom domain can be added in the Cloudflare dashboard under the Worker's Settings > Domains & Routes. See ROOMS.md for how online rooms work.
 
 ## v1.4.1
@@ -40,6 +47,7 @@ Then run the workflow from the Actions tab (or push to `main`). The site appears
 - account.js — sign up / sign in and the online leaderboard
 - login.js — the login screen (Google, sign-in code or guest)
 - worker/google.js — verifies Google ID tokens
+- command.html, command.css, command.js, worker/command.js — RIVL COMMAND at `/command`, the owners' console: live numbers, shared notes and tasks, the activity feed (bug reports and note changes, plus deploys and test results once GitHub Actions posts to its hook) and RIVER, the assistant (Claude through the API, with tools to save notes and read GitHub). Voice in and out uses the browser's own speech
 - worker/bug-report.js — emails anonymous bug reports to support (Cloudflare Email Routing)
 - backroom.js, backroom-spots.js — the Back Room easter egg (knock five times on the spade in Support); spots built by scripts/make-backroom.mjs
 - clip-mode.js, clip-mode.css, clip-spots.js — the clip playthrough for short videos: open the site with `?clips` (or `?clips=7` to start at hand 7) and 20 graded spots play by themselves on the Ranked table, each asking for the best play with a countdown and then revealing the answer, the equity and every option's grade. A title card between hands marks where to cut. Space pauses, the arrow keys skip, R replays a hand. The spots are built by scripts/make-clips.mjs from their own seed, so they never give away a daily puzzle

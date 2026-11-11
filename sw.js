@@ -15,7 +15,8 @@ self.addEventListener('activate',event=>{
 });
 
 // Pages that are their own files; every other address is the single-page app (index.html).
-const PAGES=new Set(['/stats.html','/privacy.html','/terms.html']);
+const PAGES=new Set(['/privacy.html','/terms.html']);
+const OWNER_PAGES=/^\/(stats|command)(\.html|\.css|\.js)?$/;
 
 self.addEventListener('fetch',event=>{
   const req=event.request,url=new URL(req.url);
@@ -23,6 +24,8 @@ self.addEventListener('fetch',event=>{
   if(url.pathname.startsWith('/api/')||url.pathname.startsWith('/ws/')||url.pathname.startsWith('/adjarvis')||url.pathname==='/sw.js')return;
   // Sounds are streamed in ranges, which a cached copy cannot answer, so they stay with the browser cache.
   if(req.headers.has('range')||req.destination==='audio'||req.destination==='video')return;
+  // The owners' pages (/stats, /command) always come straight from the server and are never kept offline.
+  if(OWNER_PAGES.test(url.pathname))return;
   if(req.mode==='navigate'){
     const key=PAGES.has(url.pathname)?url.pathname:'/';
     event.respondWith(fetch(req).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(cache=>cache.put(key,copy)).catch(()=>{});}return res;}).catch(()=>caches.match(key,{cacheName:CACHE})));

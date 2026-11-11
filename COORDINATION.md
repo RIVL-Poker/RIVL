@@ -42,6 +42,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Champion banners for the 4 Set Hands bots | `claude/project-thread-t0bii5` | scripted-hands.js, banners.js, banners.css, script.js, index.html | PR open |
 | Claude | Training: push-or-fold drill | `claude/project-thread-umuty5` | pushfold.js, pushfold-charts.js, scripts/pushfold/, training.js (2 small hooks), index.html, script.js, tests.js, scripts/build-site.mjs, README.md | PR open |
 | Claude | Training: Pot Odds & Draws drill | `claude/project-thread-v95j1a` | potodds.js, potodds.css, tests-potodds.js (new); training.js (2 lines), index.html (3 lines), scripts/build-site.mjs, tests.js (1 line), README.md | PR open |
+| Claude | RIVL COMMAND owners' console at /command | `feature/rivl-command` | command.html, command.css, command.js, worker/command.js, worker/directory.js, worker/rooms.js, sw.js, scripts/build-site.mjs, tests-worker.mjs, README.md, wrangler.toml | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -204,4 +205,11 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - New Training drill, **River: Call or Fold** (`#riverCall`, river.js + river.css, loaded after training.js and joined with `RivlTraining.add`): 21 hand-written river spots where you hold a bluff catcher and face a bet; call or fold, filtered by bet size (small, big, overbet). Progress is kept under `localStorage` key `rivlRiverTrainer`.
 - Each spot lists the opponent's river range combo by combo. Equity is an exact count of the combos you beat (no sampling), the price is bet ÷ (pot + bet + call), and both options are graded by `RivlRating.grade()`. `tests-river.js` (run at the end of `node tests.js`) recounts every spot with engine.js's separate evaluator and fails if a write-up's answer disagrees with the count.
 - `RivlTraining.add(cfg)` also takes a drill with its own page: give it `make()`, returning the same `{open,key,stat,started}` object as makeDrill.
+
+### 2026-11-11 04:30 UTC · Claude
+- New owners' console, **RIVL COMMAND**, at `/command` (command.html/css/js, worker/command.js). Uses the normal RIVL sign-in; the Directory answers only account ids in the `COMMAND_ACCOUNTS` secret (401 signed out, 403 with the caller's own id otherwise).
+- Live systems from `report()` in worker/stats.js (cached 15 s): online by activity, tables by mode, today's budget gauges, 7-day actives. Shared notes and tasks (`command_notes`), an activity feed (`command_events`, last 500) and per-owner seen markers and presence (`command_seen`).
+- Feed sources so far: bug reports and every note change. `/api/command/hook` also takes deploys and test results from GitHub Actions (it checks a `COMMAND_HOOK_TOKEN` secret and stays shut without one), but the workflow step that posts them is not added yet.
+- RIVER: `/api/command/ask` calls the Claude API from the Worker with `ANTHROPIC_API_KEY` (off without it), with the live numbers, notes and feed as context and tools to save or update notes and read GitHub commits and PRs. Voice uses the browser's speech recognition and speech synthesis; `_headers` now allows the microphone on `/command` only.
+- sw.js no longer handles `/stats` or `/command`. Before this, opening `/stats` online saved that page as the app's offline home page.
 

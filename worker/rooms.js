@@ -9,6 +9,7 @@ import {verifyGoogleToken} from './google.js';
 import {cleanReport,sendBugReport,BUG_MAX_CHARS,cleanPlayerReport,sendPlayerReport} from './bug-report.js';
 import {puzzleFor,publicPuzzle,reveal,CHOICES} from './puzzle.js';
 import {CRAWLER_RE} from './stats.js';
+import {askRiver} from './command.js';
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CHAT_MAX_CHARS=180,CHAT_HISTORY_LIMIT=40,CHAT_COOLDOWN_MS=1500;
 const MAX_BODY=1000,MAX_MESSAGE=2000,TURN_MS=12000,NEXT_HAND_MS=11000,RANKED_NEXT_HAND_MS=6000,RUNOUT_MS=1200,IDLE_MS=6*60*60*1000,BOT_RAISES_PER_STREET=4,BOT_THINK_MIN_MS=2000,BOT_THINK_MAX_MS=4800;
@@ -208,6 +209,8 @@ export default {
         try{
           const {EmailMessage}=env.EmailMessage?{EmailMessage:env.EmailMessage}:await import('cloudflare:email');
           await sendBugReport(env,report,url.origin,EmailMessage);
+          // A line in RIVL COMMAND's feed too, so the owners see it without opening the support inbox.
+          await dir(env,'/command/event',{kind:'bug',title:'Bug report: '+report.category,detail:report.details.slice(0,400)}).catch(()=>{});
         }catch(err){
           console.error('bug report send failed',err?.message);
           return json({error:'Your report could not be sent right now. Please try again later.'},502);
@@ -272,6 +275,20 @@ export default {
         return send(await dir(env,'/stats/report',await readBody(request)));
       }
       if(url.pathname==='/api/signout')return send(await dir(env,'/accounts/signout',await readBody(request)));
+      // RIVL COMMAND (worker/command.js): the owners' console. The Directory answers only accounts in COMMAND_ACCOUNTS.
+      const command=url.pathname.match(/^\/api\/command\/(state|seen|note)$/);
+      if(command)return send(await dir(env,'/command/'+command[1],await readBody(request,20000)));
+      if(url.pathname==='/api/command/ask'){
+        if(await limited(env.JOIN_LIMITER,request))return json({error:'Too many questions at once. Wait a minute.'},429);
+        return send(await askRiver(env,await readBody(request,120000),(path,body)=>dir(env,path,body)));
+      }
+      // GitHub Actions posts deploys and test results here with the COMMAND_HOOK_TOKEN secret.
+      if(url.pathname==='/api/command/hook'){
+        const body=await readBody(request,4000);
+        if(!env.COMMAND_HOOK_TOKEN||typeof body.token!=='string'||body.token!==env.COMMAND_HOOK_TOKEN)return json({error:'Not authorized.'},403);
+        const kind=['deploy','tests','pr','site'].includes(body.kind)?body.kind:'site';
+        return send(await dir(env,'/command/event',{kind,title:body.title,detail:body.detail,actor:body.actor,url:body.url,ok:body.ok}));
+      }
       if(url.pathname==='/api/rooms'){
         if(await limited(env.CREATE_LIMITER,request))return json({error:'Too many rooms created. Try again in a minute.'},429);
         const body=await readBody(request);

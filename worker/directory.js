@@ -4,6 +4,7 @@ import {glicko} from './glicko.js';
 import {pairAcc,W_PLACE,W_DEC,MIN_DECISIONS} from './grading.js';
 import {startOf} from './tournament.js';
 import {setupStats,heartbeat,guestId,handDealt,report} from './stats.js';
+import {setupCommand,commandRoute} from './command.js';
 import '../hand-stats.js';
 
 // rating.js (loaded by grading.js) defines the Ranked leagues shared with the site; hand-stats.js the player stats.
@@ -101,6 +102,8 @@ export class Directory {
     if(!this.rows('PRAGMA table_info(usage)').some(c=>c.name==='practice'))this.sql.exec('ALTER TABLE usage ADD COLUMN practice INTEGER NOT NULL DEFAULT 0');
     // Player numbers for the owner's stats page (worker/stats.js).
     setupStats(this);
+    // RIVL COMMAND, the owners' console (worker/command.js).
+    setupCommand(this);
     // Leaderboards are the same for everyone, so one copy is served for a few seconds instead of recomputed per request.
     this.boards=new Map();
   }
@@ -245,6 +248,7 @@ export class Directory {
     const url=new URL(request.url),path=url.pathname;
     const body=request.method==='POST'?await request.json().catch(()=>({})):{};
     try{
+      const command=await commandRoute(this,path,body);if(command)return command;
       if(path==='/status')return this.reply(this.status());
       if(path==='/accounts/create'){
         const name=String(body.name||'').trim().replace(/\s+/g,' ');
