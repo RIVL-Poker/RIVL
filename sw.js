@@ -20,7 +20,7 @@ const PAGES=new Set(['/stats.html','/privacy.html','/terms.html']);
 self.addEventListener('fetch',event=>{
   const req=event.request,url=new URL(req.url);
   if(req.method!=='GET'||url.origin!==location.origin)return;
-  if(url.pathname.startsWith('/api/')||url.pathname.startsWith('/ws/')||url.pathname==='/sw.js')return;
+  if(url.pathname.startsWith('/api/')||url.pathname.startsWith('/ws/')||url.pathname.startsWith('/adjarvis')||url.pathname==='/sw.js')return;
   // Sounds are streamed in ranges, which a cached copy cannot answer, so they stay with the browser cache.
   if(req.headers.has('range')||req.destination==='audio'||req.destination==='video')return;
   if(req.mode==='navigate'){

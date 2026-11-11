@@ -16,7 +16,7 @@ Two things only work in the live version on claude.ai:
 
 ## It is not part of the site
 
-`scripts/build-site.mjs` copies a fixed list of files into `dist/`, so nothing in this folder is deployed to rivlpoker.com. `node tests.js` and `node tests-worker.mjs` don't read it either.
+`scripts/build-site.mjs` copies a fixed list of files into `dist/`. The only part of this folder it deploys is `shots/` and `lib/`, which the site page at rivlpoker.com/adjarvis (`adjarvis/index.html`) shows. This file itself is not deployed. `node tests.js` and `node tests-worker.mjs` don't read it either.
 
 ## How it is made (`source/`)
 
