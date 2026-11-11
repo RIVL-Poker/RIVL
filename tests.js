@@ -156,6 +156,43 @@ assert(cont(9,'UTG','BTN')<=6,'at a full table the button continues with about 5
 assert(cont(6,'BTN','BB')>=55&&cont(6,'BTN','BB')>cont(6,'HJ','BB'),'the big blind defends most hands against the button, and more than against the hijack');
 const near=(size,pos,lo,hi)=>{const p=TR.openPct(size,pos);return p>=lo&&p<=hi};
 assert(near(9,'UTG',.09,.13)&&near(6,'UTG',.17,.22)&&near(9,'BTN',.44,.5),'opening ranges: about 11% under the gun at a full table, 20% at 6-max, 48% on the button');
+// Push or fold (pushfold.js): the push/fold Nash charts reproduce published heads-up results, ranges widen the fewer
+// players are left behind, and every spot has an answer and readable words.
+vm.runInContext(fs.readFileSync(__dirname+'/pushfold-charts.js','utf8'),rctx);
+vm.runInContext(fs.readFileSync(__dirname+'/pushfold.js','utf8'),rctx);
+let pfChecks=0;
+{
+const PF=rctx.RivlPushFold,CH=rctx.RivlPushFoldCharts;
+const shoves=(n,c,S)=>PF.inRuns(PF.runsOf('push',n,c),S),calls=(n,c,S)=>PF.inRuns(PF.runsOf('call',n,c),S);
+const pfShare=(test)=>TR.CLASSES.reduce((a,c)=>a+(test(c)?(c.length===2?6:c[2]==='s'?4:12):0),0)/1326;
+for(let n=1;n<=8;n++)for(const k of ['push','call']){const e=CH[k][n].split(' ');
+  assert(e.length===169&&e.every(x=>/^(\*|-|\d+\.\d\+?|\d+\.\d-\d+\.\d)(,(\d+\.\d\+?|\d+\.\d-\d+\.\d))*$/.test(x)),`push/fold chart ${k}[${n}] has 169 well-formed entries`);pfChecks++}
+// Miltersen & Sørensen (AAMAS 2007), heads-up: at 3 BB the small blind shoves J2o and folds 43s; at 6 BB the reverse.
+assert(shoves(1,'J2o',3)&&!shoves(1,'43s',3)&&!shoves(1,'J2o',6)&&shoves(1,'43s',6),'heads-up J2o and 43s match Miltersen & Sørensen');
+// Published heads-up no-ante Nash table (PokerStrategy, "Nash ranges for the push-or-fold play"): small blind shoves
+// 58.7% and the big blind calls 42.7% at 9 BB; 40.9% and 21.7% at 20 BB. Within 3 points.
+for(const [S,p,q] of [[9,.587,.427],[20,.409,.217]]){
+  assert(Math.abs(pfShare(c=>shoves(1,c,S))-p)<.03&&Math.abs(pfShare(c=>calls(1,c,S))-q)<.03,`heads-up push/fold at ${S} BB is close to the published table`);pfChecks++}
+for(const S of PF.STACKS){
+  for(let n=1;n<8;n++){assert(pfShare(c=>shoves(n,c,S))>pfShare(c=>shoves(n+1,c,S)),`at ${S} BB a seat with ${n} behind shoves more than one with ${n+1}`);
+    // At 3 BB the big blind calls nearly everything, and dead money can make it call an earlier seat a little wider.
+    if(S>=4)assert(pfShare(c=>calls(n,c,S))>=pfShare(c=>calls(n+1,c,S)),`at ${S} BB the big blind calls later shoves at least as wide`);pfChecks+=2}
+  for(let n=1;n<=8;n++){assert(shoves(n,'AA',S)&&calls(n,'AA',S)&&shoves(n,'KK',S),`aces and kings always shove and call at ${S} BB`);pfChecks++}
+  assert(!shoves(8,'72o',S)&&!shoves(8,'K5o',S),`under the gun at a full table folds 72o and K5o at ${S} BB`);pfChecks++;
+}
+// Every spot's verdicts: the chart's answer is right, the other is close only near a change, and the words read.
+for(const size of [6,9])TR.SEATS[size].forEach(pos=>{
+  const openers=pos==='BB'?TR.SEATS[size].slice(0,-1):[null];
+  for(const opener of openers)for(const stack of PF.STACKS)for(const cls of TR.CLASSES){
+    const s={size,pos,stack,opener,cls},yes=pos==='BB'?'call':'shove',j=PF.judge(s,yes),f=PF.judge(s,'fold'),ev=PF.spotEv(s);
+    // The chart and its stored EV agree, apart from hands the equilibrium mixes; a mixed hand is right either way.
+    assert(j.best===f.best&&(j.best===yes)===(ev>0)||Math.abs(ev)<PF.MIXED,`push/fold ${size}-max ${pos} ${opener||''} ${stack} BB ${cls}: chart and EV agree`);
+    assert(Math.abs(ev)<PF.MIXED?j.v==='right'&&f.v==='right':(j.v==='right')!==(f.v==='right'),`push/fold ${size}-max ${pos} ${opener||''} ${stack} BB ${cls} has one right answer`);
+    const miss=j.v==='right'?f:j;assert(miss.v==='right'||(miss.v==='close')===(Math.abs(ev)<=PF.CLOSE+1e-9),'close means it costs 0.1 BB or less');
+    assert(!/undefined|NaN/.test(PF.handText(s)+PF.spotText(s)),`push/fold text for ${cls} ${pos} ${stack} BB`);pfChecks+=3;
+  }
+});
+}
 // Player stats (hand-stats.js): seats are named from the small blind, a hand's record counts the way tracking software
 // counts it, a bad record from a browser is refused, and totals are exact sums in any order.
 require(__dirname+'/hand-stats.js');
@@ -235,4 +272,4 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsNear(R.lifetimeAccuracy(n),(90+90)/4,'a new player: Σ accuracy×weight over Σ weight');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+hsChecks+' player stats checks');
