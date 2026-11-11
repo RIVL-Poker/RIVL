@@ -369,9 +369,10 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsNear(R.lifetimeAccuracy(n),(90+90)/4,'a new player: Σ accuracy×weight over Σ weight');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+cbChecks+' flop c-bet checks + '+hsChecks+' player stats checks');
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+hsChecks+' player stats checks');
+// Every site script parses on its own. tests.js only loads parts of some files (script.js never runs whole here), so a
+// duplicate declaration left by an automatic git merge, like two `const NAV_FOR`, would otherwise pass every other check.
+{const bad=fs.readdirSync(__dirname).filter(f=>/\.js$/.test(f)).filter(f=>{try{new vm.Script(fs.readFileSync(__dirname+'/'+f,'utf8'),{filename:f});return false}catch(e){console.error(f+': '+e.message);return true}});
+  assert.deepStrictEqual(bad,[],'every .js file parses')}
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+v3Checks+' facing-a-3-bet answers + '+cbChecks+' flop c-bet checks + '+hsChecks+' player stats checks');
 require('./tests-river.js');
 require('./tests-potodds.js');
