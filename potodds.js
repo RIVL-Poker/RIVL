@@ -283,8 +283,7 @@
   $('poStreet').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.street=b.dataset.street;save();paintFilters();dealNext()});
   // The hub card's picture: a deck with the nine flush cards lit, as in the room's outs chart.
   const art=()=>'<span class="tr-mini po-mini">'+[...Array(52)].map((_,i)=>`<i class="${i>=13&&i<26?(i===13||i===17||i===21||i===25?'tr-b':'tr-c'):''}"></i>`).join('')+'</span>';
-  T.add({view:VIEW,eyebrow:'POSTFLOP',name:'Pot Odds & Draws',art,
-    text:'You hold a draw and they bet. Call or fold? Count your outs, work out the price, and see the exact math.'},{
+  const page={
     get spot(){return spot},
     open(){if(!spot){paintFilters();dealNext()}},
     key(e){const k=e.key.toLowerCase();if(!spot)return false;
@@ -293,5 +292,7 @@
       return false},
     stat(){const s=load();return s.n?`${s.n} hands played · ${pct(s.c,s.n)} correct · best streak ${s.best}`:'Deal as many hands as you like. Progress is saved in this browser.'},
     started:()=>load().n>0,
-  });
+  };
+  T.add({view:VIEW,eyebrow:'POSTFLOP',name:'Pot Odds & Draws',art,make:()=>page,
+    text:'You hold a draw and they bet. Call or fold? Count your outs, work out the price, and see the exact math.'});
 })(typeof window!=='undefined'?window:globalThis);

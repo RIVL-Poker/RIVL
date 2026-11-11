@@ -1,0 +1,37 @@
+/* River: Call or Fold (river.js). Builds on the daily puzzle table (.pz-*), the Back Room's equity bar (.br-math)
+   and the Training drill page (.hr-*); only what is new for this drill lives here. */
+.rc-math-wrap{position:relative}
+.rc-numbers{margin:0 0 12px}
+.rc-range{display:grid;gap:4px}
+.rc-range-head,.rc-total{display:flex;justify-content:space-between;gap:10px;padding:0 10px;font-size:10px;letter-spacing:.14em;font-weight:800;color:#bfb6a8}
+.rc-total{margin-top:4px;padding-top:8px;border-top:1px solid #2e241a;font-size:12px;letter-spacing:.02em;color:#e9e2d6}
+.rc-total b{font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.rc-row{border-radius:8px;background:#15120f;border:1px solid #2e241a;border-left:3px solid var(--rc,#2e241a)}
+div.rc-row{min-height:36px}
+.rc-row summary{display:grid;grid-template-columns:minmax(0,1fr) auto 84px;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;list-style:none;font-size:13px;color:#e9e2d6}
+.rc-row summary::-webkit-details-marker{display:none}
+.rc-row summary .rc-name::before{content:'▸';display:inline-block;width:12px;color:#8f8577;transition:transform .15s}
+.rc-row[open] summary .rc-name::before{transform:rotate(90deg)}
+.rc-row summary b{color:#fff;font-size:14px;font-variant-numeric:tabular-nums}
+.rc-row summary em{font-style:normal;font-size:9px;font-weight:900;letter-spacing:.12em;text-align:right;color:var(--rc)}
+.rc-row p{display:flex;flex-wrap:wrap;gap:5px 8px;margin:0;padding:0 10px 10px 22px;font-size:12px}
+.rc-row p .pz-mini{font-size:11px;padding:0 3px}
+.rc-combo{display:inline-flex;gap:1px}
+.rc-lose{--rc:var(--g-blunder)}.rc-win{--rc:var(--g-best)}.rc-tie{--rc:var(--g-inaccuracy)}
+.rc-evs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.rc-ev{display:grid;gap:2px;padding:10px 12px;border-radius:8px;background:#15120f;border:1px solid #2e241a;font-size:12px;color:#d8cfc2}
+.rc-ev.best{border-color:var(--g-best);background:#112016}
+.rc-ev b{color:#fff;font-size:18px;font-variant-numeric:tabular-nums}
+.rc-ev em{font-style:normal;font-weight:800;color:var(--gc,#fff)}
+.rc-ev em i{font-style:normal;margin-right:5px}
+/* The hub card's picture: a river board and the question. */
+.rc-art{display:grid;gap:10px;justify-items:center;width:151px}
+.rc-art>span:first-child{display:flex;gap:3px}
+.rc-art .pz-mini{font-size:12px;padding:3px 4px}
+.rc-art-q{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.12em}
+.rc-art-q b{padding:4px 8px;border-radius:6px;background:#0b0b0cdd;border:1px solid #8a6a3a;color:#ffdda0}
+.rc-art-q i{font-style:normal;color:#cfe3d5;letter-spacing:0}
+@media(max-width:600px){
+  .rc-row summary{grid-template-columns:minmax(0,1fr) auto 72px;gap:8px;font-size:12px}
+  .rc-ev b{font-size:16px}
+}

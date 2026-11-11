@@ -190,5 +190,11 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 - Answers are push/fold Nash charts (chip EV, equal stacks, blinds 0.5/1, no ante) built in `scripts/pushfold/` and stored in `pushfold-charts.js`. They are not the live grader's: short stacks there are still graded by the EV model.
 - training.js gained `RivlTraining.add(config)`, so a drill can live in its own file loaded after training.js, and a table seat can carry its own `em` label (the drill shows ALL-IN).
 ### 2026-11-11 03:20 UTC · Claude
-- Added the Pot Odds & Draws drill (potodds.js). It lives in its own file and joins the Training hub through `RivlTraining.add(config, page)` in training.js: the second argument is optional, for a drill that builds its own page instead of the shared one.
+- Added the Pot Odds & Draws drill (potodds.js). It lives in its own file and joins the Training hub through `RivlTraining.add` with `make()`, like River: Call or Fold.
 - Equity is exact: `tests-potodds.js` recounts every spot with engine.js's evaluator and checks each answer against `grade()`'s EV-loss scale.
+
+### 2026-11-11 03:30 UTC · Claude
+- New Training drill, **River: Call or Fold** (`#riverCall`, river.js + river.css, loaded after training.js and joined with `RivlTraining.add`): 21 hand-written river spots where you hold a bluff catcher and face a bet; call or fold, filtered by bet size (small, big, overbet). Progress is kept under `localStorage` key `rivlRiverTrainer`.
+- Each spot lists the opponent's river range combo by combo. Equity is an exact count of the combos you beat (no sampling), the price is bet ÷ (pot + bet + call), and both options are graded by `RivlRating.grade()`. `tests-river.js` (run at the end of `node tests.js`) recounts every spot with engine.js's separate evaluator and fails if a write-up's answer disagrees with the count.
+- `RivlTraining.add(cfg)` also takes a drill with its own page: give it `make()`, returning the same `{open,key,stat,started}` object as makeDrill.
+
