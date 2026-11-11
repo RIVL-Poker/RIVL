@@ -2792,6 +2792,11 @@ html.sidebar-open .nav .nav-icon{width:15px;height:15px;vertical-align:-2px}
   .hr-chart{padding:12px}
 }
 @media(max-width:360px){.hr-cell{font-size:7px}}
+/* Drills with a flop: smaller cards in the middle of the felt so the board clears the top seat */
+.hr-center.hr-flop{gap:5px;top:53%}
+.hr-flop .pz-board{gap:5px}.hr-flop .pz-board .pz-card{width:40px;height:57px}.hr-flop .pz-board .pz-card b,.hr-flop .pz-board .pz-card i{font-size:19px}
+.hr-flop .pz-hand .pz-card{width:50px;height:71px}.hr-flop .pz-hand .pz-card b,.hr-flop .pz-hand .pz-card i{font-size:24px}
+@media(max-width:600px){.hr-flop .pz-board .pz-card{width:36px;height:51px}.hr-flop .pz-board .pz-card b,.hr-flop .pz-board .pz-card i{font-size:17px}.hr-flop .pz-hand .pz-card{width:48px;height:68px}}
 
 /* Installed app (home-screen PWA): keep the bottom of the page clear of the iPhone home bar */
 @media (display-mode: standalone){

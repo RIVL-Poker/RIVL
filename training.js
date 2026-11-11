@@ -218,8 +218,8 @@
         const em={folded:'FOLD',me:'YOU',raise:'RAISE'}[state]||'';
         return `<div class="hr-seat hr-s-${state}${x>52?' hr-east':''}" style="left:${x}%;top:${y}%">${cards}<span class="hr-tag"><b>${s}</b>${em?`<em>${em}</em>`:''}${s==='BTN'?'<span class="hr-dealer" title="Dealer button">D</span>':''}</span>${bet?`<span class="hr-blind"><i class="pz-chip"></i>${bet}</span>`:''}</div>`;
       }).join('');
-      const pot=table.reduce((a,s)=>a+(+s.bet||0),0);
-      p('Felt').innerHTML=ring+`<div class="hr-center"><div class="pz-pot">POT <b>${bbs(pot)}</b></div><div class="pz-hand">${spot.cards.map(cardHtml).join('')}</div></div>`;
+      const pot=cfg.pot?cfg.pot(spot):table.reduce((a,s)=>a+(+s.bet||0),0),board=cfg.board?cfg.board(spot):[];
+      p('Felt').innerHTML=ring+`<div class="hr-center${board.length?' hr-flop':''}">${board.length?`<div class="pz-board">${board.map(cardHtml).join('')}</div>`:''}<div class="pz-pot">POT <b>${bbs(pot)}</b></div><div class="pz-hand">${spot.cards.map(cardHtml).join('')}</div></div>`;
       p('Felt').setAttribute('aria-label',`${spot.size}-max table. You are ${the(spot.pos)} with ${spot.cards.join(' ')}. ${cfg.say(spot)}`);
     }
     function paintStats(){
@@ -239,7 +239,7 @@
     }
     function deal(){
       const seats=cfg.heroSeats(st.size),pos=st.seat==='ALL'?seats[rnd(seats.length)]:st.seat;
-      spot=Object.assign({size:st.size,pos},cfg.deal(st.size,pos,spot&&spot.cls));spot.cards=cardsFor(spot.cls);spot.answered=false;tab=cfg.tab(spot);
+      spot=Object.assign({size:st.size,pos},cfg.deal(st.size,pos,spot&&spot.cls));if(!spot.cards)spot.cards=cardsFor(spot.cls);spot.answered=false;tab=cfg.tab(spot);
       paintFelt();paintGrid(true);paintStats();
       p('Q').textContent=cfg.question(spot);
       const acts=cfg.actions(spot);
@@ -347,9 +347,11 @@
     legend:(s,t)=>[['hr-3bet','3-bet'],...vsShares(s.size,t,s.pos).call?[['hr-call','Call']]:[],['hr-out','Fold']],
   };
 
-  /* ---------- the hub: add a drill to DRILLS and an empty <section class="view content-view"> in index.html ---------- */
+  /* ---------- the hub: add a drill to DRILLS and an empty <section class="view content-view"> in index.html ----------
+     A drill in its own file (loaded after this one) registers with RivlTraining.add(config) instead. */
   const DRILLS=[rangeTrainer,vsRaise];
   DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
+  Object.assign(root.RivlTraining,{miniChart,add(d){DRILLS.push(d);drills[d.view]=makeDrill(d);paintHub()}});
   function paintHub(){
     $('trHub').innerHTML=DRILLS.map((d,i)=>{const m=drills[d.view];
       return `<article class="panel tr-card"><div class="tr-art" aria-hidden="true">${d.art()}</div><div class="tr-body"><div class="tr-eyebrow">${d.eyebrow}</div><h3>${esc(d.name)}</h3><p>${esc(d.text)}</p><small class="tr-stat">${esc(m.stat())}</small><button type="button" class="gold" data-drill="${i}">${m.started()?'CONTINUE':'START TRAINING'}</button></div></article>`}).join('')

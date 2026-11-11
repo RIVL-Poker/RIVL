@@ -182,3 +182,8 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 
 ### 2026-10-30 02:40 UTC · Claude
 - Set Hands table only: Ace, Rico, Luna and Nash each wear a champion banner (The Throne, Dragon's Hoard, Moon Wolf, Frost King). The map is `RIVL_SCRIPTED_BANNERS` in scripted-hands.js; `rivlBanners.bot()` paints the seat and hovering it floats the banner. Shown to everyone, no vault needed. Other bot tables are unchanged.
+
+### 2026-11-11 · Claude
+- Third Training drill, **Flop C-Bet** (`#cbet`, `cbet.js`): you open from any seat but the blinds, the big blind calls and checks; check, bet 1/3 or bet 2/3. After you answer: the verdict, why (your hand, then the flop's texture) and your whole opening range on that flop coloured by the book's play. Progress under `localStorage` key `rivlCbetTrainer`.
+- Answers come from a c-bet book in `cbet.js` built on GTO Wizard's published button-vs-big-blind studies (sources in the file header). Flops are dry, wet or very wet; hands are read as nutted, value, strong draw, gutshot, thin top pair, other pair, weak equity or air. A play solvers also use counts as Close. `tests.js` checks the book against the articles' worked examples (Q♥Q♣6♦, K♥J♥7♦, Q♦J♦T♦, A-7-3) plus 300 seeded spots.
+- `training.js` changes kept small so other drills can do the same: `RivlTraining.add(config)` registers a drill from its own file, and a drill config may supply `cards`, `board(spot)` and `pot(spot)`. Board cards on the felt use `.hr-flop` (style.css).
