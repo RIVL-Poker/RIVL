@@ -156,6 +156,36 @@ assert(cont(9,'UTG','BTN')<=6,'at a full table the button continues with about 5
 assert(cont(6,'BTN','BB')>=55&&cont(6,'BTN','BB')>cont(6,'HJ','BB'),'the big blind defends most hands against the button, and more than against the hijack');
 const near=(size,pos,lo,hi)=>{const p=TR.openPct(size,pos);return p>=lo&&p<=hi};
 assert(near(9,'UTG',.09,.13)&&near(6,'UTG',.17,.22)&&near(9,'BTN',.44,.5),'opening ranges: about 11% under the gun at a full table, 20% at 6-max, 48% on the button');
+// Big blind defense (training-bb.js): you are the big blind, one open of 2 to 4 BB from any seat. Every answer is the grader's label for that game.
+vm.runInContext(fs.readFileSync(__dirname+'/training-bb.js','utf8'),rctx);
+const BD=TR.bbDefense;let bdChecks=0;
+const facingBB=(n,o,open,hole)=>({bb:10,minRaise:open*10-10,currentBet:open*10,pot:open*10+(o===n-2?0:5)+10,board:[],hand:1,street:0,sbSeat:n-2,bbSeat:n-1,
+  players:[...Array(n)].map((_,k)=>{const bet=k===o?open*10:k===n-2?5:k===n-1?10:0;
+    return{name:'p'+k,hole:k===n-1?hole:['2♣','3♦'],bet,stack:1000-bet,folded:k!==o&&k!==n-1,allin:false,raiseLocked:false,line:k===o?2:0}})});
+for(const size of [6,9])TR.SEATS[size].slice(0,-1).forEach((opener,o)=>{for(const open of BD.OPENS){
+  for(const c of TR.CLASSES){
+    const L=BD.labels(size,opener,open,c);
+    if(EACH_TIER.includes(c)){
+      const A=R.analyze(facingBB(size,o,open,holeOf(c)),size-1,1);
+      assert.strictEqual(A.toCall,open*10-10,`big blind defense ${size}-max v ${opener} ${open} BB: price`);
+      for(const act of ['raise','call','fold']){bdChecks++;
+        assert.strictEqual(L[act],R.grade(A,act,act==='raise'?BD.threeBetTo(open)*10:0).label,`big blind defense ${size}-max v ${opener} to ${open} BB ${c} ${act}`)}
+    }
+    assert(['raise','call','fold'].some(a=>L[a]==='Best'),`big blind defense ${size}-max v ${opener} to ${open} ${c} has a Best answer`);
+    assert.strictEqual(BD.judge(size,opener,open,c,BD.best(size,opener,open,c)).v,'right',`big blind defense ${c}: the chart play is marked correct`);
+    assert(!/undefined|NaN/.test(BD.handText(size,opener,open,c)),`big blind defense text for ${c} v ${opener} to ${open}`);
+  }
+  assert(!/undefined|NaN/.test(BD.priceText(size,opener,open)+BD.openerText(size,opener)),`big blind defense text v ${opener} to ${open}`);
+  // At 2.5 BB it is the facing-a-raise drill's big blind spot, so the two drills always agree.
+  if(open===2.5)TR.CLASSES.forEach(c=>assert.strictEqual(BD.best(size,opener,open,c),VR.best(VR.labels(size,opener,'BB',c)),`both drills agree on ${c} v ${opener}`));
+}
+  // Bigger raises are defended less, and the big blind defends more than the opener opens only against small raises.
+  const d=BD.OPENS.map(x=>BD.shares(size,opener,x).defend);
+  assert(d.every((x,i)=>!i||x<=d[i-1])&&d[d.length-1]<d[1],`${size}-max big blind defends less as ${opener}'s raise grows: ${d}`);
+});
+for(const size of [6,9]){const seats=TR.SEATS[size].slice(0,-1),d=seats.map(op=>BD.shares(size,op,2.5).defend);
+  assert(d.every((x,i)=>!i||x>=d[i-1]),`${size}-max big blind defends more against later openers: ${d}`)}
+assert(BD.price('BTN',2.5).need===27&&BD.price('SB',3).need===33,'pot odds: 1.5 BB to win 4 BB needs 27%, 2 BB to win the small blind\'s 4 BB needs 33%');
 // Player stats (hand-stats.js): seats are named from the small blind, a hand's record counts the way tracking software
 // counts it, a bad record from a browser is refused, and totals are exact sums in any order.
 require(__dirname+'/hand-stats.js');
@@ -235,4 +265,4 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsNear(R.lifetimeAccuracy(n),(90+90)/4,'a new player: Σ accuracy×weight over Σ weight');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+bdChecks+' big blind defense answers + '+hsChecks+' player stats checks');
