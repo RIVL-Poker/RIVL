@@ -146,6 +146,31 @@ for(const size of [6,9])TR.SEATS[size].forEach((pos,at)=>TR.SEATS[size].slice(0,
   }
   assert(!/undefined|NaN/.test(VR.spotText(size,opener,pos)),`facing a raise text for ${pos} v ${opener}`);
 }));
+// Facing a 3-bet: you open to 2.5 BB, one player 3-bets, everyone else folds. The drill's 4-bet, call and fold get the grader's labels,
+// it only deals hands you open from that seat, and its pot is the one the grader sees.
+const V3=TR.vs3Bet;let v3Checks=0;
+const threeBet=(n,at,o,hole)=>{const T=V3.threeBetTo(TR.SEATS[n][o])*10,players=[...Array(n)].map((_,k)=>{const bet=k===at?25:k===o?T:k===n-2?5:k===n-1?10:0;
+    return{name:'p'+k,hole:k===at?hole:['2♣','3♦'],bet,stack:1000-bet,folded:k!==at&&k!==o,allin:false,raiseLocked:false,line:k===at||k===o?2:0}});
+  return{bb:10,minRaise:T-25,currentBet:T,pot:players.reduce((a,p)=>a+p.bet,0),board:[],hand:1,street:0,sbSeat:n-2,bbSeat:n-1,players}};
+for(const size of [6,9])TR.SEATS[size].slice(0,-1).forEach((pos,at)=>TR.SEATS[size].slice(at+1).forEach((by,k)=>{const o=at+1+k;
+  const st0=threeBet(size,at,o,['2♣','3♦']);
+  assert.strictEqual(V3.pot(pos,by)*10,st0.pot,`facing a 3-bet ${size}-max ${pos} v ${by}: the pot matches the table`);
+  const m=V3.fourBetTo(by)/V3.threeBetTo(by);assert(m>=2&&m<=3,`facing a 3-bet ${pos} v ${by}: the 4-bet is a book size`);
+  for(const c of TR.CLASSES){
+    const L=V3.labels(size,pos,by,c);
+    if(EACH_TIER.includes(c)){
+      const A=R.analyze(threeBet(size,at,o,holeOf(c)),at,1);
+      assert.strictEqual(A.book.raisers,2,'the grader reads the spot as facing a 3-bet');
+      for(const act of ['raise','call','fold']){v3Checks++;
+        assert.strictEqual(L[act],R.grade(A,act,act==='raise'?V3.fourBetTo(by)*10:0).label,`facing a 3-bet ${size}-max ${pos} v ${by} ${c} ${act}`)}
+    }
+    assert(['raise','call','fold'].some(a=>L[a]==='Best'),`facing a 3-bet ${size}-max ${pos} v ${by} ${c} has a Best answer`);
+    if(TR.tierOf(c)<=TR.cutoff(size,pos))assert(!/undefined|NaN/.test(V3.handText(size,pos,by,c)),`facing a 3-bet text for ${c} ${pos} v ${by}`);
+  }
+  assert(!/undefined|NaN/.test(V3.spotText(size,pos,by)),`facing a 3-bet text for ${pos} v ${by}`);
+  const x=V3.shares(size,pos,by);assert(x.raise>0&&x.call>0&&x.keep<100,`facing a 3-bet ${pos} v ${by} keeps only the top of the range`);
+}));
+assert(V3.inPos('BTN','BB')&&V3.inPos('CO','SB')&&!V3.inPos('SB','BB')&&!V3.inPos('CO','BTN'),'position against the 3-bettor');
 // The charts stay close to standard ones: you continue with less than the opener opens (the big blind aside), early raises
 // get tight answers, and the big blind defends more the later the raise.
 const openP=(size,p)=>Math.round(100*TR.openPct(size,p)),cont=(size,op,pos)=>{const x=VR.shares(size,op,pos);return x.raise+x.call};
@@ -302,6 +327,7 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsNear(R.lifetimeAccuracy(n),(90+90)/4,'a new player: Σ accuracy×weight over Σ weight');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
 console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+hsChecks+' player stats checks');
 require('./tests-river.js');
 require('./tests-potodds.js');
