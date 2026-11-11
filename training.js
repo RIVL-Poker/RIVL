@@ -348,8 +348,9 @@
   };
 
   /* ---------- the hub: add a drill to DRILLS and an empty <section class="view content-view"> in index.html ---------- */
-  const DRILLS=[rangeTrainer,vsRaise];
-  DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
+  // Drills in their own files add {view, eyebrow, name, text, art, make} to RivlExtraDrills before this file loads.
+  const DRILLS=[rangeTrainer,vsRaise,...(root.RivlExtraDrills||[]).filter(d=>doc.getElementById(d.view))];
+  DRILLS.forEach(d=>drills[d.view]=d.make?d.make():makeDrill(d));
   function paintHub(){
     $('trHub').innerHTML=DRILLS.map((d,i)=>{const m=drills[d.view];
       return `<article class="panel tr-card"><div class="tr-art" aria-hidden="true">${d.art()}</div><div class="tr-body"><div class="tr-eyebrow">${d.eyebrow}</div><h3>${esc(d.name)}</h3><p>${esc(d.text)}</p><small class="tr-stat">${esc(m.stat())}</small><button type="button" class="gold" data-drill="${i}">${m.started()?'CONTINUE':'START TRAINING'}</button></div></article>`}).join('')

@@ -182,3 +182,9 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 
 ### 2026-10-30 02:40 UTC · Claude
 - Set Hands table only: Ace, Rico, Luna and Nash each wear a champion banner (The Throne, Dragon's Hoard, Moon Wolf, Frost King). The map is `RIVL_SCRIPTED_BANNERS` in scripted-hands.js; `rivlBanners.bot()` paints the seat and hovering it floats the banner. Shown to everyone, no vault needed. Other bot tables are unchanged.
+
+### 2026-11-11 03:10 UTC · Claude
+- New Training drill, **River: Call or Fold** (`#riverCall`, river.js + river.css): 21 hand-written river spots where you hold a bluff catcher and face a bet; call or fold, filtered by bet size (small, big, overbet). Progress is kept under `localStorage` key `rivlRiverTrainer`.
+- Each spot lists the opponent's river range combo by combo. Equity is an exact count of the combos you beat (no sampling), the price is bet ÷ (pot + bet + call), and both options are graded by `RivlRating.grade()`. `tests-river.js` (run at the end of `node tests.js`) recounts every spot with engine.js's separate evaluator and fails if a write-up's answer disagrees with the count.
+- training.js now also shows drills from their own files: push `{view,eyebrow,name,text,art,make}` to `window.RivlExtraDrills` before training.js loads.
+
