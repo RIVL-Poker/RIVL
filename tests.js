@@ -181,6 +181,48 @@ assert(cont(9,'UTG','BTN')<=6,'at a full table the button continues with about 5
 assert(cont(6,'BTN','BB')>=55&&cont(6,'BTN','BB')>cont(6,'HJ','BB'),'the big blind defends most hands against the button, and more than against the hijack');
 const near=(size,pos,lo,hi)=>{const p=TR.openPct(size,pos);return p>=lo&&p<=hi};
 assert(near(9,'UTG',.09,.13)&&near(6,'UTG',.17,.22)&&near(9,'BTN',.44,.5),'opening ranges: about 11% under the gun at a full table, 20% at 6-max, 48% on the button');
+// Flop c-bet drill (cbet.js): the book matches the published solver examples it cites, every hand gets one answer, and
+// strong hands never check where the book bets big while hands with nothing never bet into a wet flop.
+vm.runInContext(fs.readFileSync(__dirname+'/cbet.js','utf8'),rctx);
+const CB=TR.cbet,cbCards=s=>s.match(/../g);let cbChecks=0;
+const cbOk=(c,m)=>{assert(c,m);cbChecks++},cbBest=(h,b)=>CB.judge(cbCards(h),cbCards(b),'check').best;
+const cbPlan=(b,pos='BTN',size=6)=>CB.rangePlan(size,pos,cbCards(b)).share;
+// GTO Wizard, "The Mechanics of C-Bet Sizing" (button v big blind, 100 BB): Q♥Q♣6♦ bet often, mostly a third of the pot;
+// K♥J♥7♦ bet big with top pair to sets and strong draws; Q♦J♦T♦ check or bet about 50/50, mostly small.
+cbOk(CB.texture(cbCards('Q♥Q♣6♦')).kind==='dry'&&cbPlan('Q♥Q♣6♦').small>=90,'Q♥Q♣6♦ is bet small with nearly the whole range');
+['K♠K♦','Q♠9♠','6♠6♣','A♠A♦'].forEach(h=>cbOk(cbBest(h,'Q♥Q♣6♦')==='small',h+' bets small on Q♥Q♣6♦'));
+cbOk(CB.texture(cbCards('K♥J♥7♦')).kind==='wet'&&cbPlan('K♥J♥7♦').small===0&&cbPlan('K♥J♥7♦').big>=20,'K♥J♥7♦ bets big or checks');
+['K♠Q♦','J♠J♦','K♠J♣','7♠7♦','Q♥T♥','A♥5♥','T♠9♠'].forEach(h=>cbOk(cbBest(h,'K♥J♥7♦')==='big',h+' bets big on K♥J♥7♦'));
+['8♠8♦','J♠9♠','K♠4♦'].forEach(h=>cbOk(cbBest(h,'K♥J♥7♦')==='check',h+' checks K♥J♥7♦'));
+{const p=cbPlan('Q♦J♦T♦');cbOk(CB.texture(cbCards('Q♦J♦T♦')).kind==='veryWet'&&p.check>=35&&p.check<=65&&p.big===0,'Q♦J♦T♦: check about half, bet small with the rest')}
+// GTO Wizard, "Flop Heuristics: IP C-Betting in Cash Games": on A-7-3 rainbow weak ace-x and kings to jacks check back far
+// more; paired and rainbow flops are bet most, monotone flops and flops that complete straights far less and smaller.
+['K♠K♦','J♠J♦','A♠5♦'].forEach(h=>cbOk(cbBest(h,'A♣7♦3♠')==='check',h+' checks back on A♣7♦3♠'));
+['A♠K♦','7♠7♦','9♠9♦','K♠Q♠'].forEach(h=>cbOk(cbBest(h,'A♣7♦3♠')==='small',h+' bets small on A♣7♦3♠'));
+const cbBet=b=>{const p=cbPlan(b);return p.small+p.big};
+cbOk(cbBet('K♠7♦2♣')>cbBet('K♠7♠2♠')&&cbBet('K♠7♦2♣')>cbBet('8♠7♥5♦'),'monotone and straight-completing flops are bet less than a dry one');
+cbOk(['K♠7♠2♠','8♠7♥5♦','5♣4♦2♥'].every(b=>CB.texture(cbCards(b)).kind==='veryWet'&&cbPlan(b).big===0),'very wet flops bet small when they bet');
+['7♥2♦2♣','K♠7♦2♣','A♠K♦8♣'].forEach(b=>cbOk(CB.texture(cbCards(b)).kind==='dry'&&cbPlan(b).big===0,b+' is dry and bet small'));
+// Hand reading on the flop.
+const cbCls=(h,b)=>CB.handClass(cbCards(h),cbCards(b)).cls;
+[['7♠7♦','K♥J♥7♦','nutted'],['K♠J♠','K♥J♥7♦','nutted'],['A♥2♥','K♥J♥7♦','draw'],['Q♠T♠','K♥J♥7♦','draw'],['A♠Q♠','K♥J♥7♦','gutshot'],['A♦K♦','K♥J♥7♦','value'],
+ ['K♠5♠','K♥J♥7♦','thin'],['9♠9♦','K♥J♥7♦','showdown'],['A♠3♦','K♥J♥7♦','air'],['A♦3♦','K♥J♥7♦','equity'],['A♠Q♦','8♣7♦2♥','equity'],['A♥5♠','K♠7♠2♠','equity'],
+ ['A♠5♥','K♠7♠2♠','draw'],['8♠6♠','K♠7♠2♠','nutted'],['K♦7♣','K♠K♥7♦','nutted'],['A♦5♣','K♠K♥7♦','air'],['Q♣J♣','A♦K♠2♥','gutshot'],['J♦T♦','Q♠9♥3♣','draw'],['5♦4♦','A♠3♥8♣','gutshot']]
+ .forEach(([h,b,c])=>cbOk(cbCls(h,b)===c,`${h} on ${b} reads as ${c}, not ${cbCls(h,b)}`));
+// Every hand in every opening range on many flops: one book play, rated right; the others close or wrong; text complete;
+// strong hands and strong draws never check a wet flop, and hands with nothing never bet a wet or very wet one.
+const cbMath=vm.runInContext('Math',rctx),cbRandom=cbMath.random;cbMath.random=R.mulberry32(20261111);// the same spots every run
+for(let k=0;k<300;k++){
+  const size=k%2?9:6,seats=TR.SEATS[size].slice(0,-2),pos=seats[k%seats.length],s=CB.dealSpot(size,pos,null);
+  cbOk(CB.inRange(size,pos,s.cls)&&new Set(s.cards.concat(s.board)).size===5&&s.board.length===3,'dealt a hand from the range and a clean flop');
+  const j=CB.judge(s.cards,s.board,'check'),v=a=>CB.judge(s.cards,s.board,a).v;
+  cbOk(v(j.best)==='right'&&['check','small','big'].filter(a=>v(a)==='right').length===1,'one right answer for '+s.cards+' on '+s.board);
+  if(j.t.kind==='wet'&&['nutted','value','draw'].includes(j.h.cls))cbOk(j.best==='big',`${s.cards} bets big on ${s.board}`);
+  if(j.t.kind!=='dry'&&j.h.cls==='air')cbOk(v('small')==='wrong',`${s.cards} does not bet small with nothing on ${s.board}`);
+  const txt=CB.handText(s.cards,s.board,j.best)+CB.flopText(j.t,CB.rangePlan(size,pos,s.board));
+  cbOk(!/undefined|NaN|null/.test(txt),'c-bet text for '+s.cards+' on '+s.board);
+}
+cbMath.random=cbRandom;
 // Push or fold (pushfold.js): the push/fold Nash charts reproduce published heads-up results, ranges widen the fewer
 // players are left behind, and every spot has an answer and readable words.
 vm.runInContext(fs.readFileSync(__dirname+'/pushfold-charts.js','utf8'),rctx);
@@ -328,5 +370,8 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
 console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+cbChecks+' flop c-bet checks + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+hsChecks+' player stats checks');
 require('./tests-river.js');
 require('./tests-potodds.js');
