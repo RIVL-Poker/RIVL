@@ -351,7 +351,6 @@
   const DRILLS=[rangeTrainer,vsRaise];
   DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
   // A drill in its own file (loaded after this one) joins the hub with RivlTraining.add(config).
-  root.RivlTraining.add=cfg=>{DRILLS.push(cfg);drills[cfg.view]=makeDrill(cfg);paintHub()};
   root.RivlTraining.miniChart=miniChart;
   // A drill with its own page passes make(), which builds it and returns the same {open,key,stat,started} as makeDrill.
   root.RivlTraining.add=cfg=>{DRILLS.push(cfg);drills[cfg.view]=cfg.make?cfg.make():makeDrill(cfg);paintHub()};
