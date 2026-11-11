@@ -327,6 +327,5 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsNear(R.lifetimeAccuracy(n),(90+90)/4,'a new player: Σ accuracy×weight over Σ weight');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
-console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+hsChecks+' player stats checks');
+console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+pfChecks+' push-or-fold checks + '+bdChecks+' big blind defense answers + '+v3Checks+' facing-a-3-bet answers + '+hsChecks+' player stats checks');
 require('./tests-river.js');
