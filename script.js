@@ -1,5 +1,6 @@
 const $=id=>document.getElementById(id), views=document.querySelectorAll('.view');
 // The daily puzzle opens from Play and keeps Play lit in the sidebar; drills keep Training lit.
+const NAV_FOR={puzzle:'play',backroom:'support',rangeTrainer:'training',vsRaise:'training',pushFold:'training',bbDefense:'training',riverCall:'training',vs3Bet:'training',potOdds:'training'};
 const NAV_FOR={puzzle:'play',backroom:'support',rangeTrainer:'training',vsRaise:'training',pushFold:'training',cbet:'training',riverCall:'training'};
 const NAV_FOR={puzzle:'play',backroom:'support',rangeTrainer:'training',vsRaise:'training',pushFold:'training',riverCall:'training',vs3Bet:'training'};
 const NAV_FOR={puzzle:'play',backroom:'support',rangeTrainer:'training',vsRaise:'training',pushFold:'training',bbDefense:'training',riverCall:'training'};

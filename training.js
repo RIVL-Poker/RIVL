@@ -195,7 +195,6 @@
     open:{judge,handText,seatText},
     vsRaise:{OPEN_TO,threeBetTo,labels,best:bestOf,shares:vsShares,judge:vsJudge,handText:vsHandText,spotText:vsSpotText},
     vs3Bet:{threeBetTo:threeBy,fourBetTo,inPos,pot:v3Pot,labels:v3Labels,shares:v3Shares,judge:v3Judge,handText:v3HandText,spotText:v3SpotText},
-    drill:view=>drills[view]};
     drill:view=>drills[view],
     // Shared pieces for drills that live in their own file (training-bb.js) and join the hub with add().
     kit:{NAME,the,who,cap,kind,combos,share,bbs,ACT_NAME,ACT_VERB,CELL_VS}};
