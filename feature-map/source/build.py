@@ -68,7 +68,7 @@ file_feat = defaultdict(Counter); file_prs = defaultdict(list)
 for n, p in prs.items():
     for path, a, d in p["files"]:
         if not CODE.search(path) or not os.path.exists(f"{REPO}/{path}"): continue
-        if path.startswith("assets/"): continue
+        if path.startswith(("assets/", "feature-map/")): continue
         file_feat[path][owner[n]] += a + d
         file_prs[path].append(n)
 FILES = []
@@ -189,7 +189,7 @@ for f in FEATURES:
 
 PRS = {n: dict(n=n, t=p["t"], d=p["d"], a=p["add"], x=p["del"], f=[[q[0], q[1], q[2]] for q in p["files"]][:40], nf=len(p["files"]), c=p["commits"], o=owner[n]) for n, p in prs.items()}
 for n in PRS: PRS[n]["b"] = BR.get(n, "")
-data = dict(areas=AREAS, features=out_f, edges=EDGES, prs=PRS, files=FILES, updated="9 Nov 2026", today="2026-11-09",
+data = dict(areas=AREAS, features=out_f, edges=EDGES, prs=PRS, files=FILES, updated="11 Nov 2026", today="2026-11-11",
             threads=len(THREADS), openprs=OPEN_PRS, corr=CORR, hubs=hubs, hubN=HUB, tedges=TEDGES, hot=HOT, now=NOW, ideas=IDEAS,
             content=dict(star=CC_STAR, planets=CC_PLANETS, pieces=CONTENT, gives=CC_GIVES, video=VIDEO, library=LIBRARY))
 js = "const DATA=" + json.dumps(data, separators=(",", ":"), ensure_ascii=False) + ";"
