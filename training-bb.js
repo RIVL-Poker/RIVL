@@ -1,7 +1,7 @@
 /* RIVL Training, Big Blind Defense: you are always the big blind, one player opens to 2, 2.5, 3 or 4 BB and everyone
    else folds. 3-bet, call or fold? The answers are rating.js's own gradePreflop() for that exact spot, the same chart
    the decision grader holds your big blind play to, and it defends wider against smaller raises and later openers.
-   Runs after training.js: it uses that file's shared drill page and joins the Training hub with addDrill(). */
+   Runs after training.js: it uses that file's shared drill page and joins the Training hub with RivlTraining.add(). */
 (root=>{
   const R=root.RivlRating,T=root.RivlTraining;if(!R||!T)return;
   const {SEATS,CLASSES,tierOf,cutoff,openPct}=T,K=T.kit;
@@ -82,9 +82,9 @@
   }
 
   T.bbDefense={OPENS,threeBetTo,book,labels,best,judge,shares,price,handText,priceText,openerText};
-  if(!T.addDrill)return;
+  if(!T.add)return;
   const rnd=n=>Math.floor(Math.random()*n);
-  T.addDrill({view:'bbDefense',pre:'bd',key:'rivlBbDefense',title:'BIG BLIND DEFENSE',chartName:'DEFENDING RANGE',
+  T.add({view:'bbDefense',pre:'bd',key:'rivlBbDefense',title:'BIG BLIND DEFENSE',chartName:'DEFENDING RANGE',
     eyebrow:'PREFLOP',name:'Big Blind Defense',art:()=>K.miniChart(c=>({raise:'tr-a',call:'tr-c',fold:''})[best(6,'CO',3,c)]),
     text:'You are in the big blind and someone raises. 3-bet, call or fold? Learn how the opener\'s seat and the size of the raise change your defense.',
     fine:'Standard 100 BB charts in the big blind against one open of 2 to 4 BB with everyone else folded, the same ones RIVL grades your play against. 3-bets go to 4x the open.',

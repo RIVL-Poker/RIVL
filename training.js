@@ -142,7 +142,7 @@
     open:{judge,handText,seatText},
     vsRaise:{OPEN_TO,threeBetTo,labels,best:bestOf,shares:vsShares,judge:vsJudge,handText:vsHandText,spotText:vsSpotText},
     drill:view=>drills[view],
-    // Shared pieces for drills that live in their own file (training-bb.js) and join the hub with addDrill().
+    // Shared pieces for drills that live in their own file (training-bb.js) and join the hub with add().
     kit:{NAME,the,who,cap,kind,combos,share,bbs,ACT_NAME,ACT_VERB,CELL_VS}};
   const doc=root.document;if(!doc||!doc.getElementById('training'))return;
   const $=id=>doc.getElementById(id);
@@ -218,7 +218,7 @@
       const ring=seats.map((s,i)=>{
         const k=(i-h+n)%n,a=(90+360*k/n)*Math.PI/180,x=50+44*Math.cos(a),y=50+38*Math.sin(a),{state,bet}=table[i];
         const cards=state==='live'||state==='raise'?'<span class="hr-backs"><i></i><i></i></span>':'';
-        const em={folded:'FOLD',me:'YOU',raise:'RAISE'}[state]||'';
+        const em=table[i].em||{folded:'FOLD',me:'YOU',raise:'RAISE'}[state]||'';
         return `<div class="hr-seat hr-s-${state}${x>52?' hr-east':''}" style="left:${x}%;top:${y}%">${cards}<span class="hr-tag"><b>${s}</b>${em?`<em>${em}</em>`:''}${s==='BTN'?'<span class="hr-dealer" title="Dealer button">D</span>':''}</span>${bet?`<span class="hr-blind"><i class="pz-chip"></i>${bet}</span>`:''}</div>`;
       }).join('');
       const pot=table.reduce((a,s)=>a+(+s.bet||0),0);
@@ -352,14 +352,14 @@
   /* ---------- the hub: add a drill to DRILLS and an empty <section class="view content-view"> in index.html ---------- */
   const DRILLS=[rangeTrainer,vsRaise];
   DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
+  // A drill in its own file (loaded after this one) joins the hub with RivlTraining.add(config).
+  root.RivlTraining.add=cfg=>{DRILLS.push(cfg);drills[cfg.view]=makeDrill(cfg);paintHub()};
   function paintHub(){
     $('trHub').innerHTML=DRILLS.map((d,i)=>{const m=drills[d.view];
       return `<article class="panel tr-card"><div class="tr-art" aria-hidden="true">${d.art()}</div><div class="tr-body"><div class="tr-eyebrow">${d.eyebrow}</div><h3>${esc(d.name)}</h3><p>${esc(d.text)}</p><small class="tr-stat">${esc(m.stat())}</small><button type="button" class="gold" data-drill="${i}">${m.started()?'CONTINUE':'START TRAINING'}</button></div></article>`}).join('')
       +'<article class="panel tr-card tr-soon"><div class="tr-plus" aria-hidden="true">+</div><div class="tr-body"><div class="tr-eyebrow">COMING LATER</div><h3>More drills</h3><p>New drills will appear here as they are added.</p></div></article>';
     $('trHub').querySelectorAll('[data-drill]').forEach(b=>b.onclick=()=>show(DRILLS[+b.dataset.drill].view));
   }
-  // A drill from its own file: its page is built now and its card joins the hub.
-  root.RivlTraining.addDrill=d=>{DRILLS.push(d);drills[d.view]=makeDrill(d);paintHub()};
   Object.assign(root.RivlTraining.kit,{cardsFor,dealClass,miniChart});
   doc.addEventListener('keydown',e=>{
     if(e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
