@@ -40,6 +40,7 @@ Shared handoff file for everyone working on this repo, people and AI assistants 
 | Claude | Player stats on the Profile, in every mode, saved to the account | `claude/project-thread-lkcyr9` | hand-stats.js, player-stats.js, player-stats.css, worker/rooms.js, worker/directory.js, worker/grading.js, index.html, script.js, ladder-ui.js, rating.js, account.js, tests.js, tests-worker.mjs, scripts/build-site.mjs, README.md | PR open |
 | Claude | Freeroll Champion Banners, secret unlock, player cards | `claude/project-thread-azruh2` | banners.js, banners.css, assets/banners/, index.html, rooms.js, account.js, freeroll.js, worker/rooms.js, worker/tournament.js, worker/directory.js, tests-worker.mjs, scripts/build-site.mjs, README.md | PR open |
 | Claude | Champion banners for the 4 Set Hands bots | `claude/project-thread-t0bii5` | scripted-hands.js, banners.js, banners.css, script.js, index.html | PR open |
+| Claude | Training: Pot Odds & Draws drill | `claude/project-thread-v95j1a` | potodds.js, potodds.css, tests-potodds.js (new); training.js (2 lines), index.html (3 lines), scripts/build-site.mjs, tests.js (1 line), README.md | PR open |
 | ChatGPT | _(add your task)_ | | | |
 
 ## Log
@@ -182,3 +183,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 
 ### 2026-10-30 02:40 UTC · Claude
 - Set Hands table only: Ace, Rico, Luna and Nash each wear a champion banner (The Throne, Dragon's Hoard, Moon Wolf, Frost King). The map is `RIVL_SCRIPTED_BANNERS` in scripted-hands.js; `rivlBanners.bot()` paints the seat and hovering it floats the banner. Shown to everyone, no vault needed. Other bot tables are unchanged.
+
+### 2026-11-11 03:20 UTC · Claude
+- Added the Pot Odds & Draws drill (potodds.js). It lives in its own file and joins the Training hub through the new `RivlTraining.add(drill, impl)` in training.js, so other new drills can do the same without touching the DRILLS list.
+- Equity is exact: `tests-potodds.js` recounts every spot with engine.js's evaluator and checks each answer against `grade()`'s EV-loss scale.

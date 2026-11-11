@@ -362,5 +362,7 @@
     if(d&&drills[d.view].key(e))e.preventDefault();
   });
   doc.addEventListener('rivl:view',e=>{if(e.detail==='training')paintHub();if(drills[e.detail])drills[e.detail].open()});
+  // A drill kept in its own file (potodds.js) joins the hub here; it needs an empty <section> in index.html too.
+  root.RivlTraining.add=(d,m)=>{DRILLS.push(d);drills[d.view]=m;paintHub()};
   paintHub();
 })(typeof window!=='undefined'?window:globalThis);

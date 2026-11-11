@@ -236,3 +236,4 @@ hsEq(HS.rates(hsCounts.steal).af,Infinity,'bets with no calls');
   hsEq([R.lifetimeAccuracy({}),R.lifetimeAccuracy(null)],[null,null],'no matches yet');
 }
 console.log('PASS: 12 poker engine checks + 17 rating checks + 24 Back Room spots + 10 scripted hands + 5 Set Hands bot checks + '+trChecks+' range trainer answers + '+vrChecks+' facing-a-raise answers + '+hsChecks+' player stats checks');
+require('./tests-potodds.js');
