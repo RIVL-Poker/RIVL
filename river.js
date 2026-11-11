@@ -239,7 +239,7 @@
   root.RivlRiver={SPOTS:BUILT,build,rangeOf,combos,expand,SIZES,sizeOf,gradeSpot,judge,verdictOf};
 
   /* ---------- the page ----------
-     A Training drill (training.js shows it on the hub through RivlExtraDrills). The table and the story are the
+     A Training drill, joined to the hub with RivlTraining.add (this file loads after training.js). The table and the story are the
      daily puzzle's (RivlPuzzleView); the bet-size filter, the verdict and the progress look like the other drills. */
   const doc=root.document;if(!doc)return;
   const pct=x=>Math.round(x*100)+'%',pctOf=(c,n)=>n?Math.round(100*c/n)+'%':'–';
@@ -374,6 +374,7 @@
   }
   // The hub card: a river board with the call-or-fold question.
   const art=()=>`<span class="rc-art"><span>${['K♠','8♠','3♦','2♣','4♥'].map(mini).join('')}</span><span class="rc-art-q"><b>CALL</b><i>or</i><b>FOLD</b></span></span>`;
-  (root.RivlExtraDrills=root.RivlExtraDrills||[]).push({view:'riverCall',eyebrow:'RIVER',name:'River: Call or Fold',art,make,
+  const T2=root.RivlTraining;
+  if(T2&&T2.add&&doc.getElementById('riverCall'))T2.add({view:'riverCall',eyebrow:'RIVER',name:'River: Call or Fold',art,make,
     text:'They bet the river and you hold a bluff catcher. Learn to call or fold from the price and the hands their story allows.'});
 })(typeof window!=='undefined'?window:globalThis);

@@ -215,7 +215,7 @@
       const ring=seats.map((s,i)=>{
         const k=(i-h+n)%n,a=(90+360*k/n)*Math.PI/180,x=50+44*Math.cos(a),y=50+38*Math.sin(a),{state,bet}=table[i];
         const cards=state==='live'||state==='raise'?'<span class="hr-backs"><i></i><i></i></span>':'';
-        const em={folded:'FOLD',me:'YOU',raise:'RAISE'}[state]||'';
+        const em=table[i].em||{folded:'FOLD',me:'YOU',raise:'RAISE'}[state]||'';
         return `<div class="hr-seat hr-s-${state}${x>52?' hr-east':''}" style="left:${x}%;top:${y}%">${cards}<span class="hr-tag"><b>${s}</b>${em?`<em>${em}</em>`:''}${s==='BTN'?'<span class="hr-dealer" title="Dealer button">D</span>':''}</span>${bet?`<span class="hr-blind"><i class="pz-chip"></i>${bet}</span>`:''}</div>`;
       }).join('');
       const pot=table.reduce((a,s)=>a+(+s.bet||0),0);
@@ -348,9 +348,11 @@
   };
 
   /* ---------- the hub: add a drill to DRILLS and an empty <section class="view content-view"> in index.html ---------- */
-  // Drills in their own files add {view, eyebrow, name, text, art, make} to RivlExtraDrills before this file loads.
-  const DRILLS=[rangeTrainer,vsRaise,...(root.RivlExtraDrills||[]).filter(d=>doc.getElementById(d.view))];
-  DRILLS.forEach(d=>drills[d.view]=d.make?d.make():makeDrill(d));
+  const DRILLS=[rangeTrainer,vsRaise];
+  DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
+  // A drill in its own file (loaded after this one) joins the hub with RivlTraining.add(config).
+  // A drill with its own page passes make(), which builds it and returns the same {open,key,stat,started} as makeDrill.
+  root.RivlTraining.add=cfg=>{DRILLS.push(cfg);drills[cfg.view]=cfg.make?cfg.make():makeDrill(cfg);paintHub()};
   function paintHub(){
     $('trHub').innerHTML=DRILLS.map((d,i)=>{const m=drills[d.view];
       return `<article class="panel tr-card"><div class="tr-art" aria-hidden="true">${d.art()}</div><div class="tr-body"><div class="tr-eyebrow">${d.eyebrow}</div><h3>${esc(d.name)}</h3><p>${esc(d.text)}</p><small class="tr-stat">${esc(m.stat())}</small><button type="button" class="gold" data-drill="${i}">${m.started()?'CONTINUE':'START TRAINING'}</button></div></article>`}).join('')
