@@ -1,9 +1,9 @@
 # RIVL feature map
 
-A 3D map of everything built in RIVL: 67 features, 154 merged pull requests, 130 ideas and the content creation system, with the project threads and PRs behind each one.
+A 3D map of everything built in RIVL: 72 features, 163 merged pull requests, 129 ideas and the content creation system, with the project threads and PRs behind each one.
 
 - **Live version:** https://claude.ai/artifact/UfEHkEs7DYPHyUkt6RGrcZ. This is the one that gets updated as work lands.
-- **This folder:** an unchanged copy of version 22 of that page (9 Nov 2026), with its screenshots and clip stills and the files it is built from.
+- **This folder:** a copy of version 23 of that page (11 Nov 2026), with its screenshots and clip stills and the files it is built from. It's refreshed here with a PR when the live map changes.
 
 ## Open it
 

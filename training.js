@@ -275,8 +275,8 @@
         const em=table[i].em||{folded:'FOLD',me:'YOU',raise:'RAISE'}[state]||'';
         return `<div class="hr-seat hr-s-${state}${x>52?' hr-east':''}" style="left:${x}%;top:${y}%">${cards}<span class="hr-tag"><b>${s}</b>${em?`<em>${em}</em>`:''}${s==='BTN'?'<span class="hr-dealer" title="Dealer button">D</span>':''}</span>${bet?`<span class="hr-blind"><i class="pz-chip"></i>${bet}</span>`:''}</div>`;
       }).join('');
-      const pot=table.reduce((a,s)=>a+(+s.bet||0),0);
-      p('Felt').innerHTML=ring+`<div class="hr-center"><div class="pz-pot">POT <b>${bbs(pot)}</b></div><div class="pz-hand">${spot.cards.map(cardHtml).join('')}</div></div>`;
+      const pot=cfg.pot?cfg.pot(spot):table.reduce((a,s)=>a+(+s.bet||0),0),board=cfg.board?cfg.board(spot):[];
+      p('Felt').innerHTML=ring+`<div class="hr-center${board.length?' hr-flop':''}">${board.length?`<div class="pz-board">${board.map(cardHtml).join('')}</div>`:''}<div class="pz-pot">POT <b>${bbs(pot)}</b></div><div class="pz-hand">${spot.cards.map(cardHtml).join('')}</div></div>`;
       p('Felt').setAttribute('aria-label',`${spot.size}-max table. You are ${the(spot.pos)} with ${spot.cards.join(' ')}. ${cfg.say(spot)}`);
     }
     function paintStats(){
@@ -296,7 +296,7 @@
     }
     function deal(){
       const seats=cfg.heroSeats(st.size),pos=st.seat==='ALL'?seats[rnd(seats.length)]:st.seat;
-      spot=Object.assign({size:st.size,pos},cfg.deal(st.size,pos,spot&&spot.cls));spot.cards=cardsFor(spot.cls);spot.answered=false;tab=cfg.tab(spot);
+      spot=Object.assign({size:st.size,pos},cfg.deal(st.size,pos,spot&&spot.cls));if(!spot.cards)spot.cards=cardsFor(spot.cls);spot.answered=false;tab=cfg.tab(spot);
       paintFelt();paintGrid(true);paintStats();
       p('Q').textContent=cfg.question(spot);
       const acts=cfg.actions(spot);
@@ -443,6 +443,7 @@
   const DRILLS=[rangeTrainer,vsRaise,vs3Bet];
   DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
   // A drill in its own file (loaded after this one) joins the hub with RivlTraining.add(config).
+  root.RivlTraining.miniChart=miniChart;
   // A drill with its own page passes make(), which builds it and returns the same {open,key,stat,started} as makeDrill.
   root.RivlTraining.add=cfg=>{DRILLS.push(cfg);drills[cfg.view]=cfg.make?cfg.make():makeDrill(cfg);paintHub()};
   function paintHub(){
