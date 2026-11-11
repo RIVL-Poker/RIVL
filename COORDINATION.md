@@ -182,3 +182,7 @@ Newest at the bottom. Format: `### YYYY-MM-DD HH:MM UTC · Name`, then a few bul
 
 ### 2026-10-30 02:40 UTC · Claude
 - Set Hands table only: Ace, Rico, Luna and Nash each wear a champion banner (The Throne, Dragon's Hoard, Moon Wolf, Frost King). The map is `RIVL_SCRIPTED_BANNERS` in scripted-hands.js; `rivlBanners.bot()` paints the seat and hovering it floats the banner. Shown to everyone, no vault needed. Other bot tables are unchanged.
+
+### 2026-11-11 03:10 UTC · Claude
+- Third Training drill, **Facing a 3-Bet** (`#vs3Bet`): you open to 2.5 BB from any seat but the big blind, one player behind you 3-bets (3x in position, 4x from the blinds) and everyone else folds; 4-bet (to 2.4x), call or fold. Only hands you open from that seat are dealt. Progress is kept under `localStorage` key `rivlThreeBetTrainer`.
+- The answers are `RivlRating.gradePreflop()` on the same book `analyze()` builds for the spot (`raisers:2`), and `tests.js` checks the labels against `analyze()` + `grade()` for every seat and 3-bettor. No grader change: the grader's chart against a 3-bet is the same from every seat (4-bet AA-QQ and AK, call JJ, TT, AQ, AJs, KQs, fold the rest), so the drill teaches exactly that. Widening it by position would need a published chart first.
