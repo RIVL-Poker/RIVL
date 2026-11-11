@@ -353,7 +353,8 @@
   const DRILLS=[rangeTrainer,vsRaise];
   DRILLS.forEach(d=>drills[d.view]=makeDrill(d));
   // A drill in its own file (loaded after this one) joins the hub with RivlTraining.add(config).
-  root.RivlTraining.add=cfg=>{DRILLS.push(cfg);drills[cfg.view]=makeDrill(cfg);paintHub()};
+  // A drill with its own page passes make(), which builds it and returns the same {open,key,stat,started} as makeDrill.
+  root.RivlTraining.add=cfg=>{DRILLS.push(cfg);drills[cfg.view]=cfg.make?cfg.make():makeDrill(cfg);paintHub()};
   function paintHub(){
     $('trHub').innerHTML=DRILLS.map((d,i)=>{const m=drills[d.view];
       return `<article class="panel tr-card"><div class="tr-art" aria-hidden="true">${d.art()}</div><div class="tr-body"><div class="tr-eyebrow">${d.eyebrow}</div><h3>${esc(d.name)}</h3><p>${esc(d.text)}</p><small class="tr-stat">${esc(m.stat())}</small><button type="button" class="gold" data-drill="${i}">${m.started()?'CONTINUE':'START TRAINING'}</button></div></article>`}).join('')
