@@ -189,12 +189,16 @@
       +`You open about ${s.open}% of hands ${posPhrase(pos)}, so you keep about ${s.keep}% of them.`;
   }
 
+  const CELL_VS={raise:'hr-3bet',call:'hr-call',fold:'hr-out'};
   const drills={};
   root.RivlTraining={SEATS,CLASSES,tierOf,cutoff,openPct,
     open:{judge,handText,seatText},
     vsRaise:{OPEN_TO,threeBetTo,labels,best:bestOf,shares:vsShares,judge:vsJudge,handText:vsHandText,spotText:vsSpotText},
     vs3Bet:{threeBetTo:threeBy,fourBetTo,inPos,pot:v3Pot,labels:v3Labels,shares:v3Shares,judge:v3Judge,handText:v3HandText,spotText:v3SpotText},
     drill:view=>drills[view]};
+    drill:view=>drills[view],
+    // Shared pieces for drills that live in their own file (training-bb.js) and join the hub with add().
+    kit:{NAME,the,who,cap,kind,combos,share,bbs,ACT_NAME,ACT_VERB,CELL_VS}};
   const doc=root.document;if(!doc||!doc.getElementById('training'))return;
   const $=id=>doc.getElementById(id);
   const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -307,7 +311,7 @@
       if(!spot||spot.answered)return;spot.answered=true;
       const j=cfg.judge(spot,act),v=j.v;
       st.n++;if(v==='right'){st.c++;st.streak++;st.best=Math.max(st.best,st.streak)}else if(v==='wrong')st.streak=0;
-      const k=st.seats[spot.size+':'+spot.pos]||(st.seats[spot.size+':'+spot.pos]=[0,0]);k[0]++;if(v==='right')k[1]++;
+      const at=spot.size+':'+(cfg.seatOf?cfg.seatOf(spot):spot.pos),k=st.seats[at]||(st.seats[at]=[0,0]);k[0]++;if(v==='right')k[1]++;
       st.recent=[{c:spot.cls,p:cfg.tag(spot),v},...st.recent].slice(0,10);save();
       p('Choices').querySelectorAll('button').forEach(b=>{b.disabled=true;b.classList.toggle('best',b.dataset.act===j.best);b.classList.toggle('picked',b.dataset.act===act)});
       const [word,glyph,color]=VERDICT[v];
@@ -365,7 +369,6 @@
       return locked||prev===r?[['hr-in-old','Open'],['hr-out','Fold']]:[['hr-in-old','Opens from earlier seats too'],['hr-in-new','Added at this seat'],['hr-out','Fold']];
     },
   };
-  const CELL_VS={raise:'hr-3bet',call:'hr-call',fold:'hr-out'};
   const vsRaise={view:'vsRaise',pre:'vr',key:'rivlRaiseTrainer',title:'FACING A RAISE',chartName:'DEFENDING RANGE',
     eyebrow:'PREFLOP',name:'Facing a Raise',art:()=>miniChart(c=>({raise:'tr-a',call:'tr-c',fold:''})[bestOf(labels(9,'BTN','BB',c))]),
     text:'Someone opens before you. 3-bet, call or fold? Learn how to answer a raise from every seat, blinds included.',
@@ -449,6 +452,7 @@
       +'<article class="panel tr-card tr-soon"><div class="tr-plus" aria-hidden="true">+</div><div class="tr-body"><div class="tr-eyebrow">COMING LATER</div><h3>More drills</h3><p>New drills will appear here as they are added.</p></div></article>';
     $('trHub').querySelectorAll('[data-drill]').forEach(b=>b.onclick=()=>show(DRILLS[+b.dataset.drill].view));
   }
+  Object.assign(root.RivlTraining.kit,{cardsFor,dealClass,miniChart});
   doc.addEventListener('keydown',e=>{
     if(e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
     const d=DRILLS.find(x=>$(x.view).classList.contains('active'));
