@@ -82,6 +82,9 @@ ALLOWED_ORIGINS = ""
 # "Sign in with Google": the OAuth 2.0 Web client ID from Google Cloud Console (public, not a secret).
 # Empty hides the Google button; players can still use a sign-in code.
 GOOGLE_CLIENT_ID = "465836123925-5l16gh2t6l95rf3n6pkgqq55iam7hhvc.apps.googleusercontent.com"
+# RIVL COMMAND (/command) secrets, set with `npx wrangler secret put`: COMMAND_ACCOUNTS (allowed account ids, comma
+# separated), ANTHROPIC_API_KEY (switches RIVER on), COMMAND_HOOK_TOKEN (GitHub Actions posts to the feed), and
+# optionally GITHUB_TOKEN and COMMAND_MODEL. See README.
 # Daily budget that keeps online play inside Cloudflare's free plan (resets at midnight UTC).
 # Measured cost is roughly 33 storage writes and 50 seconds of room time per hand, so 1,500 hands
 # (about 20 table-hours) stays under the free limits of 100,000 writes and 13,000 GB-s per day.

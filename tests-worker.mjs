@@ -1432,4 +1432,72 @@ console.log('PASS: '+checks+' room server checks');
   checks++;
 }
 
+
+// The Directory directly, for paths the Worker never forwards from a browser.
+async function dirDirect(env,path,body){const r=await env.DIRECTORY.get('global').fetch('https://dir'+path,{method:'POST',body:JSON.stringify(body)});return {status:r.status,data:await r.json()}}
+
+// ---------- RIVL COMMAND: owners only, notes, feed, GitHub hook, RIVER ----------
+{
+  const env=makeEnv({COMMAND_HOOK_TOKEN:'hook-token-for-tests'});
+  const kaden=(await api(env,'/api/accounts',{name:'Kaden'})).data,sean=(await api(env,'/api/accounts',{name:'Sean'})).data,other=(await api(env,'/api/accounts',{name:'Stranger'})).data;
+  env.COMMAND_ACCOUNTS=kaden.account.id+', '+sean.account.id;
+  let r=await api(env,'/api/command/state',{key:other.key});
+  assert.equal(r.status,403,'an account not on the list gets nothing');assert.equal(r.data.notes,undefined);assert.equal(r.data.accountId,other.account.id,'but is told its own id for setup');
+  assert.equal((await api(env,'/api/command/state',{key:'x'.repeat(30)})).status,401,'a wrong key is refused');
+  assert.equal((await api(env,'/api/command/state',{})).status,401,'no key is refused');
+  assert.equal((await api(env,'/api/command/event',{title:'sneaky'})).status,404,'the internal event path is not open to browsers');
+  r=await api(env,'/api/command/state',{key:kaden.key});
+  assert.equal(r.status,200);assert.deepEqual(r.data.team.map(t=>t.name),['Kaden','Sean']);assert.equal(r.data.ai,false,'RIVER is off without an API key');
+  assert.equal(typeof r.data.live.online,'number');assert.equal(r.data.live.budget.limits.hands>0,true);assert.equal(r.data.live.week.length,7);
+  assert.ok(r.data.team.find(t=>t.name==='Kaden').here,'opening COMMAND marks you as here');
+  // Notes and tasks: both owners see and edit them; every change is in the feed.
+  assert.equal((await api(env,'/api/command/note',{key:kaden.key,title:'  '})).status,400,'a note needs a title');
+  const task=(await api(env,'/api/command/note',{key:kaden.key,kind:'task',title:'Fix the 3-bet grading bug',body:'Opener folded case',tag:'grader'})).data.note;
+  assert.deepEqual([task.kind,task.tag,task.done,task.author],['task','grader',false,kaden.account.id]);
+  r=await api(env,'/api/command/note',{key:sean.key,id:task.id,done:true});
+  assert.equal(r.data.note.done,true);assert.equal(r.data.note.updatedBy,sean.account.id);assert.equal(r.data.note.title,'Fix the 3-bet grading bug','fields not sent are kept');
+  assert.equal((await api(env,'/api/command/note',{key:other.key,id:task.id,delete:true})).status,403,'outsiders cannot delete');
+  const note=(await api(env,'/api/command/note',{key:sean.key,title:'Clips go out Friday',tag:'NOT A TAG!',pinned:true})).data.note;
+  assert.deepEqual([note.kind,note.tag,note.pinned,note.done],['note','general',true,false],'bad tags fall back; notes are never done');
+  r=await api(env,'/api/command/state',{key:sean.key});
+  assert.deepEqual(r.data.notes.map(n=>n.title),['Clips go out Friday','Fix the 3-bet grading bug']);
+  assert.deepEqual(r.data.events.slice(0,3).map(e=>e.title),['Sean added a note “Clips go out Friday”','Sean finished “Fix the 3-bet grading bug”','Kaden added a task “Fix the 3-bet grading bug”']);
+  assert.equal((await api(env,'/api/command/note',{key:kaden.key,id:note.id,delete:true})).status,200);
+  assert.equal((await api(env,'/api/command/note',{key:kaden.key,id:note.id,title:'back'})).status,404,'a deleted note stays deleted');
+  // Seen markers drive the "new since you looked" highlights.
+  const seen=(await api(env,'/api/command/seen',{key:kaden.key,what:'notes'})).data.t;
+  r=await api(env,'/api/command/state',{key:kaden.key});assert.equal(r.data.seen.notes,seen);assert.equal(r.data.seen.feed,0);
+  // GitHub hook: needs the token; the kind is limited to what Actions sends.
+  assert.equal((await api(env,'/api/command/hook',{token:'wrong',title:'x'})).status,403);
+  assert.equal((await api(env,'/api/command/hook',{token:'hook-token-for-tests',kind:'bug',title:'Deployed: Add COMMAND',ok:true,url:'https://github.com/RIVL-Poker/RIVL/actions/runs/1',detail:'abc1234'})).status,200);
+  const ev=(await api(env,'/api/command/state',{key:kaden.key})).data.events[0];
+  assert.deepEqual([ev.kind,ev.title,ev.ok,ev.url],['site','Deployed: Add COMMAND',true,'https://github.com/RIVL-Poker/RIVL/actions/runs/1'],'a hook cannot pose as a bug report');
+  const noHook=makeEnv({});assert.equal((await api(noHook,'/api/command/hook',{token:'',title:'x'})).status,403,'no hook secret, no hook');
+  // RIVER: off without a key; with one, it reads the context and its tools act as the owner who asked.
+  assert.equal((await api(env,'/api/command/ask',{key:kaden.key,messages:[{role:'user',content:'hi'}]})).status,503);
+  assert.equal((await api(env,'/api/command/ask',{key:other.key,messages:[{role:'user',content:'hi'}]})).status,403,'outsiders cannot ask RIVER');
+  const {askRiver}=await import('./worker/command.js');
+  const calls=[];
+  const fakeFetch=async(url,init)=>{
+    const body=JSON.parse(init.body);calls.push(body);
+    assert.equal(init.headers['x-api-key'],'test-key');
+    if(calls.length===1){
+      assert.match(body.system,/Asking: Sean/);assert.match(body.system,/Fix the 3-bet grading bug/,'RIVER sees the notes');
+      assert.equal(body.messages[0].content,'remind kaden\n\nto record hand 21','turns are merged and alternate');
+      return Response.json({stop_reason:'tool_use',content:[{type:'text',text:'On it.'},{type:'tool_use',id:'tu1',name:'save_note',input:{kind:'task',title:'Kaden: record hand 21',tag:'content'}}]});
+    }
+    assert.equal(body.messages.at(-1).content[0].tool_use_id,'tu1');assert.match(body.messages.at(-1).content[0].content,/"ok":true/);
+    return Response.json({stop_reason:'end_turn',content:[{type:'text',text:'Saved it as a task for Kaden.'}]});
+  };
+  env.ANTHROPIC_API_KEY='test-key';
+  const ask=await askRiver(env,{key:sean.key,messages:[{role:'assistant',content:'Hello'},{role:'user',content:'remind kaden'},{role:'user',content:'to record hand 21'}]},(p,b)=>api.call(null,env,'/api/command/'+p.split('/').pop(),b).then(x=>x.status===404?dirDirect(env,p,b):x),fakeFetch);
+  assert.deepEqual(ask,{status:200,data:{reply:'Saved it as a task for Kaden.',changed:true}});
+  r=await api(env,'/api/command/state',{key:kaden.key});
+  const saved=r.data.notes.find(n=>n.title==='Kaden: record hand 21');
+  assert.ok(saved&&saved.author===sean.account.id&&saved.kind==='task'&&saved.tag==='content','the task is saved as the owner who asked');
+  assert.equal(r.data.events[0].title,'RIVER saved “Kaden: record hand 21” for Sean');
+  const bad=await askRiver(env,{key:sean.key,messages:[]},(p,b)=>dirDirect(env,p,b),fakeFetch);assert.equal(bad.status,400);
+  checks++;
+}
+
 console.log('PASS: '+checks+' room server checks');

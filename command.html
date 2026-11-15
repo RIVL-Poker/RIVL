@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#030A14">
+  <title>RIVL COMMAND</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="command.css">
+</head>
+<body>
+  <!-- Shown until the server says this browser's RIVL account is on the COMMAND list. -->
+  <section id="gate" class="gate" aria-live="polite">
+    <div class="gate-card">
+      <svg class="gate-spade" viewBox="-70 -70 140 150" aria-hidden="true"><path d="M0,-60C20,-30 60,-10 60,20C60,45 35,55 15,42C18,58 25,68 35,75L-35,75C-25,68 -18,58 -15,42C-35,55 -60,45 -60,20C-60,-10 -20,-30 0,-60Z"/></svg>
+      <h1>RIVL COMMAND</h1>
+      <p id="gateText">Checking your access…</p>
+      <div id="gateId" class="gate-id" hidden>
+        <code id="gateIdValue"></code>
+        <button type="button" id="gateCopy" class="ghost">Copy id</button>
+      </div>
+      <a id="gateLink" class="primary" href="/" hidden>Open RIVL to sign in</a>
+    </div>
+  </section>
+
+  <div id="app" class="app" hidden>
+    <nav class="rail" aria-label="COMMAND sections">
+      <a class="rail-mark" href="/" title="Back to RIVL" aria-label="Back to RIVL">
+        <svg viewBox="-70 -70 140 150" aria-hidden="true"><path d="M0,-60C20,-30 60,-10 60,20C60,45 35,55 15,42C18,58 25,68 35,75L-35,75C-25,68 -18,58 -15,42C-35,55 -60,45 -60,20C-60,-10 -20,-30 0,-60Z"/></svg>
+      </a>
+      <button type="button" class="rail-btn active" data-view="command"><span class="ico" aria-hidden="true">◎</span><span>Command</span></button>
+      <button type="button" class="rail-btn" data-view="notes"><span class="ico" aria-hidden="true">▤</span><span>Notes</span><b class="badge" id="notesBadge" hidden></b></button>
+      <button type="button" class="rail-btn" data-view="feed"><span class="ico" aria-hidden="true">≋</span><span>Activity</span><b class="badge" id="feedBadge" hidden></b></button>
+      <button type="button" class="rail-btn" data-view="map"><span class="ico" aria-hidden="true">⌖</span><span>Feature map</span></button>
+      <div class="rail-team" id="team"></div>
+    </nav>
+
+    <div class="stage">
+      <header class="topbar">
+        <h1 class="wordmark">RIVL <span>COMMAND</span></h1>
+        <div class="clock"><time id="clock"></time><small id="date"></small></div>
+        <div class="status-pill" id="sitePill"><i></i><span>Connecting</span></div>
+      </header>
+
+      <!-- Command: live systems, RIVER, the feed -->
+      <main class="view active" id="view-command">
+        <section class="panel systems" aria-labelledby="sysTitle">
+          <h2 id="sysTitle">Live systems</h2>
+          <div class="online">
+            <strong id="onlineNow">–</strong>
+            <span>on RIVL right now</span>
+            <small id="onlineSplit"></small>
+          </div>
+          <ul class="activity-bars" id="activityBars"></ul>
+          <h3>Tables running</h3>
+          <dl class="tables" id="tablesNow"></dl>
+          <h3>Today’s free-plan budget</h3>
+          <div class="gauges" id="gauges"></div>
+          <h3>Active players, last 7 days</h3>
+          <svg class="spark" id="spark" viewBox="0 0 280 64" preserveAspectRatio="none" role="img" aria-label="Active players over the last 7 days"></svg>
+          <dl class="totals" id="totals"></dl>
+        </section>
+
+        <section class="panel console" aria-label="RIVER">
+          <div class="core-wrap">
+            <svg class="core" id="core" viewBox="0 0 400 400" aria-hidden="true">
+              <defs>
+                <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0" stop-color="#3CD7FF" stop-opacity=".28"/>
+                  <stop offset=".55" stop-color="#3CD7FF" stop-opacity=".06"/>
+                  <stop offset="1" stop-color="#3CD7FF" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="spadeGold" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#FFE2A8"/>
+                  <stop offset=".55" stop-color="#EFBD70"/>
+                  <stop offset="1" stop-color="#A9732F"/>
+                </linearGradient>
+              </defs>
+              <circle cx="200" cy="200" r="196" fill="url(#coreGlow)"/>
+              <g class="ring r-outer"><circle cx="200" cy="200" r="182" class="line dash-long"/></g>
+              <g class="ring r-ticks" id="ticks"></g>
+              <g class="ring r-arcs">
+                <path class="arc" d="M200 58 A142 142 0 0 1 333 152"/>
+                <path class="arc" d="M342 222 A142 142 0 0 1 252 332"/>
+                <path class="arc" d="M150 334 A142 142 0 0 1 60 230"/>
+                <path class="arc" d="M62 160 A142 142 0 0 1 128 76"/>
+              </g>
+              <g class="ring r-inner"><circle cx="200" cy="200" r="112" class="line dash-short"/></g>
+              <circle cx="200" cy="200" r="92" class="line faint"/>
+              <g class="spade" transform="translate(200 196) scale(.92)">
+                <path d="M0,-60C20,-30 60,-10 60,20C60,45 35,55 15,42C18,58 25,68 35,75L-35,75C-25,68 -18,58 -15,42C-35,55 -60,45 -60,20C-60,-10 -20,-30 0,-60Z"/>
+              </g>
+            </svg>
+            <p class="core-name">RIVER</p>
+            <p class="core-state" id="coreState">Standing by</p>
+          </div>
+
+          <ol class="transcript" id="transcript" aria-live="polite"></ol>
+
+          <div class="quick" id="quick"></div>
+
+          <form class="ask" id="askForm">
+            <label class="sr" for="askInput">Ask RIVER</label>
+            <textarea id="askInput" rows="1" maxlength="4000" placeholder="Ask RIVER, or tell it what to remember"></textarea>
+            <button type="button" class="mic" id="micBtn" aria-pressed="false" title="Talk to RIVER" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+              <span class="sr">Talk to RIVER</span>
+            </button>
+            <button type="submit" class="send" id="sendBtn">Send</button>
+          </form>
+          <div class="console-foot">
+            <label class="toggle"><input type="checkbox" id="voiceOut"> Read replies aloud</label>
+            <button type="button" class="link" id="clearChat">Clear conversation</button>
+          </div>
+        </section>
+
+        <section class="panel feed-panel" aria-labelledby="feedTitle">
+          <div class="panel-head">
+            <h2 id="feedTitle">Activity</h2>
+            <button type="button" class="link" data-go="feed">All activity</button>
+          </div>
+          <ol class="feed" id="feedShort"></ol>
+          <h3>Open tasks</h3>
+          <ol class="mini-tasks" id="openTasks"></ol>
+        </section>
+      </main>
+
+      <!-- Notes and tasks -->
+      <main class="view" id="view-notes">
+        <section class="panel composer" aria-labelledby="composeTitle">
+          <h2 id="composeTitle">New note</h2>
+          <form id="noteForm">
+            <div class="seg" role="radiogroup" aria-label="Type">
+              <label><input type="radio" name="kind" value="note" checked> Note</label>
+              <label><input type="radio" name="kind" value="task"> Task</label>
+            </div>
+            <label for="noteTitle">Title</label>
+            <input id="noteTitle" maxlength="120" autocomplete="off" required>
+            <label for="noteBody">Details</label>
+            <textarea id="noteBody" rows="6" maxlength="4000"></textarea>
+            <label for="noteTag">Area</label>
+            <select id="noteTag"></select>
+            <label class="toggle"><input type="checkbox" id="notePin"> Pin to the top</label>
+            <div class="form-actions">
+              <button type="submit" class="primary" id="noteSave">Save note</button>
+              <button type="button" class="ghost" id="noteCancel" hidden>Cancel edit</button>
+            </div>
+            <p class="form-error" id="noteError" role="alert"></p>
+          </form>
+        </section>
+        <section class="panel notes-list" aria-labelledby="notesTitle">
+          <div class="panel-head">
+            <h2 id="notesTitle">Notes and tasks</h2>
+            <div class="filters" id="noteFilters" role="tablist" aria-label="Show"></div>
+          </div>
+          <ol class="notes" id="notes"></ol>
+        </section>
+      </main>
+
+      <!-- Activity -->
+      <main class="view" id="view-feed">
+        <section class="panel wide" aria-labelledby="feedFullTitle">
+          <div class="panel-head">
+            <h2 id="feedFullTitle">Activity</h2>
+            <div class="filters" id="feedFilters" role="tablist" aria-label="Show"></div>
+          </div>
+          <ol class="feed full" id="feedFull"></ol>
+        </section>
+      </main>
+
+      <!-- Feature map -->
+      <main class="view" id="view-map">
+        <section class="panel wide map-card" aria-labelledby="mapTitle">
+          <h2 id="mapTitle">Feature map</h2>
+          <p>Sean’s 3D map of everything built in RIVL: every feature, the pull requests behind it, and the ideas still waiting. It lives on claude.ai, so it opens in a new tab.</p>
+          <div class="form-actions">
+            <a class="primary" href="https://claude.ai/artifact/UfEHkEs7DYPHyUkt6RGrcZ" target="_blank" rel="noopener">Open the feature map</a>
+            <a class="ghost" href="https://github.com/RIVL-Poker/RIVL/pull/159" target="_blank" rel="noopener">Its pull request</a>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="command.js"></script>
+</body>
+</html>
